@@ -9,10 +9,12 @@
 .score-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 12px;
   padding-bottom: 6px;
   border-bottom: 2px solid #e2e8f0;
+  position: relative;
 }
 
 .score-header h3 {
@@ -24,6 +26,28 @@
 
 .score-icon {
   color: #f59e0b;
+}
+
+.stats-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-button:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .current-score {
@@ -135,4 +159,93 @@
   .score-stats {
     padding: 8px;
   }
+}
+
+/* Stats Toast Styles */
+.stats-toast-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.stats-toast {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 300px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.stats-toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+}
+
+.stats-toast-header h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stats-close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-close-button:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.stats-toast-content {
+  padding: 20px;
+}
+
+.stats-toast-content .stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.stats-toast-content .stat-item:last-child {
+  border-bottom: none;
+}
+
+.stats-toast-content .stat-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stats-toast-content .stat-value {
+  font-weight: 600;
+  color: #1f2937;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 1rem;
 } 

@@ -43,8 +43,8 @@ const SubmitButton: React.FC = () => {
     }
 
     return {
-      text: canSubmitGuess() ? 'Submit a Completed Guess' : 'Submit a Completed Guess',
-      icon: canSubmitGuess() ? <Send size={20} /> : <Send size={20} />,
+      text: 'Submit a Guess',
+      icon: <Send size={20} />,
       onClick: handleSubmit,
       className: canSubmitGuess() ? 'btn-primary' : 'btn-secondary',
       disabled: !canSubmitGuess(),
@@ -120,7 +120,8 @@ const SubmitButton: React.FC = () => {
         
         {gameState.isGameActive && (
           <div className="guess-count-external">
-            Guesses: {gameState.guesses.length}
+            <div className="guess-count-label">Guesses</div>
+            <div className="guess-count-number">{gameState.guesses.length}</div>
           </div>
         )}
       </div>
@@ -128,8 +129,12 @@ const SubmitButton: React.FC = () => {
       {/* Validation hints below the button row */}
       {!canSubmitGuess() && gameState.isGameActive && (
         <div className="validation-hints">
-          {gameState.currentGuess.filter(d => d !== null).length !== new Set(gameState.currentGuess.filter(d => d !== null)).size && (
-            <span className="hint">• Remove duplicate numbers</span>
+          {(() => {
+            const filledDigits = gameState.currentGuess.filter(d => d !== null) as number[];
+            const uniqueDigits = new Set(filledDigits);
+            return filledDigits.length !== uniqueDigits.size;
+          })() && (
+            <span className="hint">• Remove duplicate numbers (click a box, then select a new number, or double-click to clear)</span>
           )}
           {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
             <span className="hint">• Numbers must be 0-{settings.digitRange}</span>

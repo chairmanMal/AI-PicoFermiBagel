@@ -71,10 +71,26 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   white-space: nowrap;
+}
+
+.guess-count-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.guess-count-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #374151;
+  line-height: 1;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -230,14 +246,31 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .submit-row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  
   .submit-btn {
-    min-width: 200px;
-    height: 55px;
-    font-size: 1rem;
+    min-width: 180px;
+    height: 50px;
+    font-size: 0.95rem;
   }
   
   .guess-count-external {
-    font-size: 0.9rem;
+    position: static;
+    transform: none;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .guess-count-label {
+    font-size: 0.7rem;
+  }
+  
+  .guess-count-number {
+    font-size: 1rem;
   }
   
   .game-end-message {
@@ -267,6 +300,28 @@
 
   .feedback-display {
     font-size: 0.8rem;
+  }
+}
+
+/* Additional mobile refinements for smaller screens */
+@media (max-width: 480px) {
+  .submit-btn {
+    min-width: 160px;
+    height: 48px;
+    font-size: 0.9rem;
+    padding: 0 12px;
+  }
+  
+  .guess-count-label {
+    font-size: 0.65rem;
+  }
+  
+  .guess-count-number {
+    font-size: 0.9rem;
+  }
+  
+  .submit-row {
+    gap: 6px;
   }
 }
 

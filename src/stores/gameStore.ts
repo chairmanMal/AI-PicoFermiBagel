@@ -105,14 +105,30 @@ export const useGameStore = create<GameStore>()(
           case 'SET_GUESS_DIGIT': {
             const { position, digit } = action;
             const newGuess = [...state.gameState.currentGuess];
+            const newLockedPositions = new Set(state.gameState.lockedPositions);
+            const wasLocked = newLockedPositions.has(position);
+            const hadValue = newGuess[position] !== null;
+            
+            // Set the new digit
             newGuess[position] = digit;
             
-            // Auto-advance to next position if digit was set and position isn't locked
+            // Auto-locking logic:
+            if (digit !== null) {
+              if (hadValue && !wasLocked) {
+                // Position had a value and wasn't locked -> auto-lock it
+                newLockedPositions.add(position);
+              } else if (wasLocked) {
+                // Position was locked -> unlock it (replacing the value)
+                newLockedPositions.delete(position);
+              }
+            }
+            
+            // Auto-advance to next position if digit was set and position isn't locked after this action
             let newActivePosition = state.gameState.activeGuessPosition;
-            if (digit !== null && !state.gameState.lockedPositions.has(position)) {
+            if (digit !== null && !newLockedPositions.has(position)) {
               newActivePosition = getNextAvailablePosition(
                 newGuess, 
-                state.gameState.lockedPositions, 
+                newLockedPositions, 
                 position + 1
               );
             }
@@ -122,6 +138,7 @@ export const useGameStore = create<GameStore>()(
                 ...state.gameState,
                 currentGuess: newGuess,
                 activeGuessPosition: newActivePosition,
+                lockedPositions: newLockedPositions,
               },
             });
             break;
@@ -130,43 +147,91 @@ export const useGameStore = create<GameStore>()(
           case 'ADD_DIGIT_SEQUENTIAL': {
             const { digit } = action;
             const currentGuess = [...state.gameState.currentGuess];
+            const newLockedPositions = new Set(state.gameState.lockedPositions);
             const activePosition = state.gameState.activeGuessPosition;
+            const hadValue = currentGuess[activePosition] !== null;
+            const wasLocked = newLockedPositions.has(activePosition);
             
-            // If we're at the last position and it's already filled, rotate left
-            if (activePosition >= state.settings.targetLength - 1 && currentGuess[activePosition] !== null) {
-              // Rotate all digits left by one position
-              for (let i = 0; i < state.settings.targetLength - 1; i++) {
-                currentGuess[i] = currentGuess[i + 1];
+            // Auto-locking logic for sequential entry
+            if (hadValue && !wasLocked) {
+              // Position had a value and wasn't locked -> auto-lock it, then move to next
+              newLockedPositions.add(activePosition);
+              // Find next available position
+              let nextPosition = getNextAvailablePosition(
+                currentGuess, 
+                newLockedPositions, 
+                activePosition + 1
+              );
+              
+              // If no next position available, stay at current
+              if (nextPosition === activePosition) {
+                nextPosition = activePosition;
               }
-              // Place new digit at the last position
-              currentGuess[state.settings.targetLength - 1] = digit;
-              // Keep active position at the last slot
-              const nextPosition = state.settings.targetLength - 1;
+              
+              // Place digit at the new position
+              if (nextPosition < currentGuess.length) {
+                currentGuess[nextPosition] = digit;
+                // Auto-advance from new position
+                const finalPosition = getNextAvailablePosition(
+                  currentGuess, 
+                  newLockedPositions, 
+                  nextPosition + 1
+                );
+                
+                set({
+                  gameState: {
+                    ...state.gameState,
+                    currentGuess: currentGuess,
+                    activeGuessPosition: finalPosition,
+                    lockedPositions: newLockedPositions,
+                  },
+                });
+              } else {
+                // No space, just lock current position
+                set({
+                  gameState: {
+                    ...state.gameState,
+                    lockedPositions: newLockedPositions,
+                  },
+                });
+              }
+            } else if (wasLocked) {
+              // Position was locked -> unlock it and replace value
+              newLockedPositions.delete(activePosition);
+              currentGuess[activePosition] = digit;
+              
+              // Auto-advance to next position
+              const nextPosition = getNextAvailablePosition(
+                currentGuess, 
+                newLockedPositions, 
+                activePosition + 1
+              );
               
               set({
                 gameState: {
                   ...state.gameState,
                   currentGuess: currentGuess,
                   activeGuessPosition: nextPosition,
+                  lockedPositions: newLockedPositions,
                 },
               });
             } else {
-              // Normal case: add digit and advance
+              // Normal case: empty position, just add digit and advance
               currentGuess[activePosition] = digit;
               
               // Calculate next position (auto-advance)
-              let nextPosition = activePosition + 1;
+              const nextPosition = getNextAvailablePosition(
+                currentGuess, 
+                newLockedPositions, 
+                activePosition + 1
+              );
               
-              // If we exceed the length, stay at the last position
-              if (nextPosition >= state.settings.targetLength) {
-                nextPosition = state.settings.targetLength - 1;
-              }
-
               set({
                 gameState: {
                   ...state.gameState,
                   currentGuess: currentGuess,
                   activeGuessPosition: nextPosition,
+                  lockedPositions: newLockedPositions,
                 },
               });
             }

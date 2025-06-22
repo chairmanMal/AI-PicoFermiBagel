@@ -21,13 +21,13 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   hintColor,
   onNumberClick,
 }) => {
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag(() => ({
     type: 'number',
     item: { digit },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  });
+  }), [digit]);
 
   const buttonClasses = [
     'number-button',
@@ -38,21 +38,22 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   ].filter(Boolean).join(' ');
 
   return (
-    <motion.button
+    <div
       ref={drag}
       className={buttonClasses}
       onClick={() => onNumberClick(digit)}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      animate={{
+      role="button"
+      tabIndex={0}
+      style={{
         opacity: isDragging ? 0.5 : 1,
-        y: isDragging ? -5 : 0,
+        transform: isDragging ? 'translateY(-5px)' : 'translateY(0px)',
+        transition: 'all 0.2s ease',
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
-      transition={{ duration: 0.2 }}
     >
       <span className="number-text">{digit}</span>
       {isUsed && <div className="used-indicator">•</div>}
-    </motion.button>
+    </div>
   );
 };
 
