@@ -6,22 +6,51 @@ const isDev = process.env.IS_DEV === 'true' || process.env.NODE_ENV === 'develop
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
+  // Set the icon path based on platform
+  let iconPath: string
+  
+  // In development, icons are in the source directory
+  // In production, they'll be in the built app bundle
+  const iconDir = isDev 
+    ? path.join(process.cwd(), 'build/icons')
+    : path.join(__dirname, '../build/icons')
+  
+  if (process.platform === 'win32') {
+    iconPath = path.join(iconDir, 'icon.ico')
+  } else if (process.platform === 'darwin') {
+    iconPath = path.join(iconDir, 'icon.icns')
+  } else {
+    iconPath = path.join(iconDir, 'icon.png')
+  }
+  
+  // Log the icon path for debugging
+  console.log('Icon path:', iconPath)
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1600,  // Much larger to accommodate scaled-down content + right panel
+    height: 1100, // Taller for scaled-down content
+    minWidth: 1200,
+    minHeight: 800,
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
+      zoomFactor: 0.75, // Reduce scale by 25%
     },
     show: false,
+    center: true,
+    titleBarStyle: 'default',
   })
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    // In production, the files are in the app.asar bundle
+    const indexPath = path.join(__dirname, '../dist/index.html')
+    console.log('Loading file:', indexPath)
+    mainWindow.loadFile(indexPath)
   }
 
   mainWindow.once('ready-to-show', () => {

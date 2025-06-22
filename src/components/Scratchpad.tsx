@@ -26,10 +26,10 @@ const Scratchpad: React.FC = () => {
 
   const colorCycle: ScratchpadColor[] = [
     'default',
+    'bagel',
     'unlikely',
     'maybe', 
     'likely',
-    'bagel',
     'not-bagel'
   ];
 

@@ -110,9 +110,9 @@
 }
 
 .guess-placeholder {
-  color: #9ca3af;
-  font-size: clamp(0.8rem, 2vw, 1.2rem);
-  font-weight: 400;
+  color: #ef4444;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  font-weight: 600;
 }
 
 .lock-indicator {

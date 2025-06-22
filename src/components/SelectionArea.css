@@ -175,9 +175,9 @@
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.hint-bagel {
-  background-color: #fed7aa !important;
-  border-color: #f97316 !important;
-  color: #9a3412 !important;
+  background-color: #fecaca !important;
+  border-color: #ef4444 !important;
+  color: #991b1b !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.hint-not-bagel {
@@ -199,9 +199,9 @@
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.hint-unlikely {
-  background-color: #fecaca !important;
-  border-color: #ef4444 !important;
-  color: #991b1b !important;
+  background-color: #fed7aa !important;
+  border-color: #f97316 !important;
+  color: #9a3412 !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.dragging {
@@ -406,8 +406,8 @@
 }
 
 .legend-color.hint-bagel {
-  background-color: #fed7aa;
-  border-color: #f97316;
+  background-color: #fecaca;
+  border-color: #ef4444;
 }
 
 .legend-color.hint-not-bagel {

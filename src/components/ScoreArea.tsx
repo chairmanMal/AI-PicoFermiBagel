@@ -5,7 +5,7 @@ import { useGameStore } from '@/stores/gameStore';
 import './ScoreArea.css';
 
 const ScoreArea: React.FC = () => {
-  const { gameState, settings, stats, hintState, getGameTimeMinutes, getTotalHintCost } = useGameStore();
+  const { gameState, settings, stats, getGameTimeMinutes, getTotalHintCost } = useGameStore();
 
   const calculateCurrentScore = () => {
     if (!gameState.isGameActive && !gameState.isGameWon) return 0;

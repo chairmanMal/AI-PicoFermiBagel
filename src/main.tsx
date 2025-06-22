@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.includes('Electron');
+// const isElectron = typeof window !== 'undefined' && window.navigator.userAgent.includes('Electron');
 
 const rootElement = document.getElementById('root');
 

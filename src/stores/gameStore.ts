@@ -8,7 +8,7 @@ import {
   HintState, 
   ScratchpadState, 
   GameStats,
-  LeaderboardEntry,
+  // LeaderboardEntry, // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
   Guess
 } from '@/types/game';
 import { 
@@ -83,7 +83,7 @@ export const useGameStore = create<GameStore>()(
       hintState: createInitialHintState(),
       scratchpadState: createInitialScratchpadState(defaultSettings.digitRange),
       stats: new Map(),
-      leaderboard: new Map(),
+      // leaderboard: new Map(), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
 
       dispatch: (action: GameAction) => {
         const state = get();
@@ -375,17 +375,18 @@ export const useGameStore = create<GameStore>()(
             break;
           }
 
-          case 'SAVE_SCORE': {
-            const newLeaderboard = new Map(state.leaderboard);
-            const difficultyBoard = newLeaderboard.get(state.settings.difficulty) || [];
-            const updatedBoard = [...difficultyBoard, action.entry]
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 100); // Keep top 100 scores
-            
-            newLeaderboard.set(state.settings.difficulty, updatedBoard);
-            set({ leaderboard: newLeaderboard });
-            break;
-          }
+          // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+          // case 'SAVE_SCORE': {
+          //   const newLeaderboard = new Map(state.leaderboard);
+          //   const difficultyBoard = newLeaderboard.get(state.settings.difficulty) || [];
+          //   const updatedBoard = [...difficultyBoard, action.entry]
+          //     .sort((a, b) => b.score - a.score)
+          //     .slice(0, 100); // Keep top 100 scores
+          //   
+          //   newLeaderboard.set(state.settings.difficulty, updatedBoard);
+          //   set({ leaderboard: newLeaderboard });
+          //   break;
+          // }
         }
       },
 
@@ -430,7 +431,7 @@ export const useGameStore = create<GameStore>()(
       partialize: (state) => ({
         settings: state.settings,
         stats: state.stats,
-        leaderboard: state.leaderboard,
+        // leaderboard: state.leaderboard, // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
       }),
       storage: {
         getItem: (name) => {
@@ -443,7 +444,7 @@ export const useGameStore = create<GameStore>()(
             state: {
               ...parsed.state,
               stats: new Map(Object.entries(parsed.state.stats || {})),
-              leaderboard: new Map(Object.entries(parsed.state.leaderboard || {})),
+              // leaderboard: new Map(Object.entries(parsed.state.leaderboard || {})), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
             }
           };
         },
@@ -453,7 +454,7 @@ export const useGameStore = create<GameStore>()(
             state: {
               ...value.state,
               stats: Object.fromEntries(value.state.stats || new Map()),
-              leaderboard: Object.fromEntries(value.state.leaderboard || new Map()),
+              // leaderboard: Object.fromEntries(value.state.leaderboard || new Map()), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
             }
           };
           localStorage.setItem(name, JSON.stringify(serializable));

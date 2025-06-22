@@ -219,7 +219,7 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Game Sections */
+/* Game Sections - Dynamic width matching number selection array */
 .guess-section,
 .submit-section,
 .selection-section {
@@ -228,6 +228,12 @@
   padding: clamp(15px, 3vw, 25px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  /* Dynamic width calculation: 8 buttons * button width + 7 gaps + container padding */
+  width: min(
+    calc(8 * clamp(60px, 12vw, 80px) + 7 * clamp(15px, 3vw, 20px) + 2rem),
+    calc(100vw - 40px)
+  );
+  margin: 0 auto;
 }
 
 /* Game sections wrapper - for right panel positioning reference */
@@ -243,13 +249,13 @@
   width: clamp(250px, 25vw, 350px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(15px, 3vw, 25px); /* Match the gap from main game sections */
   justify-content: center;
   align-items: stretch;
   height: fit-content;
   position: absolute;
   top: 50%;
-  right: calc(-1 * clamp(250px, 25vw, 350px) - 20px);
+  right: calc(-1 * clamp(250px, 25vw, 350px) - clamp(15px, 3vw, 25px));
   transform: translateY(-50%);
   z-index: 10;
 }
@@ -346,7 +352,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .container {
     flex-direction: column;
     padding: 80px 15px 15px;
@@ -358,6 +364,16 @@
   
   .main-content {
     width: 100%;
+  }
+  
+  /* Responsive section widths - dynamic tablet sizing */
+  .guess-section,
+  .submit-section,
+  .selection-section {
+    width: min(
+      calc(8 * clamp(50px, 10vw, 70px) + 7 * clamp(12px, 2.5vw, 17px) + 2rem),
+      calc(100vw - 30px)
+    );
   }
 }
 
@@ -393,6 +409,10 @@
   .submit-section,
   .selection-section {
     padding: clamp(12px, 2.5vw, 20px);
+    width: min(
+      calc(8 * clamp(45px, 9vw, 60px) + 7 * clamp(11px, 2vw, 15px) + 2rem),
+      calc(100vw - 20px)
+    );
   }
 }
 
@@ -426,6 +446,15 @@
   
   .drawer-toggle-top-right {
     right: 10px;
+  }
+  
+  .guess-section,
+  .submit-section,
+  .selection-section {
+    width: min(
+      calc(8 * clamp(35px, 7vw, 50px) + 7 * clamp(9px, 1.5vw, 12px) + 2rem),
+      calc(100vw - 16px)
+    );
   }
 }
 

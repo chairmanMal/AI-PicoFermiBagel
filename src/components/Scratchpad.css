@@ -320,16 +320,16 @@
 
 .color-unlikely,
 .color-swatch.color-unlikely {
-  background-color: #fecaca;
-  border-color: #ef4444;
-  color: #991b1b;
+  background-color: #fed7aa;
+  border-color: #f97316;
+  color: #9a3412;
 }
 
 .color-bagel,
 .color-swatch.color-bagel {
-  background-color: #fed7aa;
-  border-color: #f97316;
-  color: #9a3412;
+  background-color: #fecaca;
+  border-color: #ef4444;
+  color: #991b1b;
 }
 
 .color-not-bagel,

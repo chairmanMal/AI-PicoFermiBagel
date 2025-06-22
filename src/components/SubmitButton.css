@@ -139,12 +139,13 @@
 }
 
 .guess-history-list {
-  height: 220px; /* Fixed height for 5 guesses without scrolling */
+  height: 220px; /* Fixed height to show exactly 5 items (44px per item) */
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #f9fafb;
   padding: 8px;
+  scroll-behavior: smooth;
 }
 
 .history-item {

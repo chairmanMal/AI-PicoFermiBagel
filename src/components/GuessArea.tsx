@@ -15,7 +15,7 @@ interface GuessBoxProps {
   onLockToggle: (position: number) => void;
 }
 
-const GuessBox: React.FC<GuessBoxProps> = ({ 
+  const GuessBox: React.FC<GuessBoxProps> = ({ 
   position, 
   value, 
   isActive, 
@@ -24,6 +24,10 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   onBoxClick, 
   onLockToggle 
 }) => {
+  // Debug: Log the value for the first few positions
+  if (position < 3) {
+    console.log(`GuessBox ${position}: value =`, value, typeof value);
+  }
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'number',
     drop: (item: { digit: number }) => {
@@ -45,12 +49,12 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       onClick={() => onBoxClick(position)}
     >
       <div className="guess-content">
-        {value !== null ? (
+        {value !== null && value !== undefined ? (
           <span className={`guess-digit ${isRepeated ? 'repeated-text' : ''}`}>
             {value}
           </span>
         ) : (
-          <span className="guess-placeholder">{position + 1}</span>
+          <span className="guess-placeholder">-</span>
         )}
       </div>
       
@@ -115,15 +119,19 @@ const GuessArea: React.FC = () => {
   const createGuessGrid = () => {
     const boxes = [];
     let position = 0;
+    // const totalPositions = settings.gridRows * settings.gridColumns;
     
     for (let row = 0; row < settings.gridRows; row++) {
       const rowBoxes = [];
       for (let col = 0; col < settings.gridColumns; col++) {
+        // Ensure we have a value for this position (null if not set)
+        const value = position < gameState.currentGuess.length ? gameState.currentGuess[position] : null;
+        
         rowBoxes.push(
           <GuessBox
             key={position}
             position={position}
-            value={gameState.currentGuess[position]}
+            value={value}
             isActive={gameState.activeGuessPosition === position}
             isLocked={gameState.lockedPositions.has(position)}
             isRepeated={repeatedPositions.has(position)}

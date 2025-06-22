@@ -26,7 +26,7 @@ PicoFermiBagel is a challenging logic game that requires deductive reasoning, in
   - Row Delta hints (sum comparisons)
 - **Interactive Scratchpad**: Color-coded number tracking system
 - **Scoring System**: Performance-based scoring with time and hint penalties
-- **Leaderboards**: Cloud-based competitive scoring by difficulty level
+<!-- - **Leaderboards**: Cloud-based competitive scoring by difficulty level -->
 - **Statistics Tracking**: Detailed game statistics and progress tracking
 
 ### Technical Features
@@ -169,7 +169,7 @@ Score = 100 - (number of guesses) - (time in minutes) - (hint costs)
 
 ### Game Settings
 - **Difficulty Level**: Choose from 5 preset difficulty levels
-- **Target Display**: Option to show the secret number (disables leaderboard)
+- **Target Display**: Option to show the secret number <!-- (disables leaderboard) -->
 - **Selection Area Position**: Place number selection above or below guess area
 - **Sound Effects**: Enable/disable game sounds
 
@@ -179,12 +179,14 @@ The game supports extensive customization through the settings menu:
 - UI preferences (layout, colors)
 - Gameplay options (hints, scoring)
 
-## 🏆 Leaderboards & Statistics
+## 📊 Statistics
+
+<!-- ## 🏆 Leaderboards & Statistics
 
 - **Global Leaderboards**: Compete with players worldwide
-- **Difficulty-Specific Rankings**: Separate leaderboards for each difficulty level
+- **Difficulty-Specific Rankings**: Separate leaderboards for each difficulty level -->
 - **Detailed Statistics**: Track your progress over time
-- **Achievement System**: Unlock achievements for various milestones
+<!-- - **Achievement System**: Unlock achievements for various milestones -->
 
 ## 🎨 UI/UX Features
 

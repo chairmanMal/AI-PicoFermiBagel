@@ -72,15 +72,16 @@ export interface ScoreData {
   timestamp: Date;
 }
 
-export interface LeaderboardEntry {
-  id: string;
-  playerName: string;
-  score: number;
-  guesses: number;
-  timeMinutes: number;
-  difficulty: string;
-  timestamp: Date;
-}
+// LEADERBOARD FUNCTIONALITY - COMMENTED OUT FOR NOW
+// export interface LeaderboardEntry {
+//   id: string;
+//   playerName: string;
+//   score: number;
+//   guesses: number;
+//   timeMinutes: number;
+//   difficulty: string;
+//   timestamp: Date;
+// }
 
 export interface GameStats {
   gamesPlayed: number;
@@ -97,7 +98,7 @@ export interface AppState {
   hintState: HintState;
   scratchpadState: ScratchpadState;
   stats: Map<string, GameStats>; // Key is difficulty level
-  leaderboard: Map<string, LeaderboardEntry[]>; // Key is difficulty level
+  // leaderboard: Map<string, LeaderboardEntry[]>; // Key is difficulty level - COMMENTED OUT
 }
 
 export type GameAction = 
@@ -111,5 +112,5 @@ export type GameAction =
   | { type: 'PURCHASE_HINT'; hintType: 'bagel' | 'not-bagel' | 'row-delta'; targetNumber?: number }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
   | { type: 'SET_SCRATCHPAD_COLOR'; number: number; color: ScratchpadColor }
-  | { type: 'CLEAR_GAME_STATE' }
-  | { type: 'SAVE_SCORE'; entry: LeaderboardEntry }; 
+  | { type: 'CLEAR_GAME_STATE' };
+  // | { type: 'SAVE_SCORE'; entry: LeaderboardEntry }; // COMMENTED OUT - LEADERBOARD FUNCTIONALITY 

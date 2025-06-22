@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Send, RotateCcw, Trophy } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
@@ -11,6 +11,15 @@ const SubmitButton: React.FC = () => {
     dispatch,
     settings
   } = useGameStore();
+
+  const historyListRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new guesses are added
+  useEffect(() => {
+    if (historyListRef.current && gameState.guesses.length > 0) {
+      historyListRef.current.scrollTop = historyListRef.current.scrollHeight;
+    }
+  }, [gameState.guesses.length]);
 
   const handleSubmit = () => {
     if (canSubmitGuess()) {
@@ -128,18 +137,18 @@ const SubmitButton: React.FC = () => {
         </div>
       )}
 
-      {/* Fixed Size Guess History */}
+      {/* Scrollable Guess History */}
       <div className="guess-history-section">
         <h4 className="history-title">Recent Guesses</h4>
-        <div className="guess-history-list">
+        <div className="guess-history-list" ref={historyListRef}>
           {gameState.guesses.length > 0 ? (
-            gameState.guesses.slice(-5).map((guess, index) => (
+            gameState.guesses.map((guess, index) => (
               <motion.div
                 key={guess.id}
                 className={`history-item ${guess.feedback.isWinner ? 'winner' : ''}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.3, delay: Math.min(index, 4) * 0.1 }}
               >
                 <span className="guess-display">
                   {guess.digits.join('-')}
@@ -159,9 +168,10 @@ const SubmitButton: React.FC = () => {
             ))
           )}
         </div>
-        {gameState.guesses.length > 5 && (
+        {gameState.guesses.length > 0 && (
           <div className="history-info">
-            Showing last 5 of {gameState.guesses.length} guesses
+            {gameState.guesses.length} guess{gameState.guesses.length !== 1 ? 'es' : ''} total
+            {gameState.guesses.length > 5 && ' • Scroll to see all'}
           </div>
         )}
       </div>

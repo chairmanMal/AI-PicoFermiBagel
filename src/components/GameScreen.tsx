@@ -14,7 +14,7 @@ const GameScreen: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const { settings, gameState } = useGameStore();
+  const { gameState } = useGameStore();
 
   useEffect(() => {
     const checkScreenSize = () => {

@@ -76,7 +76,7 @@ const GuessRow: React.FC<GuessRowProps> = ({ guess, index, isLatest }) => {
 };
 
 const FeedbackArea: React.FC = () => {
-  const { gameState, getGameTimeMinutes } = useGameStore();
+  const { gameState } = useGameStore();
 
   const getGameStats = () => {
     if (gameState.guesses.length === 0) return null;
