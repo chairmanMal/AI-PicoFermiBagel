@@ -67,7 +67,7 @@ const GameScreen: React.FC = () => {
           {/* Game Title */}
           <div className="title-section">
             <h1 className="game-title">PicoFermiBagel</h1>
-            <p className="game-subtitle">A Logic Number Guessing Game</p>
+            <p className="game-subtitle">A Number-based Logical Guessing Game</p>
           </div>
 
           {/* Game Sections Wrapper - for right panel positioning */}

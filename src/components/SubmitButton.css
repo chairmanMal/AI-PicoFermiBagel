@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .game-end-message {
@@ -44,8 +44,16 @@
   color: #fbbf24;
 }
 
+.submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
 .submit-btn {
-  min-width: 200px;
+  min-width: 240px;
   height: 60px;
   font-size: 1.1rem;
   font-weight: 600;
@@ -56,6 +64,17 @@
   gap: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+}
+
+.guess-count-external {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -73,26 +92,9 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.submit-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-}
+/* Validation hints now positioned below the submit row */
 
-.game-progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
 
-.guess-count {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-}
 
 .last-result {
   font-size: 0.9rem;
@@ -108,6 +110,7 @@
   flex-direction: column;
   gap: 5px;
   align-items: center;
+  margin-top: -4px; /* Pull up closer to the submit row */
 }
 
 .hint {
@@ -227,9 +230,13 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .submit-btn {
-    min-width: 180px;
+    min-width: 200px;
     height: 55px;
     font-size: 1rem;
+  }
+  
+  .guess-count-external {
+    font-size: 0.9rem;
   }
   
   .game-end-message {

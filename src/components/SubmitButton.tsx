@@ -34,7 +34,7 @@ const SubmitButton: React.FC = () => {
     }
 
     return {
-      text: canSubmitGuess() ? 'Submit Guess' : 'Submit completed guesses',
+      text: canSubmitGuess() ? 'Submit a Completed Guess' : 'Submit a Completed Guess',
       icon: canSubmitGuess() ? <Send size={20} /> : <Send size={20} />,
       onClick: handleSubmit,
       className: canSubmitGuess() ? 'btn-primary' : 'btn-secondary',
@@ -92,41 +92,41 @@ const SubmitButton: React.FC = () => {
         </motion.div>
       )}
 
-      <motion.button
-        className={`submit-btn btn ${buttonConfig.className}`}
-        onClick={buttonConfig.onClick}
-        disabled={buttonConfig.disabled}
-        whileHover={!buttonConfig.disabled ? { scale: 1.02 } : {}}
-        whileTap={!buttonConfig.disabled ? { scale: 0.98 } : {}}
-        animate={{
-          opacity: buttonConfig.disabled ? 0.6 : 1,
-        }}
-        transition={{ duration: 0.2 }}
-      >
-        {buttonConfig.icon}
-        <span>{buttonConfig.text}</span>
-      </motion.button>
-
-      <div className="submit-info">
+      {/* Submit button with external guess count */}
+      <div className="submit-row">
+        <motion.button
+          className={`submit-btn btn ${buttonConfig.className}`}
+          onClick={buttonConfig.onClick}
+          disabled={buttonConfig.disabled}
+          whileHover={!buttonConfig.disabled ? { scale: 1.02 } : {}}
+          whileTap={!buttonConfig.disabled ? { scale: 0.98 } : {}}
+          animate={{
+            opacity: buttonConfig.disabled ? 0.6 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          {buttonConfig.icon}
+          <span>{buttonConfig.text}</span>
+        </motion.button>
+        
         {gameState.isGameActive && (
-          <div className="game-progress">
-            <span className="guess-count">
-              Guess {gameState.guesses.length + 1}
-            </span>
-          </div>
-        )}
-
-        {!canSubmitGuess() && gameState.isGameActive && (
-          <div className="validation-hints">
-            {gameState.currentGuess.filter(d => d !== null).length !== new Set(gameState.currentGuess.filter(d => d !== null)).size && (
-              <span className="hint">• Remove duplicate numbers</span>
-            )}
-            {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
-              <span className="hint">• Numbers must be 0-{settings.digitRange}</span>
-            )}
+          <div className="guess-count-external">
+            Guesses: {gameState.guesses.length}
           </div>
         )}
       </div>
+
+      {/* Validation hints below the button row */}
+      {!canSubmitGuess() && gameState.isGameActive && (
+        <div className="validation-hints">
+          {gameState.currentGuess.filter(d => d !== null).length !== new Set(gameState.currentGuess.filter(d => d !== null)).size && (
+            <span className="hint">• Remove duplicate numbers</span>
+          )}
+          {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
+            <span className="hint">• Numbers must be 0-{settings.digitRange}</span>
+          )}
+        </div>
+      )}
 
       {/* Fixed Size Guess History */}
       <div className="guess-history-section">
