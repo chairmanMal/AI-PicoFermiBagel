@@ -1,0 +1,138 @@
+.score-area {
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.score-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.score-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.score-icon {
+  color: #f59e0b;
+}
+
+.current-score {
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 8px;
+  color: white;
+}
+
+.score-value {
+  font-size: 2.2rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.score-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.score-breakdown {
+  margin-bottom: 16px;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.score-item:last-child {
+  border-bottom: none;
+}
+
+.score-item.penalty .score-number {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.score-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.score-number {
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #059669;
+}
+
+.score-stats {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #1f2937;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .score-area {
+    padding: 14px;
+  }
+  
+  .score-value {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .score-area {
+    padding: 12px;
+  }
+  
+  .current-score {
+    padding: 10px;
+    margin-bottom: 14px;
+  }
+  
+  .score-value {
+    font-size: 1.8rem;
+  }
+  
+  .score-stats {
+    padding: 8px;
+  }
+} 

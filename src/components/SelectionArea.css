@@ -1,0 +1,541 @@
+.selection-area {
+  width: 100%;
+}
+
+.selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: clamp(15px, 3vw, 20px);
+  position: relative;
+}
+
+.selection-titles {
+  flex: 1;
+  text-align: center;
+}
+
+.selection-title {
+  margin: 0 0 clamp(4px, 1vw, 8px) 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.selection-subtitle {
+  margin: 0;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.help-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.help-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Main Numbers Container - Fit as many as possible per row */
+.selection-area .numbers-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+
+.selection-area .numbers-container .numbers-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: clamp(15px, 3vw, 20px) !important; /* 1/4 of box size: 60px/4=15px to 80px/4=20px */
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  padding: 1rem !important;
+}
+
+/* Force line breaks for center-justified text effect */
+/* Break after 8th item (max per row) */
+.selection-area .numbers-container .numbers-grid .number-button:nth-child(8n)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Break after 7th item if it's in the last group of remaining items */
+.selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-1):nth-last-child(-n+4)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Break after 6th item if it's in the last group of remaining items */
+.selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-2):nth-last-child(-n+3)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Break after 5th item if it's in the last group of remaining items */
+.selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-3):nth-last-child(-n+2)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Number buttons - centered content and proper sizing */
+.selection-area .numbers-container .numbers-grid .number-button {
+  width: clamp(60px, 12vw, 80px) !important;
+  height: clamp(60px, 12vw, 80px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 8px !important;
+  background: white !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: clamp(1.2rem, 3vw, 2rem) !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  position: relative !important;
+}
+
+/* Ensure the number text is perfectly centered */
+.selection-area .numbers-container .numbers-grid .number-button .number-text {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0 !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button .used-indicator {
+  position: absolute !important;
+  top: 2px !important;
+  right: 2px !important;
+  font-size: 8px !important;
+  color: #ef4444 !important;
+  z-index: 2 !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button:hover {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+  transform: translateY(-2px) !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button:active {
+  transform: scale(0.95) !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.used {
+  background-color: #6b7280 !important;
+  border-color: #6b7280 !important;
+  color: white !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.used-submitted {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border-color: #d1d5db !important;
+  opacity: 0.8 !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.hint-bagel {
+  background-color: #fed7aa !important;
+  border-color: #f97316 !important;
+  color: #9a3412 !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.hint-not-bagel {
+  background-color: #a7f3d0 !important;
+  border-color: #10b981 !important;
+  color: #064e3b !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.hint-maybe {
+  background-color: #fde68a !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.hint-likely {
+  background-color: #bfdbfe !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.hint-unlikely {
+  background-color: #fecaca !important;
+  border-color: #ef4444 !important;
+  color: #991b1b !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.dragging {
+  transform: rotate(5deg) scale(1.1) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+  z-index: 1000 !important;
+  opacity: 0.8 !important;
+}
+
+/* Help Toast */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.help-toast {
+  background: white;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.help-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1f2937;
+}
+
+.help-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.help-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.help-content {
+  padding: 0 20px 20px;
+}
+
+.help-content p {
+  margin: 12px 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.help-content strong {
+  color: #1f2937;
+}
+
+.selection-controls {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.range-info {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.info-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-button:hover {
+  color: #3b82f6;
+  background: white;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Informational Toast Styles */
+.info-toast-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.info-toast {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.info-toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 12px 12px 0 0;
+}
+
+.info-toast-header h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-close-button:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.info-toast-content {
+  padding: 20px;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+.legend-color.hint-bagel {
+  background-color: #fed7aa;
+  border-color: #f97316;
+}
+
+.legend-color.hint-not-bagel {
+  background-color: #a7f3d0;
+  border-color: #10b981;
+}
+
+.legend-color.used {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.usage-info {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.usage-info p {
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.usage-info p:first-child {
+  margin-top: 0;
+}
+
+.usage-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .selection-area .numbers-container .numbers-grid {
+    gap: clamp(12px, 2.5vw, 17px) !important; /* 1/4 of 50px-70px */
+    max-width: 550px !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button {
+    width: clamp(50px, 10vw, 70px) !important;
+    height: clamp(50px, 10vw, 70px) !important;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem) !important;
+    text-align: center !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .selection-header {
+    align-items: center;
+  }
+  
+  .selection-area .numbers-container .numbers-grid {
+    gap: clamp(11px, 2vw, 15px) !important; /* 1/4 of 45px-60px */
+    max-width: 450px !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button {
+    width: clamp(45px, 9vw, 60px) !important;
+    height: clamp(45px, 9vw, 60px) !important;
+    font-size: clamp(1rem, 2.2vw, 1.4rem) !important;
+    text-align: center !important;
+    line-height: 1 !important;
+  }
+  
+  .info-toast {
+    margin: 10px;
+    max-height: 90vh;
+  }
+  
+  .info-toast-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .selection-area .numbers-container .numbers-grid {
+    gap: clamp(9px, 1.5vw, 12px) !important; /* 1/4 of 35px-50px */
+    max-width: 350px !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button {
+    width: clamp(35px, 7vw, 50px) !important;
+    height: clamp(35px, 7vw, 50px) !important;
+    font-size: clamp(0.8rem, 1.8vw, 1.1rem) !important;
+    text-align: center !important;
+    line-height: 1 !important;
+  }
+  
+  .selection-title {
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+  }
+  
+  .selection-subtitle {
+    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+  }
+}
+
+@media (max-height: 600px) {
+  .selection-area {
+    transform: scale(0.9);
+    transform-origin: center top;
+  }
+  
+  .selection-header {
+    margin-bottom: 10px;
+  }
+  
+  .selection-area .numbers-container .numbers-grid {
+    gap: clamp(7px, 1vw, 10px) !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button {
+    font-size: clamp(0.7rem, 1.5vw, 1rem) !important;
+  }
+  
+  .info-toast {
+    max-height: 95vh;
+  }
+}
+
+@keyframes numberSelect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.number-button.selecting {
+  animation: numberSelect 0.3s ease-in-out;
+} 

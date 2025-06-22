@@ -1,0 +1,298 @@
+.submit-button-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+}
+
+.game-end-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.game-end-message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+}
+
+.game-end-message > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.click-hint {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+.trophy-icon {
+  color: #fbbf24;
+}
+
+.submit-btn {
+  min-width: 200px;
+  height: 60px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.submit-btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-btn:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.submit-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.game-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.guess-count {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.last-result {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.validation-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: #ef4444;
+  background: #fef2f2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ef4444;
+}
+
+/* Guess History Styles */
+.guess-history-section {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 10px; /* Reduced margin to move label up */
+}
+
+.history-title {
+  margin: 0 0 8px 0; /* Reduced bottom margin */
+  color: #374151;
+  font-size: 1rem;
+  text-align: center;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 6px; /* Reduced padding */
+}
+
+.guess-history-list {
+  height: 220px; /* Fixed height for 5 guesses without scrolling */
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: 8px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-item.winner {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.history-item.empty {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  opacity: 0.6;
+}
+
+.guess-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
+
+.feedback-display {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.history-item.winner .feedback-display {
+  color: #059669;
+  font-weight: 700;
+}
+
+.history-info {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Scrollbar styling */
+.guess-history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.guess-history-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.guess-history-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.guess-history-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .submit-btn {
+    min-width: 180px;
+    height: 55px;
+    font-size: 1rem;
+  }
+  
+  .game-end-message {
+    padding: 16px 24px;
+    font-size: 1rem;
+  }
+  
+  .submit-info {
+    gap: 8px;
+  }
+
+  .guess-history-section {
+    max-width: 100%;
+  }
+
+  .guess-history-list {
+    height: 180px; /* Fixed height for mobile (5 guesses) */
+  }
+
+  .history-item {
+    padding: 6px 10px;
+  }
+
+  .guess-display {
+    font-size: 0.85rem;
+  }
+
+  .feedback-display {
+    font-size: 0.8rem;
+  }
+}
+
+/* Button state animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.submit-btn.btn-primary {
+  animation: pulse 2s infinite;
+}
+
+.submit-btn.btn-primary:hover {
+  animation: none;
+}
+
+/* Success state animation */
+@keyframes celebrate {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.05) rotate(1deg);
+  }
+  75% {
+    transform: scale(1.05) rotate(-1deg);
+  }
+}
+
+.submit-btn.btn-success {
+  animation: celebrate 0.6s ease-in-out;
+} 

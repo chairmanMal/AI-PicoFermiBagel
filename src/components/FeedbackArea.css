@@ -1,0 +1,370 @@
+.feedback-area {
+  padding: 20px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feedback-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.game-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.feedback-legend {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #6366f1;
+}
+
+.legend-section {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid #d1d5db;
+}
+
+.legend-color.pico {
+  background-color: #fbbf24;
+}
+
+.legend-color.fermi {
+  background-color: #10b981;
+}
+
+.legend-color.bagel {
+  background-color: #f87171;
+}
+
+.feedback-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.no-guesses {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.no-guesses p {
+  margin: 0 0 10px 0;
+}
+
+.no-guesses .hint {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.guesses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guess-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 15px;
+  align-items: center;
+  padding: 12px 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.guess-row:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.guess-row.latest {
+  border-color: #4f46e5;
+  background: #f8faff;
+  box-shadow: 0 2px 12px rgba(79, 70, 229, 0.1);
+}
+
+.guess-number {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+  min-width: 30px;
+}
+
+.guess-digits {
+  display: flex;
+  gap: 8px;
+}
+
+.digit-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #374151;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.feedback-results {
+  display: flex;
+  gap: 12px;
+}
+
+.feedback-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 45px;
+}
+
+.feedback-item .count {
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.feedback-item .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.feedback-item.pico .count {
+  color: #f59e0b;
+}
+
+.feedback-item.pico .label {
+  color: #d97706;
+}
+
+.feedback-item.fermi .count {
+  color: #10b981;
+}
+
+.feedback-item.fermi .label {
+  color: #059669;
+}
+
+.feedback-item.bagel .count {
+  color: #ef4444;
+}
+
+.feedback-item.bagel .label {
+  color: #dc2626;
+}
+
+.row-deltas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.deltas-label {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.delta-value {
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.delta-value.positive {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.delta-value.negative {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.delta-value.zero {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.guess-time {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  min-width: 80px;
+  text-align: right;
+}
+
+.winner-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: #ecfdf5;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.feedback-summary {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 15px;
+}
+
+.feedback-summary h4 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 1.1rem;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.summary-item .label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-item .value {
+  font-weight: 600;
+  color: #374151;
+}
+
+.summary-item .value.score {
+  color: #10b981;
+  font-size: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .guess-row {
+    grid-template-columns: auto 1fr auto auto;
+    gap: 10px;
+  }
+  
+  .guess-time {
+    display: none;
+  }
+  
+  .feedback-results {
+    gap: 8px;
+  }
+  
+  .feedback-item {
+    min-width: 35px;
+  }
+}
+
+@media (max-width: 768px) {
+  .feedback-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .legend-section {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .guess-row {
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  
+  .row-deltas {
+    display: none;
+  }
+  
+  .digit-display {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+  
+  .feedback-results {
+    gap: 6px;
+  }
+  
+  .feedback-item {
+    min-width: 30px;
+  }
+  
+  .feedback-item .count {
+    font-size: 1rem;
+  }
+  
+  .feedback-item .label {
+    font-size: 0.65rem;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+} 

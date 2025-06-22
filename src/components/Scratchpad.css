@@ -1,0 +1,411 @@
+.scratchpad {
+  padding: 20px;
+  background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+  border-radius: 12px;
+}
+
+.scratchpad-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.scratchpad-header h3 {
+  margin: 0;
+  color: #4a148c;
+  font-size: 1.5rem;
+}
+
+.info-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #4a148c;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4a148c;
+  transition: all 0.2s ease;
+}
+
+.info-button:hover {
+  background: #4a148c;
+  color: white;
+  transform: scale(1.05);
+}
+
+.scratchpad-description {
+  margin: 0;
+  color: #6a1b9a;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Toast Overlay and Toast Styles */
+.hints-toast-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.hints-toast {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.toast-header h4 {
+  margin: 0;
+  color: #4a148c;
+  font-size: 1.2rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.toast-content {
+  padding: 0 20px 20px 20px;
+}
+
+.color-meanings {
+  margin-bottom: 20px;
+}
+
+.color-meanings h5 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.color-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.color-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
+.color-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.color-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.color-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.usage-tips h5 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.usage-tips ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.usage-tips li {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.scratchpad-numbers {
+  margin-bottom: 20px;
+}
+
+.scratchpad-numbers h4 {
+  margin: 0 0 12px 0;
+  color: #4a148c;
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* Numbers container for better centering */
+.scratchpad .numbers-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.scratchpad .numbers-container .numbers-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 11px !important; /* 1/4 of box size: 45px/4=11.25px ≈ 11px */
+  background: rgba(255, 255, 255, 0.9) !important;
+  padding: 15px !important;
+  border-radius: 8px !important;
+  max-width: 280px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Force line breaks for center-justified text effect - 3-5 per row */
+/* Break after 5th item (max per row) */
+.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Break after 4th item if it's in the last group of remaining items */
+.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n-1):nth-last-child(-n+2)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+/* Break after 3rd item if it's the last group and would leave less than 3 */
+.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n-2):nth-last-child(-n+1)::after {
+  content: '' !important;
+  flex-basis: 100% !important;
+  height: 0 !important;
+}
+
+.scratchpad-number {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  user-select: none;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Ensure the number text is perfectly centered */
+.scratchpad-number .number-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.scratchpad-number:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scratchpad-number:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.hint-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.7rem;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Color styles */
+.color-default,
+.color-swatch.color-default {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.color-maybe,
+.color-swatch.color-maybe {
+  background-color: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.color-likely,
+.color-swatch.color-likely {
+  background-color: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.color-unlikely,
+.color-swatch.color-unlikely {
+  background-color: #fecaca;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.color-bagel,
+.color-swatch.color-bagel {
+  background-color: #fed7aa;
+  border-color: #f97316;
+  color: #9a3412;
+}
+
+.color-not-bagel,
+.color-swatch.color-not-bagel {
+  background-color: #a7f3d0;
+  border-color: #10b981;
+  color: #064e3b;
+}
+
+.scratchpad-number.hint-purchased {
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .scratchpad .numbers-container .numbers-grid {
+    gap: 10px !important; /* 1/4 of 40px = 10px */
+    max-width: 260px !important;
+  }
+  
+  .scratchpad-number {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    text-align: center;
+    line-height: 1;
+  }
+  
+  .hints-toast {
+    max-width: 90vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .scratchpad {
+    padding: 15px;
+  }
+  
+  .header-content {
+    gap: 8px;
+  }
+  
+  .scratchpad-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .info-button {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .scratchpad .numbers-container .numbers-grid {
+    gap: 9px !important; /* 1/4 of 35px = 8.75px ≈ 9px */
+    padding: 12px !important;
+    max-width: 220px !important;
+  }
+  
+  .scratchpad-number {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+    text-align: center;
+    line-height: 1;
+  }
+  
+  .hints-toast {
+    max-width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .toast-header {
+    padding: 15px 15px 0 15px;
+  }
+  
+  .toast-content {
+    padding: 0 15px 15px 15px;
+  }
+} 
