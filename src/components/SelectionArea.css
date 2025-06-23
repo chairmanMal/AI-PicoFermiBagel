@@ -165,7 +165,7 @@
 }
 
 .selection-area .numbers-container .numbers-grid .number-button:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.98) !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.used {
@@ -212,12 +212,29 @@
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.dragging {
-  transform: rotate(5deg) scale(1.1) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
-  z-index: 1000 !important;
-  opacity: 0.8 !important;
-  background: #3b82f6 !important;
+  cursor: grabbing !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.dragging-clone {
+  background: #1f2937 !important;
+  border-color: #3b82f6 !important;
+  border-width: 4px !important;
   color: white !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 0 3px #3b82f6, 0 0 20px rgba(59, 130, 246, 0.6) !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+  transform: scale(2.0) rotate(5deg) !important; /* Double the size for maximum visibility */
+  outline: 2px solid rgba(255, 255, 255, 0.8) !important;
+  outline-offset: 2px !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.dragging-clone .number-text {
+  color: white !important;
+  font-weight: 900 !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 1), 0 0 8px rgba(0, 0, 0, 0.8) !important;
+  font-size: 1.1em !important;
 }
 
 /* Help Toast */

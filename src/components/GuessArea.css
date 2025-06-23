@@ -86,25 +86,42 @@
   border-color: #3b82f6;
   border-width: 3px;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  background: white;
 }
 
 .guess-box.repeated {
-  border-color: #ef4444;
+  background: #fef2f2; /* Light red background */
+  border-color: #d1d5db; /* Keep normal border color */
+  border-width: 2px; /* Keep normal border width */
+}
+
+/* When a repeated position is also active (manually selected) */
+.guess-box.repeated.active {
+  border-color: #3b82f6; /* Blue border for active state */
   border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  background: #fef2f2; /* Keep light red background to show it's repeated */
 }
 
 .guess-box.drag-over {
-  background: #dbeafe;
-  border-color: #3b82f6;
-  transform: scale(1.05);
+  background: white !important;
+  border-color: #3b82f6 !important;
+  border-width: 3px !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
 }
 
-.guess-box.selected-for-replacement {
-  background: #fef3c7;
-  border-color: #f59e0b;
-  border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+.guess-box.locked {
+  border-color: #6b7280 !important;
+  background: white !important;
+}
+
+.guess-box.long-pressing {
+  background: white !important;
+  border-color: #f59e0b !important;
+  border-width: 3px !important;
+  transform: scale(0.98) !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3) !important;
 }
 
 .guess-content {
@@ -116,20 +133,55 @@
 }
 
 .guess-digit {
-  color: #1f2937;
+  color: #1f2937; /* Black for normal numbers */
 }
 
 .guess-digit.repeated-text {
-  color: #ef4444;
+  color: #ef4444; /* Red for duplicated numbers */
 }
 
 .guess-placeholder {
-  color: #ef4444;
+  color: #d1d5db; /* Light gray for placeholder dash */
   font-size: clamp(1.2rem, 3vw, 2rem);
   font-weight: 600;
 }
 
+.lock-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(107, 114, 128, 0.9);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  pointer-events: none;
+}
 
+.long-press-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 3px solid #f59e0b;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  animation: longPressGlow 0.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes longPressGlow {
+  from {
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  }
+}
 
 .lock-toggle {
   position: absolute;

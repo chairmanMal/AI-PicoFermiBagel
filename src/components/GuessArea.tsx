@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { HelpCircle, Lock } from 'lucide-react';
-import { useDrop } from 'react-dnd';
 import { useGameStore } from '@/stores/gameStore';
+import { getNextUnlockedPosition } from '@/utils/gameLogic';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -15,7 +15,7 @@ interface GuessBoxProps {
   onLockToggle: (position: number) => void;
 }
 
-  const GuessBox: React.FC<GuessBoxProps> = ({ 
+const GuessBox: React.FC<GuessBoxProps> = ({ 
   position, 
   value, 
   isActive, 
@@ -24,20 +24,73 @@ interface GuessBoxProps {
   onBoxClick, 
   onLockToggle 
 }) => {
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const longPressCompleted = useRef(false);
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: 'number',
-    drop: (item: { digit: number }) => {
-      useGameStore.getState().dispatch({
-        type: 'SET_GUESS_DIGIT',
-        position,
-        digit: item.digit
-      });
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  }), [position]);
+  const handleMouseDown = useCallback(() => {
+    longPressCompleted.current = false;
+    if (value !== null) {
+      setIsLongPressing(true);
+      longPressTimer.current = setTimeout(() => {
+        onLockToggle(position);
+        setIsLongPressing(false);
+        longPressCompleted.current = true;
+      }, 500); // 500ms for long press
+    }
+  }, [value, position, onLockToggle]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    longPressCompleted.current = false;
+    if (value !== null) {
+      setIsLongPressing(true);
+      longPressTimer.current = setTimeout(() => {
+        onLockToggle(position);
+        setIsLongPressing(false);
+        longPressCompleted.current = true;
+      }, 500); // 500ms for long press
+    }
+  }, [value, position, onLockToggle]);
+
+  const handleMouseUp = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (isLongPressing && !longPressCompleted.current) {
+      setIsLongPressing(false);
+      // This was a regular click, not a long press - allow clicking on any unlocked position
+      onBoxClick(position);
+    } else if (longPressCompleted.current) {
+      // Reset the flag for next interaction
+      longPressCompleted.current = false;
+      setIsLongPressing(false);
+    } else if (!isLongPressing && !longPressCompleted.current) {
+      // This was a click on an empty position - still allow selection
+      onBoxClick(position);
+    }
+  }, [isLongPressing, position, onBoxClick]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (isLongPressing && !longPressCompleted.current) {
+      setIsLongPressing(false);
+      // This was a regular tap, not a long press - allow tapping on any unlocked position
+      onBoxClick(position);
+    } else if (longPressCompleted.current) {
+      // Reset the flag for next interaction
+      longPressCompleted.current = false;
+      setIsLongPressing(false);
+    } else if (!isLongPressing && !longPressCompleted.current) {
+      // This was a tap on an empty position - still allow selection
+      onBoxClick(position);
+    }
+  }, [isLongPressing, position, onBoxClick]);
 
   const handleDoubleClick = () => {
     if (value !== null && !isLocked) {
@@ -49,13 +102,47 @@ interface GuessBoxProps {
     }
   };
 
+  // Handle drag over events
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isLocked) {
+      setIsDragOver(true);
+    }
+  }, [isLocked]);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    if (!isLocked) {
+      const digit = parseInt(e.dataTransfer.getData('text/plain'));
+      if (!isNaN(digit)) {
+        useGameStore.getState().dispatch({
+          type: 'SET_GUESS_DIGIT',
+          position,
+          digit
+        });
+      }
+    }
+  }, [position, isLocked]);
+
   return (
     <div
-      ref={drop}
-      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isOver ? 'drag-over' : ''} ${value !== null && isActive ? 'selected-for-replacement' : ''}`}
-      onClick={() => onBoxClick(position)}
+      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isLongPressing ? 'long-pressing' : ''}`}
+      data-position={position}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
-      title={value !== null && !isLocked ? "Click to select, double-click to clear" : undefined}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      title={value !== null && !isLocked ? "Click to select, double-click to clear, long-press to lock" : isLocked ? "Long-press to unlock" : "Click to select this position"}
     >
       <div className="guess-content">
         {value !== null && value !== undefined ? (
@@ -67,17 +154,14 @@ interface GuessBoxProps {
         )}
       </div>
       
-      {value !== null && isLocked && (
-        <button
-          className="lock-toggle locked"
-          onClick={(e) => {
-            e.stopPropagation();
-            onLockToggle(position);
-          }}
-          aria-label="Unlock position"
-        >
+      {isLocked && (
+        <div className="lock-indicator">
           <Lock size={14} />
-        </button>
+        </div>
+      )}
+      
+      {isLongPressing && (
+        <div className="long-press-indicator" />
       )}
     </div>
   );
@@ -88,17 +172,48 @@ const GuessArea: React.FC = () => {
   const { settings, gameState, dispatch } = useGameStore();
   
   const handleBoxClick = (position: number) => {
-    dispatch({ type: 'SET_ACTIVE_POSITION', position });
+    // Allow clicking on any unlocked position to set it as active
+    // (whether it's empty or has a value, as long as it's not locked)
+    if (!gameState.lockedPositions.has(position)) {
+      dispatch({ type: 'SET_ACTIVE_POSITION', position });
+    }
   };
 
   const handleLockToggle = (position: number) => {
-    // Don't allow locking when there are duplicate numbers
-    const filledDigits = gameState.currentGuess.filter(d => d !== null) as number[];
-    const uniqueDigits = new Set(filledDigits);
-    const hasDuplicates = filledDigits.length !== uniqueDigits.size;
-    
-    if (!hasDuplicates) {
-      dispatch({ type: 'TOGGLE_POSITION_LOCK', position });
+    // Only allow locking/unlocking if there's a value in the position
+    if (gameState.currentGuess[position] !== null) {
+      // Don't allow locking when there are duplicate numbers
+      const filledDigits = gameState.currentGuess.filter(d => d !== null) as number[];
+      const uniqueDigits = new Set(filledDigits);
+      const hasDuplicates = filledDigits.length !== uniqueDigits.size;
+      
+      if (!hasDuplicates) {
+        const isCurrentlyLocked = gameState.lockedPositions.has(position);
+        
+        if (!isCurrentlyLocked) {
+          // About to lock this position
+          // If this position is currently the active position (blue outline), 
+          // we need to move the active position before locking
+          if (gameState.activeGuessPosition === position) {
+            // Find the next unlocked position (excluding this one since it will be locked)
+            const nextPosition = getNextUnlockedPosition(
+              gameState.currentGuess,
+              new Set([...gameState.lockedPositions, position]), // Include this position as if it's already locked
+              position + 1
+            );
+            
+            // Update both the lock state and active position
+            dispatch({ type: 'TOGGLE_POSITION_LOCK', position });
+            dispatch({ type: 'SET_ACTIVE_POSITION', position: nextPosition });
+          } else {
+            // Just toggle the lock without changing active position
+            dispatch({ type: 'TOGGLE_POSITION_LOCK', position });
+          }
+        } else {
+          // About to unlock this position - just toggle the lock, don't change active position
+          dispatch({ type: 'TOGGLE_POSITION_LOCK', position });
+        }
+      }
     }
   };
 
@@ -131,7 +246,6 @@ const GuessArea: React.FC = () => {
   const createGuessGrid = () => {
     const boxes = [];
     let position = 0;
-    // const totalPositions = settings.gridRows * settings.gridColumns;
     
     for (let row = 0; row < settings.gridRows; row++) {
       const rowBoxes = [];
@@ -199,7 +313,7 @@ const GuessArea: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="help-header">
-              <h4>How to Enter Your Guess</h4>
+              <h4>Guess Position Controls</h4>
               <button
                 className="help-close"
                 onClick={() => setShowHelp(false)}
@@ -209,15 +323,13 @@ const GuessArea: React.FC = () => {
               </button>
             </div>
             <div className="help-content">
-              <p><strong>Sequential Entry:</strong> Click numbers to fill boxes left-to-right, then next row.</p>
-              <p><strong>Specific Positioning:</strong> Click a box first, then click a number to place it there.</p>
-              <p><strong>Replacing Numbers:</strong> Click a filled box (yellow highlight), then click a new number to replace it.</p>
-              <p><strong>Clearing Numbers:</strong> Double-click any filled box to clear it.</p>
-              <p><strong>Drag & Drop:</strong> Drag numbers directly onto boxes to place or replace.</p>
-              <p><strong>Lock Positions:</strong> Click the lock icon to prevent changes to that position.</p>
-              <p><strong>Red Numbers:</strong> Indicates repeated digits (not allowed).</p>
-              <p><strong>Blue Outline:</strong> Shows the active position for sequential entry.</p>
-              <p><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement.</p>
+              <p><strong>Blue Outline:</strong> Auto-fill position - numbers will go here when tapped</p>
+              <p><strong>Manual Selection:</strong> Click any unlocked box to make it the active position</p>
+              <p><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box</p>
+              <p><strong>Locking:</strong> Long-press any filled box to lock/unlock it</p>
+              <p><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
+              <p><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
+              <p><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
             </div>
           </motion.div>
         </div>

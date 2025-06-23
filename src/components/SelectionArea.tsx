@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDrag } from 'react-dnd';
+import React, { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HelpCircle, X } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
@@ -21,13 +21,121 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   hintColor,
   onNumberClick,
 }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'number',
-    item: { digit },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  }), [digit]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { dispatch } = useGameStore();
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const rect = dragRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      // For mouse, start drag immediately on move
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = dragRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragStart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+      setIsLongPressing(true);
+      
+      // Start drag after a short delay to differentiate from tap
+      dragTimeoutRef.current = setTimeout(() => {
+        setIsLongPressing(false);
+        setIsDragging(true);
+        setDragPosition({ x: touch.clientX, y: touch.clientY });
+      }, 200); // Slightly longer delay for better UX
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (dragStart && !isDragging) {
+      setIsDragging(true);
+    }
+    if (isDragging) {
+      setDragPosition({ x: e.clientX, y: e.clientY });
+    }
+  }, [dragStart, isDragging]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+      dragTimeoutRef.current = null;
+    }
+    
+    if (dragStart) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!isDragging) {
+        setIsDragging(true);
+      }
+      setDragPosition({ x: touch.clientX, y: touch.clientY });
+    }
+  }, [dragStart, isDragging]);
+
+  const handleDragEnd = useCallback((clientX: number, clientY: number) => {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+      dragTimeoutRef.current = null;
+    }
+
+    if (isDragging) {
+      // Find the element under the drop point
+      const elementBelow = document.elementFromPoint(clientX, clientY);
+      const guessBox = elementBelow?.closest('.guess-box');
+      
+      if (guessBox) {
+        const position = parseInt(guessBox.getAttribute('data-position') || '0');
+        const isLocked = guessBox.classList.contains('locked');
+        
+        if (!isLocked) {
+          dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+        }
+      }
+    } else if (!isLongPressing) {
+      // This was a tap/click, not a drag or long press
+      onNumberClick(digit);
+    }
+
+    // Reset all states
+    setIsDragging(false);
+    setIsLongPressing(false);
+    setDragStart(null);
+    setDragPosition(null);
+  }, [isDragging, isLongPressing, digit, dispatch, onNumberClick]);
+
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    handleDragEnd(e.clientX, e.clientY);
+  }, [handleDragEnd]);
+
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    const touch = e.changedTouches[0];
+    handleDragEnd(touch.clientX, touch.clientY);
+  }, [handleDragEnd]);
+
+  // Add event listeners for mouse/touch events
+  React.useEffect(() => {
+    if (dragStart) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [dragStart, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const buttonClasses = [
     'number-button',
@@ -37,23 +145,54 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     isDragging && 'dragging',
   ].filter(Boolean).join(' ');
 
+  const dragStyle = isDragging && dragPosition ? {
+    position: 'fixed' as const,
+    left: dragPosition.x - (dragStart?.x || 0),
+    top: dragPosition.y - (dragStart?.y || 0),
+    zIndex: 9999, // Very high z-index to appear above everything
+    pointerEvents: 'none' as const,
+    transform: 'scale(2.0) rotate(5deg)', // Double the size for maximum visibility
+    opacity: 1,
+    backgroundColor: '#1f2937', // Dark background for contrast
+    color: 'white', // White text for maximum visibility
+    border: '3px solid #3b82f6', // Blue border for visibility
+    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(59, 130, 246, 0.3)', // Strong shadow and glow
+    borderRadius: '8px',
+  } : {};
+
   return (
-    <div
-      ref={drag}
-      className={buttonClasses}
-      onClick={() => onNumberClick(digit)}
-      role="button"
-      tabIndex={0}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        transform: isDragging ? 'translateY(-5px)' : 'translateY(0px)',
-        transition: 'all 0.2s ease',
-        cursor: isDragging ? 'grabbing' : 'grab',
-      }}
-    >
-      <span className="number-text">{digit}</span>
-      {isUsed && <div className="used-indicator">•</div>}
-    </div>
+    <>
+      <div
+        ref={dragRef}
+        className={buttonClasses}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        role="button"
+        tabIndex={0}
+        style={{
+          transform: isDragging ? 'scale(1.2)' : isLongPressing ? 'scale(1.1)' : 'scale(1)',
+          opacity: 1, // Keep full opacity to maintain grid layout
+          cursor: isDragging ? 'grabbing' : 'grab',
+          transition: isDragging ? 'transform 0.1s ease' : 'all 0.2s ease',
+          zIndex: isDragging ? 10 : 1, // Bring to front when dragging
+          boxShadow: isLongPressing ? '0 0 10px rgba(59, 130, 246, 0.5)' : undefined,
+        }}
+      >
+        <span className="number-text">{digit}</span>
+        {isUsed && <div className="used-indicator">•</div>}
+      </div>
+      
+      {/* Dragging clone that follows cursor/finger - rendered as portal to appear above everything */}
+      {isDragging && dragPosition && createPortal(
+        <div
+          className={`${buttonClasses} dragging-clone`}
+          style={dragStyle}
+        >
+          <span className="number-text">{digit}</span>
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
 
@@ -106,7 +245,7 @@ const SelectionArea: React.FC = () => {
       <div className="selection-header">
         <div className="selection-titles">
           <h3 className="selection-title">Number Selection</h3>
-          <p className="selection-subtitle">Select numbers for your guess</p>
+          <p className="selection-subtitle">Tap to auto-fill or drag to specific positions</p>
         </div>
         <button
           className="help-button"
@@ -151,7 +290,7 @@ const SelectionArea: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="info-toast-header">
-                <h4>Color Legend</h4>
+                <h4>How to Select Numbers</h4>
                 <button
                   className="info-close-button"
                   onClick={() => setShowHelp(false)}
@@ -177,8 +316,10 @@ const SelectionArea: React.FC = () => {
                   </div>
                 </div>
                 <div className="usage-info">
-                  <p><strong>Number Range:</strong> 0 - {settings.digitRange}</p>
-                  <p><strong>Tip:</strong> Click numbers to add them sequentially, or drag and drop for specific positions.</p>
+                  <p><strong>Auto-fill:</strong> Tap numbers to fill the highlighted position (blue outline)</p>
+                  <p><strong>Manual:</strong> Click a guess box first, then tap a number</p>
+                  <p><strong>Drag & Drop:</strong> Hold and drag numbers to specific positions</p>
+                  <p><strong>Lock:</strong> Long-press filled positions to lock them</p>
                 </div>
               </div>
             </motion.div>

@@ -7,6 +7,7 @@ import SubmitButton from './SubmitButton';
 import ScoreArea from './ScoreArea';
 import Scratchpad from './Scratchpad';
 import MenuArea from './MenuArea';
+import TargetDisplay from './TargetDisplay';
 import './GameScreen.css';
 
 const GameScreen: React.FC = () => {
@@ -72,6 +73,9 @@ const GameScreen: React.FC = () => {
 
           {/* Game Sections Wrapper - for right panel positioning */}
           <div className="game-sections-wrapper">
+            {/* Target Display - Shows when enabled */}
+            <TargetDisplay />
+            
             {/* Guess Area */}
             <div className="guess-section">
               <GuessArea />

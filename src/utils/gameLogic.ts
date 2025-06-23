@@ -209,6 +209,32 @@ export function getNextAvailablePosition(
 }
 
 /**
+ * Gets the next unlocked position for auto-advance (skips locked positions)
+ */
+export function getNextUnlockedPosition(
+  guess: (number | null)[], 
+  lockedPositions: Set<number>,
+  startPosition: number = 0
+): number {
+  // Start from the given position and look for next unlocked position
+  for (let i = startPosition; i < guess.length; i++) {
+    if (!lockedPositions.has(i)) {
+      return i;
+    }
+  }
+  
+  // If no unlocked position found from start onwards, search from beginning
+  for (let i = 0; i < startPosition; i++) {
+    if (!lockedPositions.has(i)) {
+      return i;
+    }
+  }
+  
+  // If all positions are locked, return the start position
+  return Math.min(startPosition, guess.length - 1);
+}
+
+/**
  * Formats time in minutes and seconds
  */
 export function formatGameTime(startTime: Date, endTime?: Date): string {

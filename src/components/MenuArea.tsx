@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, ShoppingCart } from 'lucide-react';
+import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, ShoppingCart, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import './MenuArea.css';
 
@@ -11,6 +11,7 @@ interface MenuAreaProps {
 const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
   const [showCustomSettings, setShowCustomSettings] = useState(false);
   const [showHintPurchasing, setShowHintPurchasing] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const { settings, resetGame, updateSettings, gameState, hintState, dispatch, getTotalHintCost } = useGameStore();
 
   const handleStartNewGame = () => {
@@ -44,6 +45,11 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
       hintType,
       targetNumber
     });
+  };
+
+  const handleOpenManual = () => {
+    // Show the manual in an in-app modal instead of trying to open externally
+    setShowManual(true);
   };
 
   const presetDifficulties = [
@@ -241,6 +247,14 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
         <div className="menu-section">
           <h4>Options</h4>
           <button
+            className="menu-item"
+            onClick={handleOpenManual}
+          >
+            <BookOpen size={18} />
+            How to Play
+          </button>
+
+          <button
             className="menu-item toggle"
             onClick={toggleShowTarget}
           >
@@ -284,6 +298,48 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Manual Modal */}
+      <AnimatePresence>
+        {showManual && (
+          <motion.div
+            className="manual-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowManual(false)}
+          >
+            <motion.div
+              className="manual-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="manual-modal-header">
+                <h3>How to Play - PicoFermiBagel</h3>
+                <button
+                  className="manual-close-button"
+                  onClick={() => setShowManual(false)}
+                  aria-label="Close manual"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="manual-modal-content">
+                <iframe
+                  src="/pfb_manual.html"
+                  title="PicoFermiBagel Manual"
+                  className="manual-iframe"
+                  frameBorder="0"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

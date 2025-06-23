@@ -104,6 +104,7 @@ export interface AppState {
 export type GameAction = 
   | { type: 'START_NEW_GAME' }
   | { type: 'SET_GUESS_DIGIT'; position: number; digit: number | null }
+  | { type: 'SET_GUESS_DIGIT_NO_ADVANCE'; position: number; digit: number | null }
   | { type: 'ADD_DIGIT_SEQUENTIAL'; digit: number }
   | { type: 'SUBMIT_GUESS' }
   | { type: 'TOGGLE_POSITION_LOCK'; position: number }
