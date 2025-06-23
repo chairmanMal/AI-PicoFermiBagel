@@ -68,16 +68,16 @@ const Scratchpad: React.FC = () => {
 
   return (
     <div className="scratchpad">
+      <button 
+        className="info-button info-button-corner"
+        onClick={() => setShowHintsToast(true)}
+        title="Show color meanings and tips"
+      >
+        <HelpCircle size={20} />
+      </button>
       <div className="scratchpad-header">
         <div className="header-content">
           <h3>Scratchpad</h3>
-          <button 
-            className="info-button"
-            onClick={() => setShowHintsToast(true)}
-            title="Show color meanings and tips"
-          >
-            <HelpCircle size={20} />
-          </button>
         </div>
         <p className="scratchpad-description">
           Click numbers to track your deductions

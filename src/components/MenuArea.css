@@ -4,7 +4,6 @@
   max-width: 600px;
   max-height: 90vh;
   width: 100%;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -16,6 +15,7 @@
   padding: 20px 24px 16px;
   border-bottom: 1px solid #e5e7eb;
   background: #f8fafc;
+  flex-shrink: 0;
 }
 
 .menu-header h3 {
@@ -43,6 +43,7 @@
 .menu-content {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   padding: 0 0 20px 0;
 }
 
@@ -382,6 +383,24 @@
   font-weight: 500;
 }
 
+/* Version Section */
+.version-section {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+  padding-top: 16px;
+}
+
+.version-info {
+  text-align: center;
+}
+
+.version-text {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .menu-modal {
@@ -395,6 +414,10 @@
   
   .menu-section {
     padding: 12px 20px;
+  }
+  
+  .menu-content {
+    -webkit-overflow-scrolling: touch;
   }
   
   .number-hints {
@@ -425,6 +448,10 @@
     padding: 10px 15px;
   }
   
+  .menu-content {
+    -webkit-overflow-scrolling: touch;
+  }
+  
   .menu-item {
     padding: 10px 12px;
     font-size: 0.9rem;
@@ -451,7 +478,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  z-index: 10000;
   padding: 20px;
 }
 

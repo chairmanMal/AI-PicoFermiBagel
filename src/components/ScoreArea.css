@@ -25,7 +25,8 @@
 }
 
 .score-icon {
-  color: #f59e0b;
+  color: #d97706;
+  stroke-width: 2.5;
 }
 
 .stats-button {
@@ -172,7 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 5300;
   padding: 20px;
 }
 

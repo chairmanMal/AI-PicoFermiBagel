@@ -2,6 +2,7 @@
   padding: 20px;
   background: linear-gradient(135deg, #f3e5f5, #e1bee7);
   border-radius: 12px;
+  position: relative;
 }
 
 .scratchpad-header {
@@ -43,6 +44,13 @@
   transform: scale(1.05);
 }
 
+.info-button-corner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
 .scratchpad-description {
   margin: 0;
   color: #6a1b9a;
@@ -61,7 +69,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 5200;
   padding: 20px;
 }
 

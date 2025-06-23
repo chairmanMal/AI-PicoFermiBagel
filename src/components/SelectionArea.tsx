@@ -252,7 +252,7 @@ const SelectionArea: React.FC = () => {
           onClick={() => setShowHelp(true)}
           aria-label="Show help"
         >
-          <HelpCircle size={18} />
+          <HelpCircle size={27} />
         </button>
       </div>
 

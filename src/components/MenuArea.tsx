@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, ShoppingCart, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { getFullVersionString } from '@/config/version';
 import './MenuArea.css';
 
 interface MenuAreaProps {
@@ -295,6 +296,12 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
               <span>Score:</span>
               <span>{gameState.score}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="menu-section version-section">
+          <div className="version-info">
+            <span className="version-text">{getFullVersionString()}</span>
           </div>
         </div>
       </div>

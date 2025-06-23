@@ -358,4 +358,52 @@
 
 .submit-btn.btn-success {
   animation: celebrate 0.6s ease-in-out;
+}
+
+/* iPad landscape specific adjustments */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .submit-button-area {
+    gap: 6px;
+    padding: 8px;
+  }
+  
+  .submit-btn {
+    min-width: 180px;
+    height: 42px;
+    font-size: 0.9rem;
+  }
+  
+  .game-end-message {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    gap: 6px;
+  }
+  
+  .guess-history-section {
+    margin-top: 6px;
+  }
+  
+  .history-title {
+    margin: 0 0 4px 0;
+    font-size: 0.8rem;
+    padding-bottom: 3px;
+  }
+  
+  .guess-history-list {
+    height: 140px;
+    padding: 4px;
+  }
+  
+  .history-item {
+    padding: 4px 8px;
+    margin-bottom: 2px;
+  }
+  
+  .guess-display {
+    font-size: 0.8rem;
+  }
+  
+  .feedback-display {
+    font-size: 0.75rem;
+  }
 } 

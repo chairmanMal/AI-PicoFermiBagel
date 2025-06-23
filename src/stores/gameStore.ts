@@ -94,7 +94,16 @@ export const useGameStore = create<GameStore>()(
             const newHintState = createInitialHintState();
             const newScratchpadState = createInitialScratchpadState(state.settings.digitRange);
             
+            // Reset UI settings to defaults while preserving difficulty and sound
+            const resetSettings: GameSettings = {
+              ...state.settings,
+              showTarget: false, // Reset to default
+              selectionAreaPosition: 'bottom' as const, // Reset to default
+              // Keep difficulty and soundEnabled as they are
+            };
+            
             set({
+              settings: resetSettings,
               gameState: newGameState,
               hintState: newHintState,
               scratchpadState: newScratchpadState,
