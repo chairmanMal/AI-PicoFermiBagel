@@ -26,8 +26,8 @@ const GameScreen: React.FC = () => {
       
       // Space-based logic: Use drawer if there's not enough space for side panel
       // Need at least 900px width for main content + side panel in landscape
-      // Or if in portrait mode on smaller screens
-      const needsDrawer = isLandscape ? width < 900 : width < 768;
+      // In portrait mode, always use drawer since there's no horizontal space for side panel
+      const needsDrawer = isLandscape ? width < 900 : true;
       setUseDrawer(needsDrawer);
       
       // Debug logging for viewport and device detection
