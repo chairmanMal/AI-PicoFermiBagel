@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { HelpCircle, Lock } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { getNextUnlockedPosition } from '@/utils/gameLogic';
+import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -102,7 +102,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
     }
   };
 
-  // Handle drag over events
+  // Handle drag over events (HTML5 drag and drop - not currently used)
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (!isLocked) {
@@ -130,6 +130,19 @@ const GuessBox: React.FC<GuessBoxProps> = ({
     }
   }, [position, isLocked]);
 
+  // Handle mouse drag feedback (for custom drag implementation)
+  const handleMouseEnter = useCallback(() => {
+    // Check if something is being dragged by looking for dragging elements
+    const isDraggingElement = document.querySelector('.dragging');
+    if (isDraggingElement && !isLocked) {
+      setIsDragOver(true);
+    }
+  }, [isLocked]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
   return (
     <div
       className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isLongPressing ? 'long-pressing' : ''}`}
@@ -142,6 +155,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       title={value !== null && !isLocked ? "Click to select, double-click to clear, long-press to lock" : isLocked ? "Long-press to unlock" : "Click to select this position"}
     >
       <div className="guess-content">
@@ -169,7 +184,12 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 
 const GuessArea: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
-  const { settings, gameState, dispatch } = useGameStore();
+  const { settings, gameState, hintState, dispatch } = useGameStore();
+  
+  // Calculate row sums if any have been purchased
+  const targetRowSums = hintState.purchasedHints.revealedRowSums.size > 0
+    ? calculateTargetRowSums(gameState.target, settings.gridRows, settings.gridColumns, hintState.purchasedHints.revealedRowSums)
+    : undefined;
   
   const handleBoxClick = (position: number) => {
     // Allow clicking on any unlocked position to set it as active
@@ -275,6 +295,9 @@ const GuessArea: React.FC = () => {
       boxes.push(
         <div key={`row-${row}`} className="guess-row">
           {rowBoxes}
+          {targetRowSums && targetRowSums[row] !== null && (
+            <span className="row-sum-display">[{targetRowSums[row]}]</span>
+          )}
         </div>
       );
     }

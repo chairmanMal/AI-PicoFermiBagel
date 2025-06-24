@@ -7,6 +7,7 @@ export interface GameSettings {
   soundEnabled: boolean;
   gridRows: number; // Number of rows in guess grid (1-4)
   gridColumns: number; // Number of columns in guess grid (1-4)
+  clearGuessAfterSubmit: boolean; // Whether to clear the guess after submission
 }
 
 export interface Guess {
@@ -15,6 +16,7 @@ export interface Guess {
   feedback: GuessResult;
   timestamp: Date;
   rowDeltas?: number[]; // For row delta hints
+  targetRowSums?: (number | null)[]; // For row sums hint - null means not revealed
 }
 
 export interface GuessResult {
@@ -43,11 +45,15 @@ export interface HintState {
     notBagelNumbers: Set<number>;
     rowDeltaHints: number; // Count of row delta hints purchased
     showActualDeltas: boolean; // Whether to show +/- or just magnitude
+    randomExposedNumbers: Set<number>; // Numbers randomly exposed via hint
+    revealedRowSums: Set<number>; // Which row indices have their sums revealed
   };
   hintCost: {
     bagelHint: number;
     notBagelHint: number;
     rowDeltaHint: number;
+    randomExposeHint: number;
+    rowSumsHint: number;
   };
 }
 
@@ -110,7 +116,7 @@ export type GameAction =
   | { type: 'TOGGLE_POSITION_LOCK'; position: number }
   | { type: 'SET_ACTIVE_POSITION'; position: number }
   | { type: 'MOVE_DIGIT'; fromPosition: number; toPosition: number }
-  | { type: 'PURCHASE_HINT'; hintType: 'bagel' | 'not-bagel' | 'row-delta'; targetNumber?: number }
+  | { type: 'PURCHASE_HINT'; hintType: 'bagel' | 'not-bagel' | 'row-delta' | 'random-expose' | 'row-sums'; targetNumber?: number }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
   | { type: 'SET_SCRATCHPAD_COLOR'; number: number; color: ScratchpadColor }
   | { type: 'CLEAR_GAME_STATE' };

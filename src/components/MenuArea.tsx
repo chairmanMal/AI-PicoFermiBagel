@@ -28,6 +28,10 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     updateSettings({ soundEnabled: !settings.soundEnabled });
   };
 
+  const toggleClearGuess = () => {
+    updateSettings({ clearGuessAfterSubmit: !settings.clearGuessAfterSubmit });
+  };
+
   const handleDifficultyChange = (difficulty: string) => {
     updateSettings({ difficulty: difficulty as any });
     setShowCustomSettings(false);
@@ -40,7 +44,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     });
   };
 
-  const handlePurchaseHint = (hintType: 'bagel' | 'not-bagel' | 'row-delta', targetNumber?: number) => {
+  const handlePurchaseHint = (hintType: 'bagel' | 'not-bagel' | 'row-delta' | 'random-expose' | 'row-sums', targetNumber?: number) => {
     dispatch({
       type: 'PURCHASE_HINT',
       hintType,
@@ -104,7 +108,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
 
         <div className="menu-section">
           <div className="section-header">
-            <h4>Hint Purchasing</h4>
+            <h4>Hints</h4>
             <button
               className="toggle-btn"
               onClick={() => setShowHintPurchasing(!showHintPurchasing)}
@@ -124,39 +128,37 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
                 transition={{ duration: 0.2 }}
               >
                 <div className="hint-section">
-                  <h5>Number Hints (5 points each)</h5>
-                  <div className="number-hints">
-                    {Array.from({ length: settings.digitRange + 1 }, (_, i) => i).map(number => (
-                      <div key={number} className="number-hint-group">
-                        <span className="number">{number}</span>
-                        <button
-                          className="hint-btn bagel"
-                          onClick={() => handlePurchaseHint('bagel', number)}
-                          disabled={hintState?.purchasedHints.bagelNumbers.has(number)}
-                        >
-                          Not In
-                        </button>
-                        <button
-                          className="hint-btn not-bagel"
-                          onClick={() => handlePurchaseHint('not-bagel', number)}
-                          disabled={hintState?.purchasedHints.notBagelNumbers.has(number)}
-                        >
-                          In Target
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <h5>Number Hints</h5>
+                  <button
+                    className="hint-btn random-expose"
+                    onClick={() => handlePurchaseHint('random-expose')}
+                    disabled={
+                      // Disable if all numbers have been exposed
+                      Array.from({ length: settings.digitRange + 1 }, (_, i) => i).every(num =>
+                        hintState?.purchasedHints.randomExposedNumbers.has(num) ||
+                        hintState?.purchasedHints.bagelNumbers.has(num) ||
+                        hintState?.purchasedHints.notBagelNumbers.has(num)
+                      )
+                    }
+                  >
+                    Randomly expose a number (5 points)
+                  </button>
+                  <p className="hint-desc">Reveals if a random number is in the target or not</p>
                 </div>
 
                 <div className="hint-section">
-                  <h5>Row Delta Hints (3 points each)</h5>
+                  <h5>Row Sums (3 points)</h5>
                   <button
-                    className="hint-btn row-delta"
-                    onClick={() => handlePurchaseHint('row-delta')}
+                    className="hint-btn row-sums"
+                    onClick={() => handlePurchaseHint('row-sums')}
+                    disabled={
+                      // Disable if all rows have been revealed
+                      hintState?.purchasedHints.revealedRowSums.size >= settings.gridRows
+                    }
                   >
-                    Buy Row Delta Hint
+                    Buy Row Sums ({hintState?.purchasedHints.revealedRowSums.size || 0}/{settings.gridRows} revealed)
                   </button>
-                  <p className="hint-desc">Shows sum differences between guess and target rows</p>
+                  <p className="hint-desc">Shows the sum of target numbers for one random row</p>
                 </div>
 
                 <div className="hint-cost">
@@ -269,7 +271,15 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             onClick={toggleSound}
           >
             {settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            {settings.soundEnabled ? 'Sound On' : 'Sound Off'}
+            {settings.soundEnabled ? '🔊 Sound Enabled' : '🔇 Sound Disabled'}
+          </button>
+
+          <button
+            className="menu-item toggle"
+            onClick={toggleClearGuess}
+          >
+            <RotateCcw size={18} />
+            {settings.clearGuessAfterSubmit ? 'Clear Guess After Submit' : 'Keep Guess After Submit'}
           </button>
         </div>
 

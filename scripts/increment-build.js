@@ -3,41 +3,33 @@
 const fs = require('fs');
 const path = require('path');
 
-const versionFilePath = path.join(__dirname, '..', 'src', 'config', 'version.ts');
+// Path to the version.ts file
+const versionFilePath = path.join(__dirname, '../src/config/version.ts');
 
-try {
-  // Read the current version file
-  let content = fs.readFileSync(versionFilePath, 'utf8');
-  
-  // Extract current build revision
-  const buildRevisionMatch = content.match(/BUILD_REVISION:\s*(\d+)/);
-  if (!buildRevisionMatch) {
-    throw new Error('Could not find BUILD_REVISION in version file');
-  }
-  
-  const currentRevision = parseInt(buildRevisionMatch[1]);
-  const newRevision = currentRevision + 1;
-  
-  // Update the build revision
-  content = content.replace(
-    /BUILD_REVISION:\s*\d+/,
-    `BUILD_REVISION: ${newRevision}`
-  );
-  
-  // Update the build date
-  const today = new Date().toISOString().split('T')[0];
-  content = content.replace(
-    /BUILD_DATE:\s*new Date\(\)\.toISOString\(\)\.split\('T'\)\[0\]/,
-    `BUILD_DATE: '${today}'`
-  );
-  
-  // Write the updated content back
-  fs.writeFileSync(versionFilePath, content);
-  
-  console.log(`✅ Build revision incremented: ${currentRevision} → ${newRevision}`);
-  console.log(`📅 Build date updated: ${today}`);
-  
-} catch (error) {
-  console.error('❌ Error incrementing build revision:', error.message);
+// Read the current version file
+const versionFileContent = fs.readFileSync(versionFilePath, 'utf8');
+
+// Extract current build revision number
+const buildRevisionMatch = versionFileContent.match(/BUILD_REVISION:\s*(\d+)/);
+if (!buildRevisionMatch) {
+  console.error('Could not find BUILD_REVISION in version.ts');
   process.exit(1);
-} 
+}
+
+const currentBuildRevision = parseInt(buildRevisionMatch[1]);
+const newBuildRevision = currentBuildRevision + 1;
+
+// Get current date in YYYY-MM-DD format
+const today = new Date();
+const buildDate = today.toISOString().split('T')[0];
+
+// Update the version file content
+const newVersionFileContent = versionFileContent
+  .replace(/BUILD_REVISION:\s*\d+/, `BUILD_REVISION: ${newBuildRevision}`)
+  .replace(/BUILD_DATE:\s*'[^']*'/, `BUILD_DATE: '${buildDate}'`);
+
+// Write the updated version file
+fs.writeFileSync(versionFilePath, newVersionFileContent, 'utf8');
+
+console.log(`✅ Build number incremented: ${currentBuildRevision} → ${newBuildRevision}`);
+console.log(`📅 Build date updated: ${buildDate}`); 

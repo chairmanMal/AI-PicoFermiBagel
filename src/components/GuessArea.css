@@ -45,12 +45,32 @@
   flex-direction: column;
   gap: clamp(8px, 2vw, 12px);
   align-items: center;
+  padding-right: 80px; /* Space for row sums */
 }
 
 .guess-row {
   display: flex;
   gap: clamp(8px, 2vw, 12px);
   justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.guess-row .row-sum-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #f59e0b;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #f59e0b;
+  white-space: nowrap;
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
 }
 
 .guess-box {
@@ -104,11 +124,13 @@
 }
 
 .guess-box.drag-over {
-  background: white !important;
+  background: #dbeafe !important; /* Light blue background */
   border-color: #3b82f6 !important;
-  border-width: 3px !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  border-width: 4px !important;
+  transform: scale(1.15) !important; /* Slightly more expansion */
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.4), 0 8px 20px rgba(59, 130, 246, 0.3) !important; /* Stronger glow + drop shadow */
+  z-index: 10 !important;
+  animation: dragOverPulse 0.6s ease-in-out infinite alternate !important;
 }
 
 .guess-box.locked {
@@ -180,6 +202,15 @@
   }
   to {
     box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  }
+}
+
+@keyframes dragOverPulse {
+  from {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.4), 0 8px 20px rgba(59, 130, 246, 0.3);
+  }
+  to {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.6), 0 12px 30px rgba(59, 130, 246, 0.5);
   }
 }
 
@@ -280,10 +311,17 @@
 @media (max-width: 768px) {
   .guess-grid {
     gap: clamp(6px, 1.5vw, 10px);
+    padding-right: 60px; /* Smaller space for row sums on mobile */
   }
   
   .guess-row {
     gap: clamp(6px, 1.5vw, 10px);
+  }
+  
+  .guess-row .row-sum-display {
+    right: -50px;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    padding: 3px 6px;
   }
   
   .guess-box {
@@ -304,6 +342,16 @@
 }
 
 @media (max-width: 480px) {
+  .guess-grid {
+    padding-right: 45px; /* Even smaller space for row sums on small mobile */
+  }
+  
+  .guess-row .row-sum-display {
+    right: -40px;
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
+    padding: 2px 4px;
+  }
+  
   .guess-box {
     width: clamp(40px, 9vw, 60px);
     height: clamp(40px, 9vw, 60px);

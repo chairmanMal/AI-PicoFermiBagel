@@ -5,8 +5,8 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "build:increment": "node scripts/increment-build.js && npm run build",
+    "build": "node scripts/increment-build.js && tsc && vite build",
+    "build:no-increment": "tsc && vite build",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env IS_DEV=true electron .",
     "electron:pack": "electron-builder",

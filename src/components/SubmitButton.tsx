@@ -52,24 +52,12 @@ const SubmitButton: React.FC = () => {
   };
 
   const formatFeedback = (feedback: any) => {
-    const parts = [];
-    
-    // Add Fermis first (best feedback)
-    for (let i = 0; i < feedback.fermis; i++) {
-      parts.push('Fermi');
-    }
-    
-    // Add Picos second
-    for (let i = 0; i < feedback.picos; i++) {
-      parts.push('Pico');
-    }
-    
     // Only show "Bagel" if there are NO picos or fermis (all digits are wrong)
     if (feedback.fermis === 0 && feedback.picos === 0) {
       return 'Bagel';
     }
     
-    return parts.join('');
+    return 'Pico-' + feedback.picos + ', Fermi-' + feedback.fermis;
   };
 
   const buttonConfig = getButtonContent();

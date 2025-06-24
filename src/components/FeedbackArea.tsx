@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Target, TrendingUp } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { formatGameTime } from '@/utils/gameLogic';
+import { formatGameTime, calculateTargetRowSums } from '@/utils/gameLogic';
 import './FeedbackArea.css';
 
 interface GuessRowProps {
@@ -13,6 +13,17 @@ interface GuessRowProps {
 
 const GuessRow: React.FC<GuessRowProps> = ({ guess, index, isLatest }) => {
   const { feedback, digits, timestamp, rowDeltas } = guess;
+  const { gameState, hintState, settings } = useGameStore();
+  
+  // Debug feedback values
+  console.log(`🎯 Guess #${index + 1} feedback:`, feedback);
+  
+  // Always use current hint state to calculate row sums (so all guesses show current hints)
+  const targetRowSums = hintState.purchasedHints.revealedRowSums.size > 0
+    ? calculateTargetRowSums(gameState.target, settings.gridRows, settings.gridColumns, hintState.purchasedHints.revealedRowSums)
+    : undefined;
+    
+  // Row sums are calculated dynamically based on current hint state
 
   return (
     <motion.div
@@ -24,25 +35,59 @@ const GuessRow: React.FC<GuessRowProps> = ({ guess, index, isLatest }) => {
       <div className="guess-number">#{index + 1}</div>
       
       <div className="guess-digits">
-        {digits.map((digit: number, pos: number) => (
-          <span key={pos} className="digit-display">
-            {digit}
-          </span>
-        ))}
+        {settings.gridRows === 1 ? (
+          // Single row - show all digits in one line with optional sum
+          <div className="digit-row">
+            <div className="row-digits">
+              {digits.map((digit: number, pos: number) => (
+                <span key={pos} className="digit-display">
+                  {digit}
+                </span>
+              ))}
+            </div>
+            {targetRowSums && targetRowSums[0] !== null && (
+              <span className="row-sum-display">[{targetRowSums[0]}]</span>
+            )}
+          </div>
+        ) : (
+          // Multi-row - group digits by rows and show sum for each row
+          Array.from({ length: settings.gridRows }, (_, rowIndex) => {
+            const rowStart = rowIndex * settings.gridColumns;
+            const rowEnd = Math.min(rowStart + settings.gridColumns, digits.length);
+            const rowDigits = digits.slice(rowStart, rowEnd);
+            const hasRowSum = targetRowSums && targetRowSums[rowIndex] !== null;
+            
+            return (
+              <div key={rowIndex} className="digit-row">
+                <div className="row-digits">
+                  {rowDigits.map((digit: number, pos: number) => (
+                    <span key={rowStart + pos} className="digit-display">
+                      {digit}
+                    </span>
+                  ))}
+                </div>
+                {hasRowSum && (
+                  <span className="row-sum-display">[{targetRowSums[rowIndex]}]</span>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
       <div className="feedback-results">
-        <div className="feedback-item pico">
-          <span className="count">{feedback.picos}</span>
-          <span className="label">Pico</span>
-        </div>
-        <div className="feedback-item fermi">
-          <span className="count">{feedback.fermis}</span>
-          <span className="label">Fermi</span>
-        </div>
-        <div className="feedback-item bagel">
-          <span className="count">{feedback.bagels}</span>
-          <span className="label">Bagel</span>
+        <div style={{ 
+          fontSize: '0.9rem', 
+          fontWeight: 500,
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+          {(() => {
+            if (feedback.picos === 0 && feedback.fermis === 0) {
+              return 'Bagel';
+            } else {
+              return 'Pico-' + feedback.picos + ', Fermi-' + feedback.fermis;
+            }
+          })()}
         </div>
       </div>
 
@@ -56,6 +101,8 @@ const GuessRow: React.FC<GuessRowProps> = ({ guess, index, isLatest }) => {
           ))}
         </div>
       )}
+
+
 
       <div className="guess-time">
         {new Date(timestamp).toLocaleTimeString([], { 

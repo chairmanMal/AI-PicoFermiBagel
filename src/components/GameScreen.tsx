@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
+import { getBuildString, getBuildDateString } from '../config/version';
 import GuessArea from './GuessArea';
 import SelectionArea from './SelectionArea';
 import SubmitButton from './SubmitButton';
@@ -16,7 +17,7 @@ const GameScreen: React.FC = () => {
   const [useDrawer, setUseDrawer] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const { gameState } = useGameStore();
+  const { gameState, settings, dispatch } = useGameStore();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -29,42 +30,6 @@ const GameScreen: React.FC = () => {
       // In portrait mode, always use drawer since there's no horizontal space for side panel
       const needsDrawer = isLandscape ? width < 900 : true;
       setUseDrawer(needsDrawer);
-      
-      // Debug logging for viewport and device detection
-      console.log('=== VIEWPORT DEBUG INFO ===');
-      console.log('Window dimensions:', {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        devicePixelRatio: window.devicePixelRatio
-      });
-      console.log('Screen dimensions:', {
-        width: window.screen.width,
-        height: window.screen.height,
-        availWidth: window.screen.availWidth,
-        availHeight: window.screen.availHeight
-      });
-      console.log('Orientation:', window.screen.orientation?.type || 'unknown');
-      console.log('Use drawer (space-based):', needsDrawer);
-      console.log('User agent:', navigator.userAgent);
-      
-      // Calculate what the CSS scaling should be
-      const vh = window.innerHeight;
-      const calculatedScale = Math.max(0.5, Math.min(vh / 1100, 0.85));
-      console.log('Calculated CSS scale should be:', calculatedScale);
-      console.log('Scale formula: clamp(0.5, ' + vh + ' / 1100, 0.85) =', calculatedScale);
-      
-      // Check if landscape
-      console.log('Is landscape:', isLandscape);
-      
-      if (isLandscape && window.innerWidth >= 768) {
-        console.log('🎯 Should be applying landscape tablet scaling!');
-        console.log('Expected transform: scale(' + calculatedScale + ')');
-        console.log('Expected width compensation:', window.innerWidth / calculatedScale);
-        console.log('Expected height compensation:', window.innerHeight / calculatedScale);
-        console.log('Should show side panel directly:', !needsDrawer);
-      }
-      
-      console.log('========================');
     };
 
     checkScreenSize();
@@ -79,14 +44,38 @@ const GameScreen: React.FC = () => {
     };
   }, [gameState]);
 
-
-
-  // Debug logging for layout investigation
+  // App startup indicator
   useEffect(() => {
-    console.log('=== LAYOUT DEBUG ===');
-    console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
-    console.log('Device pixel ratio:', window.devicePixelRatio);
+    console.log(`🚀 PicoFermiBagel ${getBuildString()} LOADED - Latest Version Confirmed!`);
+    console.log(`🚀 Build Date: ${getBuildDateString()}`);
+    console.log('🚀 If you see this message, you have the latest build with debug logging');
+    console.log('🚀 CONSISTENCY FIX IS ACTIVE - State will auto-correct on startup');
   }, []);
+
+  // Debug current game state
+  useEffect(() => {
+    console.log('🎮 GAME STATE DEBUG:');
+    console.log('🎮 Settings:', {
+      difficulty: settings?.difficulty || 'unknown',
+      gridRows: settings?.gridRows || 'unknown',
+      gridColumns: settings?.gridColumns || 'unknown',
+      targetLength: settings?.targetLength || 'unknown'
+    });
+    console.log('🎮 Current guess length:', gameState.currentGuess?.length || 'unknown');
+    console.log('🎮 Target length:', gameState.target?.length || 'unknown');
+  }, [gameState, settings]);
+
+  // Fix game state consistency on startup
+  useEffect(() => {
+    const expectedLength = settings.targetLength;
+    const currentGuessLength = gameState.currentGuess.length;
+    const targetLength = gameState.target.length;
+    
+    if (currentGuessLength !== expectedLength || targetLength !== expectedLength) {
+      console.log('🔧 FIXING INCONSISTENT STATE: Starting new game to match settings');
+      dispatch({ type: 'START_NEW_GAME' });
+    }
+  }, []); // Only run once on mount
 
   return (
     <div className="game-screen">
@@ -185,13 +174,7 @@ const GameScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Drawer Overlay */}
-            {isDrawerOpen && (
-              <div 
-                className="drawer-overlay" 
-                onClick={() => setIsDrawerOpen(false)}
-              />
-            )}
+
           </>
         )}
       </div>

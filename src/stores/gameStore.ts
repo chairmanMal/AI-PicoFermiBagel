@@ -19,8 +19,10 @@ import {
   getDifficultySettings,
   generateId,
   calculateRowDeltas,
+  calculateTargetRowSums,
   getNextUnlockedPosition
 } from '@/utils/gameLogic';
+import { soundUtils } from '@/utils/soundUtils';
 
 const defaultSettings: GameSettings = {
   difficulty: 'classic',
@@ -31,6 +33,7 @@ const defaultSettings: GameSettings = {
   soundEnabled: true,
   gridRows: 1,
   gridColumns: 3,
+  clearGuessAfterSubmit: true,
 };
 
 const createInitialGameState = (settings: GameSettings): GameState => ({
@@ -51,11 +54,15 @@ const createInitialHintState = (): HintState => ({
     notBagelNumbers: new Set(),
     rowDeltaHints: 0,
     showActualDeltas: false,
+    randomExposedNumbers: new Set(),
+    revealedRowSums: new Set(),
   },
   hintCost: {
     bagelHint: 5,
     notBagelHint: 5,
     rowDeltaHint: 3,
+    randomExposeHint: 5,
+    rowSumsHint: 3,
   },
 });
 
@@ -119,6 +126,11 @@ export const useGameStore = create<GameStore>()(
             // Set the new digit (or clear if digit is null)
             newGuess[position] = digit;
             
+            // Play sound if digit was placed and sound is enabled
+            if (digit !== null && state.settings.soundEnabled) {
+              soundUtils.playDigitPlaceSound();
+            }
+            
             // Auto-advance to next position if digit was set and we're not manually selecting
             let newActivePosition = state.gameState.activeGuessPosition;
             if (digit !== null) {
@@ -146,6 +158,11 @@ export const useGameStore = create<GameStore>()(
             
             // Set the new digit (or clear if digit is null) without advancing position
             newGuess[position] = digit;
+            
+            // Play sound if digit was placed and sound is enabled
+            if (digit !== null && state.settings.soundEnabled) {
+              soundUtils.playDigitPlaceSound();
+            }
 
             set({
               gameState: {
@@ -163,8 +180,16 @@ export const useGameStore = create<GameStore>()(
             const lockedPositions = new Set(state.gameState.lockedPositions);
             const activePosition = state.gameState.activeGuessPosition;
             
+            console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
+            console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
+            
             // Place digit at the active position
             currentGuess[activePosition] = digit;
+            
+            // Play sound if sound is enabled
+            if (state.settings.soundEnabled) {
+              soundUtils.playDigitPlaceSound();
+            }
             
             // Auto-advance to next unlocked position
             const nextPosition = getNextUnlockedPosition(
@@ -172,6 +197,8 @@ export const useGameStore = create<GameStore>()(
               lockedPositions, 
               activePosition + 1
             );
+            
+            console.log('🔢 AUTOFILL DEBUG: Next position:', activePosition, '→', nextPosition);
             
             set({
               gameState: {
@@ -191,6 +218,11 @@ export const useGameStore = create<GameStore>()(
             const rowDeltas = state.hintState.purchasedHints.rowDeltaHints > 0 
               ? calculateRowDeltas(guess, state.gameState.target, state.hintState.purchasedHints.showActualDeltas)
               : undefined;
+            const targetRowSums = state.hintState.purchasedHints.revealedRowSums.size > 0
+              ? calculateTargetRowSums(state.gameState.target, state.settings.gridRows, state.settings.gridColumns, state.hintState.purchasedHints.revealedRowSums)
+              : undefined;
+
+            console.log('💾 STORING GUESS - targetRowSums:', targetRowSums);
 
             const newGuess: Guess = {
               id: generateId(),
@@ -198,7 +230,10 @@ export const useGameStore = create<GameStore>()(
               feedback,
               timestamp: new Date(),
               rowDeltas,
+              targetRowSums,
             };
+
+            console.log('💾 NEW GUESS OBJECT:', newGuess);
 
             const newGuesses = [...state.gameState.guesses, newGuess];
             const timeMinutes = get().getGameTimeMinutes();
@@ -214,15 +249,26 @@ export const useGameStore = create<GameStore>()(
               guesses: newGuesses,
               currentGuess: gameEnded 
                 ? state.gameState.currentGuess 
-                : Array(state.settings.targetLength).fill(null),
+                : state.settings.clearGuessAfterSubmit 
+                  ? Array(state.settings.targetLength).fill(null)
+                  : state.gameState.currentGuess,
               score: newScore,
               isGameWon: gameWon,
               isGameActive: !gameEnded,
-              activeGuessPosition: gameEnded ? state.gameState.activeGuessPosition : 0,
+              activeGuessPosition: gameEnded 
+                ? state.gameState.activeGuessPosition 
+                : state.settings.clearGuessAfterSubmit 
+                  ? 0 
+                  : state.gameState.activeGuessPosition,
               gameEndTime: gameEnded ? new Date() : undefined,
             };
 
             set({ gameState: newGameState });
+
+            // Play sound feedback if sound is enabled
+            if (state.settings.soundEnabled) {
+              soundUtils.playGuessCompleteSound();
+            }
 
             // Update stats if game is won
             if (gameWon) {
@@ -323,6 +369,59 @@ export const useGameStore = create<GameStore>()(
                   newHintState.purchasedHints.showActualDeltas = true;
                 }
                 break;
+              case 'random-expose':
+                // Find a random number that hasn't been exposed yet
+                const availableNumbers = Array.from({ length: state.settings.digitRange + 1 }, (_, i) => i)
+                  .filter(num => 
+                    !newHintState.purchasedHints.randomExposedNumbers.has(num) &&
+                    !newHintState.purchasedHints.bagelNumbers.has(num) &&
+                    !newHintState.purchasedHints.notBagelNumbers.has(num)
+                  );
+                
+                if (availableNumbers.length > 0) {
+                  const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                  const selectedNumber = availableNumbers[randomIndex];
+                  
+                  // Check if the number is in the target
+                  const isInTarget = state.gameState.target.includes(selectedNumber);
+                  
+                  // Add to appropriate set and update scratchpad
+                  if (isInTarget) {
+                    newHintState.purchasedHints.notBagelNumbers.add(selectedNumber);
+                  } else {
+                    newHintState.purchasedHints.bagelNumbers.add(selectedNumber);
+                  }
+                  
+                  newHintState.purchasedHints.randomExposedNumbers.add(selectedNumber);
+                  
+                  // Update scratchpad color
+                  const newScratchpadState = { ...state.scratchpadState };
+                  newScratchpadState.numberColors.set(selectedNumber, isInTarget ? 'not-bagel' : 'bagel');
+                  set({ scratchpadState: newScratchpadState });
+                }
+                break;
+              case 'row-sums':
+                console.log('💰 ROW SUM HINT DEBUG: Purchase initiated');
+                console.log('💰 Grid rows:', state.settings.gridRows);
+                console.log('💰 Current revealed rows:', Array.from(newHintState.purchasedHints.revealedRowSums));
+                
+                // Find available rows that don't have their sums revealed yet
+                const availableRows = Array.from({ length: state.settings.gridRows }, (_, i) => i)
+                  .filter(rowIndex => !newHintState.purchasedHints.revealedRowSums.has(rowIndex));
+                
+                console.log('💰 Available rows for reveal:', availableRows);
+                
+                if (availableRows.length > 0) {
+                  // Randomly select one of the available rows
+                  const randomIndex = Math.floor(Math.random() * availableRows.length);
+                  const selectedRow = availableRows[randomIndex];
+                  console.log('💰 Selected row for reveal:', selectedRow);
+                  newHintState.purchasedHints.revealedRowSums.add(selectedRow);
+                  console.log('💰 After adding - revealed rows:', Array.from(newHintState.purchasedHints.revealedRowSums));
+                } else {
+                  console.log('💰 No available rows to reveal!');
+                }
+                break;
             }
 
             set({ hintState: newHintState });
@@ -415,7 +514,9 @@ export const useGameStore = create<GameStore>()(
         return (
           purchasedHints.bagelNumbers.size * hintCost.bagelHint +
           purchasedHints.notBagelNumbers.size * hintCost.notBagelHint +
-          purchasedHints.rowDeltaHints * hintCost.rowDeltaHint
+          purchasedHints.rowDeltaHints * hintCost.rowDeltaHint +
+          purchasedHints.randomExposedNumbers.size * hintCost.randomExposeHint +
+          (purchasedHints.revealedRowSums.size * hintCost.rowSumsHint)
         );
       },
 

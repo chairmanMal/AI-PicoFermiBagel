@@ -171,6 +171,47 @@ export function calculateRowDeltas(
 }
 
 /**
+ * Calculates row sums for the target based on grid layout
+ */
+export function calculateTargetRowSums(
+  target: number[],
+  gridRows: number,
+  gridColumns: number,
+  revealedRows?: Set<number>
+): (number | null)[] {
+  console.log('🧮 calculateTargetRowSums called with:', {
+    target,
+    gridRows,
+    gridColumns,
+    revealedRows: revealedRows ? Array.from(revealedRows) : 'undefined'
+  });
+  
+  const rowSums: (number | null)[] = [];
+  
+  for (let row = 0; row < gridRows; row++) {
+    if (revealedRows && revealedRows.has(row)) {
+      let sum = 0;
+      console.log('🧮 Calculating sum for revealed row', row);
+      for (let col = 0; col < gridColumns; col++) {
+        const index = row * gridColumns + col;
+        if (index < target.length) {
+          console.log('🧮 Row', row, 'Col', col, 'Index', index, 'Value', target[index]);
+          sum += target[index];
+        }
+      }
+      console.log('🧮 Row', row, 'sum:', sum);
+      rowSums.push(sum);
+    } else {
+      console.log('🧮 Row', row, 'not revealed, pushing null');
+      rowSums.push(null); // Not revealed yet
+    }
+  }
+  
+  console.log('🧮 Final rowSums:', rowSums);
+  return rowSums;
+}
+
+/**
  * Generates a unique ID for game elements
  */
 export function generateId(): string {
@@ -216,22 +257,30 @@ export function getNextUnlockedPosition(
   lockedPositions: Set<number>,
   startPosition: number = 0
 ): number {
+  console.log('🎯 getNextUnlockedPosition: start=', startPosition, 'guessLength=', guess.length, 'locked=', Array.from(lockedPositions));
+  
   // Start from the given position and look for next unlocked position
   for (let i = startPosition; i < guess.length; i++) {
+    console.log('🎯 Checking position', i, '- locked:', lockedPositions.has(i));
     if (!lockedPositions.has(i)) {
+      console.log('🎯 Found next position:', i);
       return i;
     }
   }
   
   // If no unlocked position found from start onwards, search from beginning
   for (let i = 0; i < startPosition; i++) {
+    console.log('🎯 Checking wrap-around position', i, '- locked:', lockedPositions.has(i));
     if (!lockedPositions.has(i)) {
+      console.log('🎯 Found wrap-around position:', i);
       return i;
     }
   }
   
   // If all positions are locked, return the start position
-  return Math.min(startPosition, guess.length - 1);
+  const fallback = Math.min(startPosition, guess.length - 1);
+  console.log('🎯 All locked, returning fallback:', fallback);
+  return fallback;
 }
 
 /**

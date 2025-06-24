@@ -136,7 +136,38 @@
 
 .guess-digits {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: visible;
+  position: relative;
+}
+
+.digit-row {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  overflow: visible;
+  position: relative;
+}
+
+.row-digits {
+  display: flex;
+  gap: 8px;
+}
+
+.row-sum-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #f59e0b;
+  margin-left: 4px;
+  position: relative;
+  z-index: 10;
+  background: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .digit-display {
@@ -156,6 +187,34 @@
 .feedback-results {
   display: flex;
   gap: 12px;
+}
+
+.feedback-compact {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.feedback-text {
+  font-weight: 600;
+}
+
+.feedback-text.pico {
+  color: #f59e0b;
+}
+
+.feedback-text.fermi {
+  color: #10b981;
+}
+
+.feedback-text.bagel {
+  color: #ef4444;
+}
+
+.feedback-separator {
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .feedback-item {
@@ -239,6 +298,8 @@
   color: #6b7280;
 }
 
+
+
 .guess-time {
   font-size: 0.8rem;
   color: #9ca3af;
@@ -316,6 +377,10 @@
     gap: 8px;
   }
   
+  .feedback-compact {
+    font-size: 0.8rem;
+  }
+  
   .feedback-item {
     min-width: 35px;
   }
@@ -342,6 +407,10 @@
     display: none;
   }
   
+  .row-sum-display {
+    font-size: 0.8rem;
+  }
+  
   .digit-display {
     width: 28px;
     height: 28px;
@@ -350,6 +419,10 @@
   
   .feedback-results {
     gap: 6px;
+  }
+  
+  .feedback-compact {
+    font-size: 0.75rem;
   }
   
   .feedback-item {

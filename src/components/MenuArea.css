@@ -268,6 +268,26 @@
   background: #7c3aed;
 }
 
+.hint-btn.random-expose {
+  background: #10b981;
+  color: white;
+  padding: 8px 16px;
+}
+
+.hint-btn.random-expose:hover:not(:disabled) {
+  background: #059669;
+}
+
+.hint-btn.row-sums {
+  background: #f59e0b;
+  color: white;
+  padding: 8px 16px;
+}
+
+.hint-btn.row-sums:hover:not(:disabled) {
+  background: #d97706;
+}
+
 .hint-desc {
   font-size: 0.8rem;
   color: #6b7280;
@@ -396,7 +416,7 @@
 
 .version-text {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6b7280;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
 }
