@@ -5,6 +5,7 @@ export interface GameSettings {
   showTarget: boolean;
   selectionAreaPosition: 'top' | 'bottom';
   soundEnabled: boolean;
+  soundVolume: number; // Volume level from 0.0 to 1.0
   gridRows: number; // Number of rows in guess grid (1-4)
   gridColumns: number; // Number of columns in guess grid (1-4)
   clearGuessAfterSubmit: boolean; // Whether to clear the guess after submission

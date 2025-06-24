@@ -45,7 +45,8 @@
   flex-direction: column;
   gap: clamp(8px, 2vw, 12px);
   align-items: center;
-  padding-right: 80px; /* Space for row sums */
+  /* Remove padding-right to center the boxes properly */
+  position: relative;
 }
 
 .guess-row {
@@ -54,6 +55,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
+  /* Ensure row sums don't affect centering by containing them absolutely */
 }
 
 .guess-row .row-sum-display {
@@ -67,7 +69,9 @@
   border: 1px solid #f59e0b;
   white-space: nowrap;
   position: absolute;
-  right: -60px;
+  /* Position to the right of the centered row content */
+  left: 50%;
+  margin-left: calc((var(--grid-columns, 3) * clamp(50px, 12vw, 80px) + (var(--grid-columns, 3) - 1) * clamp(8px, 2vw, 12px)) / 2 + 20px);
   top: 50%;
   transform: translateY(-50%);
   z-index: 5;
@@ -311,7 +315,7 @@
 @media (max-width: 768px) {
   .guess-grid {
     gap: clamp(6px, 1.5vw, 10px);
-    padding-right: 60px; /* Smaller space for row sums on mobile */
+    /* Remove padding-right to keep boxes centered */
   }
   
   .guess-row {
@@ -319,7 +323,7 @@
   }
   
   .guess-row .row-sum-display {
-    right: -50px;
+    left: calc(100% + 15px); /* Adjust for mobile */
     font-size: clamp(0.7rem, 1.8vw, 0.9rem);
     padding: 3px 6px;
   }
@@ -343,11 +347,11 @@
 
 @media (max-width: 480px) {
   .guess-grid {
-    padding-right: 45px; /* Even smaller space for row sums on small mobile */
+    /* Remove padding-right to keep boxes centered */
   }
   
   .guess-row .row-sum-display {
-    right: -40px;
+    left: calc(100% + 10px); /* Adjust for small mobile */
     font-size: clamp(0.6rem, 1.5vw, 0.8rem);
     padding: 2px 4px;
   }

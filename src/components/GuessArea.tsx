@@ -126,6 +126,11 @@ const GuessBox: React.FC<GuessBoxProps> = ({
           position,
           digit
         });
+        
+        // Play drip sound for drag and drop placement
+        import('../utils/soundUtils').then(({ soundUtils }) => {
+          soundUtils.playDripSound();
+        });
       }
     }
   }, [position, isLocked]);

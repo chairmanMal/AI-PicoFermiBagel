@@ -97,6 +97,11 @@ const NumberButton: React.FC<NumberButtonProps> = ({
         
         if (!isLocked) {
           dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+          
+          // Play drip sound for drag and drop placement
+          import('../utils/soundUtils').then(({ soundUtils }) => {
+            soundUtils.playDripSound();
+          });
         }
       }
     } else if (!isLongPressing) {

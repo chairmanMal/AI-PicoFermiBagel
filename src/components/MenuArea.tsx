@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, ShoppingCart, BookOpen } from 'lucide-react';
+import { X, ChevronLeft, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getFullVersionString } from '@/config/version';
 import './MenuArea.css';
@@ -11,9 +11,8 @@ interface MenuAreaProps {
 
 const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
   const [showCustomSettings, setShowCustomSettings] = useState(false);
-  const [showHintPurchasing, setShowHintPurchasing] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  const { settings, resetGame, updateSettings, gameState, hintState, dispatch, getTotalHintCost } = useGameStore();
+  const { settings, resetGame, updateSettings, gameState } = useGameStore();
 
   const handleStartNewGame = () => {
     resetGame();
@@ -44,13 +43,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     });
   };
 
-  const handlePurchaseHint = (hintType: 'bagel' | 'not-bagel' | 'row-delta' | 'random-expose' | 'row-sums', targetNumber?: number) => {
-    dispatch({
-      type: 'PURCHASE_HINT',
-      hintType,
-      targetNumber
-    });
-  };
+
 
   const handleOpenManual = () => {
     // Show the manual in an in-app modal instead of trying to open externally
@@ -67,19 +60,18 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
   ];
 
   return (
-    <div className="menu-modal">
-      <div className="menu-header">
-        <h3>Game Menu</h3>
+    <div className="menu-drawer-container">
+      <div className="drawer-header">
         <button 
-          className="menu-close"
+          className="drawer-close"
           onClick={onClose}
           aria-label="Close menu"
         >
-          <X size={20} />
+          <ChevronLeft size={20} />
         </button>
       </div>
 
-      <div className="menu-content">
+      <div className="drawer-content">
         <div className="menu-section">
           <button
             className="menu-item primary"
@@ -106,68 +98,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
           </div>
         </div>
 
-        <div className="menu-section">
-          <div className="section-header">
-            <h4>Hints</h4>
-            <button
-              className="toggle-btn"
-              onClick={() => setShowHintPurchasing(!showHintPurchasing)}
-            >
-              <ShoppingCart size={16} />
-              {showHintPurchasing ? 'Hide' : 'Show'}
-            </button>
-          </div>
 
-          <AnimatePresence>
-            {showHintPurchasing && (
-              <motion.div
-                className="hint-purchasing"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="hint-section">
-                  <h5>Number Hints</h5>
-                  <button
-                    className="hint-btn random-expose"
-                    onClick={() => handlePurchaseHint('random-expose')}
-                    disabled={
-                      // Disable if all numbers have been exposed
-                      Array.from({ length: settings.digitRange + 1 }, (_, i) => i).every(num =>
-                        hintState?.purchasedHints.randomExposedNumbers.has(num) ||
-                        hintState?.purchasedHints.bagelNumbers.has(num) ||
-                        hintState?.purchasedHints.notBagelNumbers.has(num)
-                      )
-                    }
-                  >
-                    Randomly expose a number (5 points)
-                  </button>
-                  <p className="hint-desc">Reveals if a random number is in the target or not</p>
-                </div>
-
-                <div className="hint-section">
-                  <h5>Row Sums (3 points)</h5>
-                  <button
-                    className="hint-btn row-sums"
-                    onClick={() => handlePurchaseHint('row-sums')}
-                    disabled={
-                      // Disable if all rows have been revealed
-                      hintState?.purchasedHints.revealedRowSums.size >= settings.gridRows
-                    }
-                  >
-                    Buy Row Sums ({hintState?.purchasedHints.revealedRowSums.size || 0}/{settings.gridRows} revealed)
-                  </button>
-                  <p className="hint-desc">Shows the sum of target numbers for one random row</p>
-                </div>
-
-                <div className="hint-cost">
-                  <strong>Total Hint Cost: {getTotalHintCost()} points</strong>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         <div className="menu-section">
           <div className="section-header">
@@ -273,6 +204,27 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             {settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             {settings.soundEnabled ? '🔊 Sound Enabled' : '🔇 Sound Disabled'}
           </button>
+
+          {settings.soundEnabled && (
+            <div className="setting-group volume-control">
+              <label>
+                <Volume2 size={16} />
+                Volume: {Math.round((settings.soundVolume || 0.5) * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.soundVolume || 0.5}
+                onChange={(e) => updateSettings({ soundVolume: parseFloat(e.target.value) })}
+                className="range-slider volume-slider"
+                style={{
+                  background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.5) * 100}%, #e5e7eb ${(settings.soundVolume || 0.5) * 100}%, #e5e7eb 100%)`
+                }}
+              />
+            </div>
+          )}
 
           <button
             className="menu-item toggle"

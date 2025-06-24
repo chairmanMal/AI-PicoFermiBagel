@@ -31,6 +31,7 @@ const defaultSettings: GameSettings = {
   showTarget: false,
   selectionAreaPosition: 'bottom',
   soundEnabled: true,
+  soundVolume: 0.5, // Default to 50% volume
   gridRows: 1,
   gridColumns: 3,
   clearGuessAfterSubmit: true,
@@ -123,12 +124,19 @@ export const useGameStore = create<GameStore>()(
             const newGuess = [...state.gameState.currentGuess];
             const newLockedPositions = new Set(state.gameState.lockedPositions);
             
+            // Check if digit is already in the guess (redundant) - excluding the current position
+            const isRedundant = digit !== null && newGuess.some((d, i) => i !== position && d === digit);
+            
             // Set the new digit (or clear if digit is null)
             newGuess[position] = digit;
             
             // Play sound if digit was placed and sound is enabled
             if (digit !== null && state.settings.soundEnabled) {
-              soundUtils.playDigitPlaceSound();
+              if (isRedundant) {
+                soundUtils.playDudSound();
+              } else {
+                soundUtils.playDigitPlaceSound();
+              }
             }
             
             // Auto-advance to next position if digit was set and we're not manually selecting
@@ -156,12 +164,19 @@ export const useGameStore = create<GameStore>()(
             const { position, digit } = action;
             const newGuess = [...state.gameState.currentGuess];
             
+            // Check if digit is already in the guess (redundant) - excluding the current position
+            const isRedundant = digit !== null && newGuess.some((d, i) => i !== position && d === digit);
+            
             // Set the new digit (or clear if digit is null) without advancing position
             newGuess[position] = digit;
             
             // Play sound if digit was placed and sound is enabled
             if (digit !== null && state.settings.soundEnabled) {
-              soundUtils.playDigitPlaceSound();
+              if (isRedundant) {
+                soundUtils.playDudSound();
+              } else {
+                soundUtils.playDigitPlaceSound();
+              }
             }
 
             set({
@@ -183,12 +198,19 @@ export const useGameStore = create<GameStore>()(
             console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
             console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
             
+            // Check if digit is already in the guess (redundant)
+            const isRedundant = currentGuess.includes(digit);
+            
             // Place digit at the active position
             currentGuess[activePosition] = digit;
             
             // Play sound if sound is enabled
             if (state.settings.soundEnabled) {
-              soundUtils.playDigitPlaceSound();
+              if (isRedundant) {
+                soundUtils.playDudSound();
+              } else {
+                soundUtils.playDigitPlaceSound();
+              }
             }
             
             // Auto-advance to next unlocked position
@@ -267,7 +289,14 @@ export const useGameStore = create<GameStore>()(
 
             // Play sound feedback if sound is enabled
             if (state.settings.soundEnabled) {
-              soundUtils.playGuessCompleteSound();
+              if (gameWon) {
+                soundUtils.playGameWonSound();
+              } else if (!gameEnded) {
+                soundUtils.playGuessCompleteSound();
+              } else {
+                // Game lost (too many guesses)
+                soundUtils.playGameLostSound();
+              }
             }
 
             // Update stats if game is won
@@ -442,6 +471,11 @@ export const useGameStore = create<GameStore>()(
               // Calculate targetLength based on grid dimensions
               if (action.settings.gridRows !== undefined || action.settings.gridColumns !== undefined) {
                 newSettings.targetLength = newSettings.gridRows * newSettings.gridColumns;
+              }
+
+              // Update sound volume if changed
+              if (action.settings.soundVolume !== undefined) {
+                soundUtils.setVolume(action.settings.soundVolume);
               }
 
               // Start new game if game-affecting settings changed
