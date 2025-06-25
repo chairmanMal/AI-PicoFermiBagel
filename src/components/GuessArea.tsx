@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { HelpCircle, Lock } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
@@ -188,7 +187,77 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 };
 
 const GuessArea: React.FC = () => {
-  const [showHelp, setShowHelp] = useState(false);
+
+
+  // Create toast outside of any stacking context
+  const showToast = () => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483647;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      padding-top: 80px;
+    `;
+    
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 2147483647;
+      ">
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 20px 0;
+          border-bottom: 1px solid #e5e7eb;
+          margin-bottom: 20px;
+        ">
+          <h4 style="margin: 0; font-size: 1.2rem; color: #1f2937;">Guess Position Controls</h4>
+          <button id="close-toast" style="
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px 8px;
+            border-radius: 4px;
+          ">×</button>
+        </div>
+        <div style="padding: 0 20px 20px;">
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Blue Outline:</strong> Auto-fill position - numbers will go here when tapped</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Manual Selection:</strong> Click any unlocked box to make it the active position</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Long-press any filled box to lock/unlock it</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
+        </div>
+      </div>
+    `;
+    
+    const closeToast = () => {
+      document.body.removeChild(overlay);
+    };
+    
+    overlay.addEventListener('click', closeToast);
+    overlay.querySelector('#close-toast')?.addEventListener('click', closeToast);
+    
+    document.body.appendChild(overlay);
+  };
   const { settings, gameState, hintState, dispatch } = useGameStore();
   
   // Calculate row sums if any have been purchased
@@ -316,7 +385,7 @@ const GuessArea: React.FC = () => {
         <h3 className="guess-title">Your Guess</h3>
         <button
           className="help-button"
-          onClick={() => setShowHelp(true)}
+          onClick={showToast}
           aria-label="Show help"
         >
           <HelpCircle size={27} />
@@ -330,38 +399,7 @@ const GuessArea: React.FC = () => {
         {createGuessGrid()}
       </div>
 
-      {/* Help Toast */}
-      {showHelp && (
-        <div className="help-overlay" onClick={() => setShowHelp(false)}>
-          <motion.div
-            className="help-toast"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="help-header">
-              <h4>Guess Position Controls</h4>
-              <button
-                className="help-close"
-                onClick={() => setShowHelp(false)}
-                aria-label="Close help"
-              >
-                ×
-              </button>
-            </div>
-            <div className="help-content">
-              <p><strong>Blue Outline:</strong> Auto-fill position - numbers will go here when tapped</p>
-              <p><strong>Manual Selection:</strong> Click any unlocked box to make it the active position</p>
-              <p><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box</p>
-              <p><strong>Locking:</strong> Long-press any filled box to lock/unlock it</p>
-              <p><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
-              <p><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
-              <p><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
-            </div>
-          </motion.div>
-        </div>
-      )}
+
     </div>
   );
 };

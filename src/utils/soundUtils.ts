@@ -1,7 +1,7 @@
 // Simple sound utility for audio feedback
 class SoundUtils {
   private audioContext: AudioContext | null = null;
-  private masterVolume: number = 0.5; // Default to 50% volume
+  private masterVolume: number = 0.2; // Default to 20% volume
 
   constructor() {
     // Initialize AudioContext on first use
@@ -58,7 +58,7 @@ class SoundUtils {
 
       // Quick fade in/out for a clean click
       gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.1 * this.masterVolume, this.audioContext.currentTime + 0.01);
+      gainNode.gain.linearRampToValueAtTime(0.2 * this.masterVolume, this.audioContext.currentTime + 0.01);
       gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.08);
 
       oscillator.start(this.audioContext.currentTime);
@@ -88,8 +88,8 @@ class SoundUtils {
 
       // Quick attack, then fade out like a water drop
       gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.12 * this.masterVolume, this.audioContext.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.01 * this.masterVolume, this.audioContext.currentTime + 0.15);
+      gainNode.gain.linearRampToValueAtTime(0.25 * this.masterVolume, this.audioContext.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.02 * this.masterVolume, this.audioContext.currentTime + 0.15);
 
       oscillator.start(this.audioContext.currentTime);
       oscillator.stop(this.audioContext.currentTime + 0.15);
@@ -116,7 +116,7 @@ class SoundUtils {
       oscillator.type = 'sine';
 
       gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.15 * this.masterVolume, this.audioContext.currentTime + 0.02);
+      gainNode.gain.linearRampToValueAtTime(0.3 * this.masterVolume, this.audioContext.currentTime + 0.02);
       gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.15);
 
       oscillator.start(this.audioContext.currentTime);

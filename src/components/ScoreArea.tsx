@@ -77,6 +77,7 @@ const ScoreArea: React.FC = () => {
         {showStatsToast && (
           <motion.div
             className="stats-toast-overlay"
+            style={{ zIndex: 99999 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

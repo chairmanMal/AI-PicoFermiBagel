@@ -4,6 +4,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
+  position: relative;
 }
 
 .game-end-message {
@@ -359,6 +360,8 @@
 .submit-btn.btn-success {
   animation: celebrate 0.6s ease-in-out;
 }
+
+/* Remove the transparent spacer - it's not fixing the initial positioning issue */
 
 /* iPad landscape specific adjustments */
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {

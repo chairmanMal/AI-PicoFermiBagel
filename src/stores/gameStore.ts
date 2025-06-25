@@ -31,7 +31,7 @@ const defaultSettings: GameSettings = {
   showTarget: false,
   selectionAreaPosition: 'bottom',
   soundEnabled: true,
-  soundVolume: 0.5, // Default to 50% volume
+  soundVolume: 0.2, // Default to 20% volume
   gridRows: 1,
   gridColumns: 3,
   clearGuessAfterSubmit: true,
@@ -81,6 +81,7 @@ interface GameStore extends AppState {
   getGameTimeMinutes: () => number;
   isGuessValid: () => boolean;
   canSubmitGuess: () => boolean;
+  resetAllSettings: () => void;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -569,6 +570,22 @@ export const useGameStore = create<GameStore>()(
       canSubmitGuess: () => {
         const { gameState, settings } = get();
         return gameState.isGameActive && isValidGuess(gameState.currentGuess, settings.digitRange);
+      },
+
+      resetAllSettings: () => {
+        // Clear localStorage to reset all persisted data
+        localStorage.removeItem('pico-fermi-bagel-store');
+        
+        // Reset to defaults
+        set({
+          settings: defaultSettings,
+          gameState: createInitialGameState(defaultSettings),
+          hintState: createInitialHintState(),
+          scratchpadState: createInitialScratchpadState(defaultSettings.digitRange),
+          stats: new Map(),
+        });
+        
+        console.log('🔄 All settings and data reset to defaults');
       },
     }),
     {

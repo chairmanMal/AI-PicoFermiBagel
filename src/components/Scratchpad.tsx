@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, X } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { HelpCircle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import type { ScratchpadColor } from '@/types/game';
 import './Scratchpad.css';
@@ -13,7 +13,108 @@ const Scratchpad: React.FC = () => {
     dispatch 
   } = useGameStore();
   
-  const [showHintsToast, setShowHintsToast] = useState(false);
+
+
+  // Create toast outside of any stacking context
+  const showToast = () => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+    
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 2147483647;
+      ">
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid #e5e7eb;
+          background: #f8fafc;
+          border-radius: 12px 12px 0 0;
+        ">
+          <h4 style="margin: 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;">Scratchpad Guide</h4>
+          <button id="close-toast" style="
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 18px;
+          ">✕</button>
+        </div>
+        <div style="padding: 20px;">
+          <div style="margin-bottom: 20px;">
+            <h5 style="margin: 0 0 12px 0; color: #1f2937; font-size: 1rem; font-weight: 600;">Color Meanings:</h5>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #e5e7eb; border: 1px solid #d1d5db;"></div>
+                <span><strong>Unknown</strong> - No information yet</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fecaca; border: 1px solid #ef4444;"></div>
+                <span><strong>Bagel</strong> - Definitely NOT in target</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fed7aa; border: 1px solid #f97316;"></div>
+                <span><strong>Unlikely</strong> - Probably not in target</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fde68a; border: 1px solid #f59e0b;"></div>
+                <span><strong>Maybe</strong> - Might be in target</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #bfdbfe; border: 1px solid #3b82f6;"></div>
+                <span><strong>Likely</strong> - Probably in target</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #a7f3d0; border: 1px solid #10b981;"></div>
+                <span><strong>Not Bagel</strong> - Definitely IN target</span>
+              </div>
+            </div>
+          </div>
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 16px;">
+            <h5 style="margin: 0 0 8px 0; color: #1f2937; font-size: 1rem; font-weight: 600;">Tips:</h5>
+            <ul style="margin: 0; padding-left: 20px; color: #6b7280; font-size: 0.85rem; line-height: 1.4;">
+              <li>Click numbers to cycle through colors</li>
+              <li>Use colors to track your logical deductions</li>
+              <li>Hint-purchased numbers are locked with 💡</li>
+              <li>This is just for your memory - doesn't affect scoring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const closeToast = () => {
+      document.body.removeChild(overlay);
+    };
+    
+    overlay.addEventListener('click', closeToast);
+    overlay.querySelector('#close-toast')?.addEventListener('click', closeToast);
+    
+    document.body.appendChild(overlay);
+  };
 
   const colorMeanings: Record<ScratchpadColor, { label: string; description: string }> = {
     default: { label: 'Unknown', description: 'No information yet' },
@@ -70,7 +171,7 @@ const Scratchpad: React.FC = () => {
     <div className="scratchpad">
       <button 
         className="info-button info-button-corner"
-        onClick={() => setShowHintsToast(true)}
+        onClick={showToast}
         title="Show color meanings and tips"
       >
         <HelpCircle size={20} />
@@ -117,63 +218,7 @@ const Scratchpad: React.FC = () => {
         </div>
       </div>
 
-      {/* Hints Toast */}
-      <AnimatePresence>
-        {showHintsToast && (
-          <motion.div
-            className="hints-toast-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowHintsToast(false)}
-          >
-            <motion.div
-              className="hints-toast"
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="toast-header">
-                <h4>Scratchpad Guide</h4>
-                <button 
-                  className="close-button"
-                  onClick={() => setShowHintsToast(false)}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="toast-content">
-                <div className="color-meanings">
-                  <h5>Color Meanings:</h5>
-                  <div className="color-grid">
-                    {Object.entries(colorMeanings).map(([color, info]) => (
-                      <div key={color} className="color-item">
-                        <div className={`color-swatch color-${color}`}></div>
-                        <div className="color-info">
-                          <span className="color-name">{info.label}</span>
-                          <span className="color-desc">{info.description}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="usage-tips">
-                  <h5>Tips:</h5>
-                  <ul>
-                    <li>Click numbers to cycle through colors</li>
-                    <li>Use colors to track your logical deductions</li>
-                    <li>Hint-purchased numbers are locked with 💡</li>
-                    <li>This is just for your memory - doesn't affect scoring</li>
-                  </ul>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 };

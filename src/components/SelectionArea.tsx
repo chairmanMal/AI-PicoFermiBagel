@@ -1,7 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, X } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { isNumberUsedInGuess } from '@/utils/gameLogic';
 import './SelectionArea.css';
@@ -24,10 +22,65 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const [dragIndicatorElement, setDragIndicatorElement] = useState<HTMLDivElement | null>(null);
   const dragRef = useRef<HTMLDivElement>(null);
   const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { dispatch } = useGameStore();
+
+  // Create global drag indicator attached to document.body
+  const createDragIndicator = useCallback((x: number, y: number) => {
+    const indicator = document.createElement('div');
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${x - 35}px;
+      top: ${y - 35}px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: #1f2937;
+      border: 4px solid #3b82f6;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 900;
+      z-index: 2147483647;
+      pointer-events: none;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(59, 130, 246, 0.3);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
+      opacity: 1;
+      visibility: visible;
+    `;
+    indicator.textContent = digit.toString();
+    document.body.appendChild(indicator);
+    setDragIndicatorElement(indicator);
+    console.log(`🎯 Created global drag indicator for digit ${digit} at ${x}, ${y}`);
+    return indicator;
+  }, [digit]);
+
+  // Update drag indicator position
+  const updateDragIndicator = useCallback((x: number, y: number) => {
+    if (dragIndicatorElement) {
+      dragIndicatorElement.style.left = `${x - 35}px`;
+      dragIndicatorElement.style.top = `${y - 35}px`;
+      console.log(`🎯 Updated drag indicator position to ${x}, ${y}`);
+    }
+  }, [dragIndicatorElement]);
+
+  // Remove drag indicator
+  const removeDragIndicator = useCallback(() => {
+    if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
+      try {
+        document.body.removeChild(dragIndicatorElement);
+        console.log(`🎯 Removed drag indicator for digit ${digit}`);
+      } catch (error) {
+        console.warn(`🎯 Failed to remove drag indicator for digit ${digit}:`, error);
+      }
+      setDragIndicatorElement(null);
+    }
+  }, [dragIndicatorElement, digit]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,26 +96,36 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     const touch = e.touches[0];
     const rect = dragRef.current?.getBoundingClientRect();
     if (rect) {
-      setDragStart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+      const relativeX = touch.clientX - rect.left;
+      const relativeY = touch.clientY - rect.top;
+      setDragStart({ x: relativeX, y: relativeY });
       setIsLongPressing(true);
+      
+      console.log(`🎯 Touch start on digit ${digit}:`, {
+        touchClient: `${touch.clientX}, ${touch.clientY}`,
+        buttonRect: `${rect.left}, ${rect.top}, ${rect.width}x${rect.height}`,
+        relative: `${relativeX}, ${relativeY}`
+      });
       
       // Start drag after a short delay to differentiate from tap
       dragTimeoutRef.current = setTimeout(() => {
         setIsLongPressing(false);
         setIsDragging(true);
-        setDragPosition({ x: touch.clientX, y: touch.clientY });
+        createDragIndicator(touch.clientX, touch.clientY);
+        console.log(`🎯 Drag started for digit ${digit} at:`, touch.clientX, touch.clientY);
       }, 200); // Slightly longer delay for better UX
     }
-  }, []);
+  }, [digit]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (dragStart && !isDragging) {
       setIsDragging(true);
+      createDragIndicator(e.clientX, e.clientY);
     }
     if (isDragging) {
-      setDragPosition({ x: e.clientX, y: e.clientY });
+      updateDragIndicator(e.clientX, e.clientY);
     }
-  }, [dragStart, isDragging]);
+  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (dragTimeoutRef.current) {
@@ -75,10 +138,13 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       const touch = e.touches[0];
       if (!isDragging) {
         setIsDragging(true);
+        createDragIndicator(touch.clientX, touch.clientY);
+        console.log(`🎯 Drag started during move for digit ${digit}`);
       }
-      setDragPosition({ x: touch.clientX, y: touch.clientY });
+      updateDragIndicator(touch.clientX, touch.clientY);
+      console.log(`🎯 Touch move for digit ${digit}:`, touch.clientX, touch.clientY);
     }
-  }, [dragStart, isDragging]);
+  }, [dragStart, isDragging, digit, createDragIndicator, updateDragIndicator]);
 
   const handleDragEnd = useCallback((clientX: number, clientY: number) => {
     if (dragTimeoutRef.current) {
@@ -113,8 +179,8 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     setIsDragging(false);
     setIsLongPressing(false);
     setDragStart(null);
-    setDragPosition(null);
-  }, [isDragging, isLongPressing, digit, dispatch, onNumberClick]);
+    removeDragIndicator();
+  }, [isDragging, isLongPressing, digit, dispatch, onNumberClick, removeDragIndicator]);
 
   const handleMouseUp = useCallback((e: MouseEvent) => {
     handleDragEnd(e.clientX, e.clientY);
@@ -142,28 +208,29 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     }
   }, [dragStart, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  // Cleanup drag indicator on unmount or when digit changes
+  React.useEffect(() => {
+    return () => {
+      if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
+        try {
+          document.body.removeChild(dragIndicatorElement);
+        } catch (error) {
+          console.warn(`🎯 Cleanup: Failed to remove drag indicator for digit ${digit}:`, error);
+        }
+      }
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, [dragIndicatorElement, digit]);
+
   const buttonClasses = [
     'number-button',
     isUsed && 'used',
     isUsedInSubmitted && 'used-submitted',
     hintColor !== 'default' && `hint-${hintColor}`,
-    isDragging && 'dragging',
+    // Remove 'dragging' class since we're not styling the original button during drag
   ].filter(Boolean).join(' ');
-
-  const dragStyle = isDragging && dragPosition ? {
-    position: 'fixed' as const,
-    left: dragPosition.x - (dragStart?.x || 0),
-    top: dragPosition.y - (dragStart?.y || 0),
-    zIndex: 9999, // Very high z-index to appear above everything
-    pointerEvents: 'none' as const,
-    transform: 'scale(2.0) rotate(5deg)', // Double the size for maximum visibility
-    opacity: 1,
-    backgroundColor: '#1f2937', // Dark background for contrast
-    color: 'white', // White text for maximum visibility
-    border: '3px solid #3b82f6', // Blue border for visibility
-    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(59, 130, 246, 0.3)', // Strong shadow and glow
-    borderRadius: '8px',
-  } : {};
 
   return (
     <>
@@ -175,28 +242,16 @@ const NumberButton: React.FC<NumberButtonProps> = ({
         role="button"
         tabIndex={0}
         style={{
-          transform: isDragging ? 'scale(1.2)' : isLongPressing ? 'scale(1.1)' : 'scale(1)',
-          opacity: 1, // Keep full opacity to maintain grid layout
+          // NO transforms - keep original button completely static
           cursor: isDragging ? 'grabbing' : 'grab',
-          transition: isDragging ? 'transform 0.1s ease' : 'all 0.2s ease',
-          zIndex: isDragging ? 10 : 1, // Bring to front when dragging
+          // Only subtle visual feedback that doesn't affect layout
           boxShadow: isLongPressing ? '0 0 10px rgba(59, 130, 246, 0.5)' : undefined,
         }}
       >
         <span className="number-text">{digit}</span>
         {isUsed && <div className="used-indicator">•</div>}
       </div>
-      
-      {/* Dragging clone that follows cursor/finger - rendered as portal to appear above everything */}
-      {isDragging && dragPosition && createPortal(
-        <div
-          className={`${buttonClasses} dragging-clone`}
-          style={dragStyle}
-        >
-          <span className="number-text">{digit}</span>
-        </div>,
-        document.body
-      )}
+
     </>
   );
 };
@@ -210,7 +265,113 @@ const SelectionArea: React.FC = () => {
     dispatch 
   } = useGameStore();
 
-  const [showHelp, setShowHelp] = useState(false);
+  // Clean up any orphaned drag indicators on mount/unmount
+  React.useEffect(() => {
+    const cleanupOrphanedIndicators = () => {
+      const indicators = document.querySelectorAll('[style*="z-index: 2147483647"][style*="position: fixed"]');
+      indicators.forEach(indicator => {
+        if (indicator.textContent && /^\d$/.test(indicator.textContent)) {
+          try {
+            document.body.removeChild(indicator);
+            console.log('🧹 Cleaned up orphaned drag indicator');
+          } catch (error) {
+            console.warn('🧹 Failed to clean up orphaned indicator:', error);
+          }
+        }
+      });
+    };
+
+    cleanupOrphanedIndicators();
+    
+    return () => {
+      cleanupOrphanedIndicators();
+    };
+  }, []);
+
+
+
+  // Create toast outside of any stacking context
+  const showToast = () => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+    
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 2147483647;
+      ">
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid #e5e7eb;
+          background: #f8fafc;
+          border-radius: 12px 12px 0 0;
+        ">
+          <h4 style="margin: 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;">How to Select Numbers</h4>
+          <button id="close-toast" style="
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 18px;
+          ">✕</button>
+        </div>
+        <div style="padding: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fecaca; border: 1px solid #ef4444;"></div>
+              <span><strong>Bagel</strong> - Not in target number</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #a7f3d0; border: 1px solid #10b981;"></div>
+              <span><strong>Not Bagel</strong> - In target number</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #e5e7eb; border: 1px solid #9ca3af;"></div>
+              <span><strong>Used</strong> - Currently in guess</span>
+            </div>
+          </div>
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 16px;">
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Auto-fill:</strong> Tap numbers to fill the highlighted position (blue outline)</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Manual:</strong> Click a guess box first, then tap a number</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Drag & Drop:</strong> Hold and drag numbers to specific positions</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Lock:</strong> Long-press filled positions to lock them</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const closeToast = () => {
+      document.body.removeChild(overlay);
+    };
+    
+    overlay.addEventListener('click', closeToast);
+    overlay.querySelector('#close-toast')?.addEventListener('click', closeToast);
+    
+    document.body.appendChild(overlay);
+  };
 
   const handleNumberClick = (digit: number) => {
     if (!gameState.isGameActive) return;
@@ -254,7 +415,7 @@ const SelectionArea: React.FC = () => {
         </div>
         <button
           className="help-button"
-          onClick={() => setShowHelp(true)}
+          onClick={showToast}
           aria-label="Show help"
         >
           <HelpCircle size={27} />
@@ -276,61 +437,7 @@ const SelectionArea: React.FC = () => {
         </div>
       </div>
 
-      {/* Informational Toast */}
-      <AnimatePresence>
-        {showHelp && (
-          <motion.div
-            className="info-toast-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowHelp(false)}
-          >
-            <motion.div
-              className="info-toast"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="info-toast-header">
-                <h4>How to Select Numbers</h4>
-                <button
-                  className="info-close-button"
-                  onClick={() => setShowHelp(false)}
-                  aria-label="Close"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              
-              <div className="info-toast-content">
-                <div className="legend-items">
-                  <div className="legend-item">
-                    <div className="legend-color hint-bagel"></div>
-                    <span><strong>Bagel</strong> - Not in target number</span>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-color hint-not-bagel"></div>
-                    <span><strong>Not Bagel</strong> - In target number</span>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-color used"></div>
-                    <span><strong>Used</strong> - Currently in guess</span>
-                  </div>
-                </div>
-                <div className="usage-info">
-                  <p><strong>Auto-fill:</strong> Tap numbers to fill the highlighted position (blue outline)</p>
-                  <p><strong>Manual:</strong> Click a guess box first, then tap a number</p>
-                  <p><strong>Drag & Drop:</strong> Hold and drag numbers to specific positions</p>
-                  <p><strong>Lock:</strong> Long-press filled positions to lock them</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 };

@@ -425,18 +425,53 @@
 
 .volume-slider {
   background: #e5e7eb;
+  height: 12px; /* Much thicker track for easier interaction */
+  cursor: pointer;
+  padding: 8px 0; /* Add padding for larger touch area */
 }
 
 .volume-slider::-webkit-slider-thumb {
   background: #4f46e5;
-  border: 2px solid white;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  width: 32px; /* Much larger thumb for easier touch interaction */
+  height: 32px; /* Much larger thumb for easier touch interaction */
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+}
+
+.volume-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.6);
 }
 
 .volume-slider::-moz-range-thumb {
   background: #4f46e5;
-  border: 2px solid white;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  width: 32px; /* Much larger thumb for easier touch interaction */
+  height: 32px; /* Much larger thumb for easier touch interaction */
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+}
+
+.volume-slider::-moz-range-thumb:active {
+  transform: scale(1.2);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.6);
 }
 
 /* Game Info */
@@ -475,7 +510,7 @@
 
 .version-text {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #374151;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
 }
@@ -672,7 +707,8 @@
 
 .menu-drawer-container .drawer-content {
   flex: 1;
-  overflow-y: auto; /* Enable scrolling for the content */
+  overflow-y: scroll; /* Force scroll to show scrollbars */
+  -webkit-overflow-scrolling: touch;
   padding: 15px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
   display: flex;
@@ -682,4 +718,49 @@
   border-radius: 0 12px 0 0;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   min-height: 0; /* Allow it to shrink and enable proper scrolling */
+  /* Always show scrollbar for better UX */
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #e2e8f0;
+  /* Prevent iOS swipe gestures that drag down the entire app */
+  touch-action: pan-y;
+}
+
+/* Force visible scrollbars for menu drawer - iOS override */
+.menu-drawer-container .drawer-content {
+  scrollbar-width: thick !important; /* Force thick scrollbars on Firefox */
+  scrollbar-color: #475569 #e2e8f0 !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar {
+  width: 20px !important; /* Even wider for iOS */
+  -webkit-appearance: none !important;
+  background: #e2e8f0 !important;
+  border-left: 1px solid #cbd5e1 !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar-track {
+  background: #f8fafc !important;
+  border-radius: 0 !important;
+  border: none !important;
+  -webkit-box-shadow: inset 2px 0 4px rgba(0,0,0,0.1) !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar-thumb {
+  background: #475569 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  min-height: 40px !important;
+  -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar-thumb:hover {
+  background: #475569 !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar-thumb:active {
+  background: #334155 !important;
+}
+
+.menu-drawer-container .drawer-content::-webkit-scrollbar-corner {
+  background: #e2e8f0 !important;
 } 

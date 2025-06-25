@@ -161,11 +161,15 @@
 .selection-area .numbers-container .numbers-grid .number-button:hover {
   border-color: #4f46e5 !important;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
-  transform: translateY(-2px) !important;
+  /* Remove transform to prevent layout shifts */
+  background: #f8fafc !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button:active {
-  transform: scale(0.98) !important;
+  /* Remove transform to prevent layout shifts */
+  border-color: #3b82f6 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
+  background: #eff6ff !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.used {
@@ -221,7 +225,7 @@
   border-width: 4px !important;
   color: white !important;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 0 3px #3b82f6, 0 0 20px rgba(59, 130, 246, 0.6) !important;
-  z-index: 9999 !important;
+  z-index: 1000 !important;
   pointer-events: none !important;
   opacity: 1 !important;
   transition: none !important;
@@ -355,7 +359,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5100;
+  z-index: 9998;
   padding: 20px;
 }
 
@@ -557,11 +561,24 @@
 }
 
 @keyframes numberSelect {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% { 
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: white;
+  }
+  50% { 
+    border-color: #3b82f6;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+    background: #dbeafe;
+  }
+  100% { 
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: white;
+  }
 }
 
 .number-button.selecting {
   animation: numberSelect 0.3s ease-in-out;
+  /* No transforms - only color and shadow changes */
 } 

@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getFullVersionString } from '@/config/version';
+
+import CustomScrollIndicator from './CustomScrollIndicator';
 import './MenuArea.css';
 
 interface MenuAreaProps {
   onClose: () => void;
 }
 
+
+
 const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
   const [showCustomSettings, setShowCustomSettings] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
+  const drawerContentRef = useRef<HTMLDivElement>(null);
 
   const handleStartNewGame = () => {
     resetGame();
@@ -43,7 +48,26 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     });
   };
 
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    updateSettings({ soundVolume: newVolume });
+    
+    // Play a test sound immediately to demonstrate the volume change
+    import('../utils/soundUtils').then(({ soundUtils }) => {
+      soundUtils.playDigitPlaceSound();
+    });
+  };
 
+  const handleVolumeSliderStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent event bubbling to avoid triggering swipe gestures
+    e.stopPropagation();
+  };
+
+  const handleVolumeSliderMove = (e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent event bubbling and default behavior during slider interaction
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
   const handleOpenManual = () => {
     // Show the manual in an in-app modal instead of trying to open externally
@@ -71,7 +95,8 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
         </button>
       </div>
 
-      <div className="drawer-content">
+      <div className="drawer-content" ref={drawerContentRef} style={{ position: 'relative' }}>
+        <CustomScrollIndicator containerRef={drawerContentRef} />
         <div className="menu-section">
           <button
             className="menu-item primary"
@@ -97,8 +122,6 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             ))}
           </div>
         </div>
-
-
 
         <div className="menu-section">
           <div className="section-header">
@@ -206,21 +229,29 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
           </button>
 
           {settings.soundEnabled && (
-            <div className="setting-group volume-control">
+            <div 
+              className="setting-group volume-control"
+              onTouchStart={handleVolumeSliderStart}
+              onTouchMove={handleVolumeSliderMove}
+            >
               <label>
                 <Volume2 size={16} />
-                Volume: {Math.round((settings.soundVolume || 0.5) * 100)}%
+                Volume: {Math.round((settings.soundVolume || 0.2) * 100)}%
               </label>
               <input
                 type="range"
                 min="0"
                 max="1"
-                step="0.05"
-                value={settings.soundVolume || 0.5}
-                onChange={(e) => updateSettings({ soundVolume: parseFloat(e.target.value) })}
+                step="0.01"
+                value={settings.soundVolume || 0.2}
+                onChange={handleVolumeChange}
+                onTouchStart={handleVolumeSliderStart}
+                onTouchMove={handleVolumeSliderMove}
+                onMouseDown={handleVolumeSliderStart}
+                onMouseMove={handleVolumeSliderMove}
                 className="range-slider volume-slider"
                 style={{
-                  background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.5) * 100}%, #e5e7eb ${(settings.soundVolume || 0.5) * 100}%, #e5e7eb 100%)`
+                  background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.2) * 100}%, #e5e7eb ${(settings.soundVolume || 0.2) * 100}%, #e5e7eb 100%)`
                 }}
               />
             </div>
