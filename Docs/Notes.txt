@@ -1,0 +1,101 @@
+
+Electron is still only displaying a white rotating square
+
+Label the upper block on left side with a centered label "Your Guess"
+
+In custom settings, the number of rows and columns should initially display the current setting
+
+Under difficulty presets, use a row & column notation such as 1x3 implying 1 row with 3 digits or 2x4 implying 2 rows each with 4 digits
+
+Under Medium, list a 2x3 game with 0-12 numbers to select from, and under Hard list a 2x3 game with 0-16 plus a 2x4 game with 1-19 and and under Expert list a  3x3 game with 0-19
+
+----
+
+Electron STILL not working. Add some console message that may help narrow down the problem!
+
+----
+
+Now both vite and electron are showing screens!
+
+On electron (see image),  Notice the scaling problem. The scale of all visible components needs to autoadjust to the screen size! if necessary the number of Recent Guesses displayed coud be reduced to 4 or even 3 guesses
+
+Also, let's mover the "hint purchase" functionality into the hamburger menu itself to free up some screen realestate
+
+Also, move the information icons up closer to the upper right corners of the block they appear in
+
+Add a small subtitle just below the Number Selection title that says "Select numbers for your guess"
+
+Let's move the hamburger icon to the upper left side of the screen to avoid conflict with chevrons icon when it appears.
+
+In hamburger menu, when there are multiple difficulty presets in a section, they should appear on their on line and be individually selectable
+
+A multi row game, should have the Guess boxes laid out in the same manner as the game. For example a 3x3 game should have 3 rows of 3 boxes per row
+
+When displayed on a smaller screen, the hamburger menu contents should be scrollable
+
+---
+
+Move chevron open drawer icon to upper right of display
+
+Center the header and subheader labels in Number Selection block
+
+When main display doesn't fit on screen, scale everything down so no scrolling is required
+
+You can disable console writes as things seem to be working
+
+In Difficulty Preset menu, there are still 2 entries in the hard category that should each be on their own line and individually selectable
+
+When numbers are displayed in Number Selection or scratchpad area, center them horizontally 
+
+Change label "Complete your guess" to "Submit completed guesses"
+
+MOve "Number Selection Block" above the Subnit Guess/Recent Guesses block
+
+----
+
+When displayed, have the right side of the main display always centered vertically vs what is shown in the image
+
+---
+
+To Restore Leaderboard Functionality:
+Simply search for "LEADERBOARD FUNCTIONALITY" or "COMMENTED OUT" and uncomment all the marked sections. The code is fully preserved and ready to be re-enabled.
+
+
+----
+
+To Create a Proper ICO File Later:
+If you want a proper multi-resolution ICO file, you can:
+Install ImageMagick: brew install imagemagick
+Run: magick build/icons/icon.png -define icon:auto-resize=256,128,64,48,32,16 build/icons/icon.ico
+The current setup should work perfectly for development and most use cases!
+
+____
+
+On touch devices (phones and tablets), I'd like to make the menu and the right side 
+display both operate as drawers panels (in addition to how the currently work) that can 'slide' in by an appropriate swipe from the 
+side of the screen towward the sceens center. Assuming only the main display (guess, number picking, and submit elements) is visible, if there is a swipe 
+in the middle 1/3 of the screen vertically from the left toward the mid-line of the screen, 
+the menu should slide into view ie as if the menu's drawer opened. Then if ever there is a leftward swipe from the midline toward 
+the left side of the display should close it if open. Likewise if only the main display is showing, and there 
+is a leftward swipe in the middle 1/3 of the screen vertically, from the right side of the screen
+toward the midline, then the right side display (ie the scratchpad and score drawer) should slide open. And if ever there is a  
+swipe from the midline toward the right side of the screen while the rightside drawer is open, the drawer should close.
+
+Add a "dud' sound when a redundant digit is added to a guess (vs the std audio of a guess position being filled)
+Add a "bupper" sound when a game is lost
+Add a celebration sound when a game is won
+
+When the sound option is turned on, right below add a horzontal volume slider to adjust the sound effect's volume. 
+Default the volume to be nominal value (to the approx value of today's sound effects). When the option is set to disable 
+sound, eliminate the slider
+
+---
+in the rightside drawer, move the sracth pad element to the top and the scor element to the bottom. The collapse the hints by defaul to a single line that asks to show the hints as was the case in the menu drawer prior to the last change
+Let's move the "hints" settings frpm the menu drawer to the rightside drawer and put it between the score and scratch pad elements
+
+Given the last changes let's redefine & rename the two drawers. 
+
+What was the menu drawer with the hamburger icon will now be the settings drawer and it should get a 'gear' icon on the main display page that will open it in addition to the swipe based opening mechanism
+
+Then what was the rightside drawer with the chevron icon will become the new menu drawer and it should get the hammburger icon on the main display page that will open it in addition to the swipe based opening mechanism
+ 

@@ -234,8 +234,20 @@ export const useGameStore = create<GameStore>()(
           }
 
           case 'SUBMIT_GUESS': {
-            if (!isValidGuess(state.gameState.currentGuess, state.settings.digitRange)) return;
+            console.log('🚀 SUBMIT_GUESS: Starting submission process');
+            console.log('🚀 Current guess:', state.gameState.currentGuess);
+            console.log('🚀 Settings:', state.settings);
+            console.log('🚀 Digit range:', state.settings.digitRange);
             
+            const isValid = isValidGuess(state.gameState.currentGuess, state.settings.digitRange);
+            console.log('🚀 Is guess valid?', isValid);
+            
+            if (!isValid) {
+              console.log('🚀 ❌ GUESS INVALID - ABORTING SUBMISSION');
+              return;
+            }
+            
+            console.log('🚀 ✅ GUESS VALID - PROCEEDING WITH SUBMISSION');
             const guess = state.gameState.currentGuess as number[];
             const feedback = evaluateGuess(guess, state.gameState.target);
             const rowDeltas = state.hintState.purchasedHints.rowDeltaHints > 0 
@@ -259,6 +271,8 @@ export const useGameStore = create<GameStore>()(
             console.log('💾 NEW GUESS OBJECT:', newGuess);
 
             const newGuesses = [...state.gameState.guesses, newGuess];
+            console.log('🚀 📝 TOTAL GUESSES AFTER ADDING:', newGuesses.length);
+            console.log('🚀 📝 ALL GUESSES:', newGuesses);
             const timeMinutes = get().getGameTimeMinutes();
             const hintCost = get().getTotalHintCost();
             const newScore = calculateScore(newGuesses.length, timeMinutes, hintCost);
@@ -287,6 +301,8 @@ export const useGameStore = create<GameStore>()(
             };
 
             set({ gameState: newGameState });
+            console.log('🚀 ✅ GAME STATE UPDATED WITH NEW GUESS');
+            console.log('🚀 ✅ Final guess count:', newGameState.guesses.length);
 
             // Play sound feedback if sound is enabled
             if (state.settings.soundEnabled) {

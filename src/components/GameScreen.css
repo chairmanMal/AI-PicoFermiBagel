@@ -1,191 +1,73 @@
-/* App Scaling Wrapper - Only centers content in iPad portrait mode */
+/* App Scaling Wrapper - Conditional approach based on memory */
 .app-scaling-wrapper {
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
-  /* Default: no centering behavior for landscape/non-iPad */
+  overflow: visible; /* Allow content to expand beyond wrapper */
+  /* Default: normal block display for landscape/non-iPad */
   display: block;
   background: transparent;
   position: relative;
 }
 
-/* Only apply centering behavior in iPad portrait mode */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+/* Portrait mode: Disable CSS-based layout, let JavaScript auto-scaling handle everything */
+@media (orientation: portrait) {
   .app-scaling-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000; /* Black background for any letterboxing */
-    /* Position wrapper within safe areas */
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
-    /* Adjust wrapper size to account for safe areas */
-    width: 100vw;
-    height: 100vh;
-    box-sizing: border-box;
+    /* Use same simple block layout as landscape */
+    display: block;
+    /* No special positioning - let JavaScript handle it */
+    background: transparent;
+  }
+  
+  /* Hide right panel completely in portrait mode */
+  .right-panel {
+    display: none !important;
+  }
+  
+  /* Hide mobile drawer when closed in portrait mode */
+  .mobile-drawer:not(.open) {
+    display: none !important;
+  }
+  
+  /* Hide settings drawer when closed in portrait mode */
+  .settings-drawer:not(.open) {
+    display: none !important;
   }
 }
 
 .game-screen {
-  /* Default behavior for landscape and non-iPad: full viewport with safe area padding */
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
-  
-  /* Add safe area padding for landscape and non-iPad modes */
-  padding-top: env(safe-area-inset-top);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
+  position: relative; /* Provides positioning context for absolutely positioned children */
+  overflow: visible; /* Allow content to expand beyond game screen */
   transform-origin: center center;
   
   /* Prevent whole screen from being draggable - disable swipe gestures */
   touch-action: none;
-  /* Force correct positioning from start */
   box-sizing: border-box;
   
-  /* Auto-scale if content doesn't fit */
-  transform: scale(1);
-  transition: transform 0.3s ease;
+  /* Full viewport with 20px padding for content clearance */
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 20px; /* 20px padding on all sides - auto-scaling works within this space */
 }
 
-/* iPad Portrait Mode ONLY - Use scaling wrapper approach */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+/* Portrait mode: Let JavaScript auto-scaling handle everything */
+@media (orientation: portrait) {
   .game-screen {
-    /* Size to fit within safe areas for iPad portrait */
-    width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    
-    /* Remove individual safe area padding since wrapper handles it */
-    padding: 0;
-  }
-}
-
-/* Auto-scaling for screens that don't fit - Portrait only to avoid iPad landscape issues */
-@media (max-height: 1000px) and (min-width: 768px) and (orientation: portrait) {
-  .game-screen {
-    transform: scale(0.95);
-    height: 105vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.95) !important;
+    /* Use same dimensions as landscape - let JavaScript handle scaling */
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    /* Keep 20px padding for content clearance */
+    padding: 20px;
+    /* Keep gradient background */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
 }
 
-@media (max-height: 900px) and (min-width: 768px) and (orientation: portrait) {
-  .game-screen {
-    transform: scale(0.90);
-    height: 111vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.90) !important;
-  }
-}
-
-@media (max-height: 800px) and (min-width: 768px) and (orientation: portrait) {
-  .game-screen {
-    transform: scale(0.92);
-    height: 108.7vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.92) !important;
-  }
-}
-
-@media (max-height: 700px) {
-  .game-screen {
-    transform: scale(0.82);
-    height: 122vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.82) !important;
-  }
-}
-
-@media (max-height: 600px) {
-  .game-screen {
-    transform: scale(0.72);
-    height: 139vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.72) !important;
-  }
-}
-
-@media (max-height: 500px) {
-  .game-screen {
-    transform: scale(0.62);
-    height: 161vh; /* Compensate for scale */
-    transform-origin: top center;
-  }
-  
-  .container {
-    padding: 60px 20px calc(20px + env(safe-area-inset-bottom) * 0.62) !important;
-  }
-}
-
-/* Auto-scaling for narrow screens */
-@media (max-width: 500px) {
-  .game-screen {
-    transform: scale(0.92);
-    width: 108.7vw; /* Compensate for scale */
-    transform-origin: top left;
-  }
-}
-
-@media (max-width: 400px) {
-  .game-screen {
-    transform: scale(0.85);
-    width: 117.6vw; /* Compensate for scale */
-    transform-origin: top left;
-  }
-}
-
-@media (max-width: 350px) {
-  .game-screen {
-    transform: scale(0.75);
-    width: 133.3vw; /* Compensate for scale */
-    transform-origin: top left;
-  }
-}
-
-/* Combined small screen scaling */
-@media (max-width: 500px) and (max-height: 700px) {
-  .game-screen {
-    transform: scale(0.68);
-    width: 147vw;
-    height: 147vh;
-    transform-origin: top left;
-  }
-}
-
-@media (max-width: 400px) and (max-height: 600px) {
-  .game-screen {
-    transform: scale(0.62);
-    width: 161vw;
-    height: 161vh;
-    transform-origin: top left;
-  }
-}
+/* Removed complex auto-scaling - using simple conditional wrapper approach instead */
 
 /* Settings Button */
 .settings-button {
@@ -257,7 +139,7 @@
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden; /* Restore overflow hidden for drawer */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
 }
@@ -312,8 +194,6 @@
   background: transparent !important;
 }
 
-
-
 .menu-drawer .drawer-content,
 .menu-drawer-container .drawer-content {
   flex: 1;
@@ -333,21 +213,16 @@
 .container {
   flex: 1;
   display: flex;
-  flex-direction: row; /* Row layout for desktop */
+  flex-direction: column; /* Column layout for mobile - will be overridden for desktop */
   gap: 25px;
-  padding: 40px 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 20px; /* Reduced padding for better space utilization */
   width: 100%;
-  align-items: flex-start;
-  position: relative;
-  justify-content: center;
+  align-items: center; /* Center content horizontally */
+  justify-content: center; /* Center content vertically */
+  position: relative; /* Default positioning - can be overridden by JavaScript */
   /* Prevent swipe gestures on background */
   touch-action: none;
   box-sizing: border-box;
-  /* Reasonable safe area handling */
-  padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  min-height: calc(100vh - env(safe-area-inset-top) - 80px);
 }
 
 /* Main Content Area */
@@ -357,7 +232,7 @@
   flex-direction: column;
   gap: clamp(15px, 3vw, 25px);
   min-width: 0;
-  max-width: 800px; /* Constrain main content width for better centering */
+  width: 100%; /* Use full available width */
   /* Prevent swipe gestures on background areas */
   touch-action: none;
 }
@@ -365,7 +240,8 @@
 /* Title Section */
 .title-section {
   text-align: center;
-  margin-bottom: clamp(10px, 2vw, 20px);
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .game-title {
@@ -383,7 +259,7 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Game Sections - Dynamic width matching number selection array */
+/* Game Sections - Use full available width within container */
 .guess-section,
 .submit-section,
 .selection-section {
@@ -392,11 +268,7 @@
   padding: clamp(15px, 3vw, 25px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-  /* Dynamic width calculation: 8 buttons * button width + 7 gaps + container padding */
-  width: min(
-    calc(8 * clamp(60px, 12vw, 80px) + 7 * clamp(15px, 3vw, 20px) + 2rem),
-    calc(100vw - 40px)
-  );
+  width: 100%; /* Use full available width */
   margin: 0 auto;
 }
 
@@ -416,6 +288,22 @@
   flex-direction: column;
   gap: clamp(15px, 3vw, 25px);
   position: relative;
+}
+
+/* Default: Show inline submit section, hide sidebar one */
+.submit-section-inline {
+  display: block;
+}
+
+.submit-section-sidebar {
+  display: none;
+}
+
+/* Override for iPad landscape - show sidebar submit section */
+@media (orientation: landscape) and (min-height: 768px) and (max-height: 1024px) {
+  .submit-section-sidebar {
+    display: flex !important; /* Force show in landscape */
+  }
 }
 
 /* Right Panel - Desktop - Absolutely positioned via JavaScript */
@@ -480,6 +368,7 @@
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Restore overflow hidden for drawer */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
 }
@@ -533,71 +422,6 @@
   /* Always show scrollbar for better UX */
   scrollbar-width: auto;
   scrollbar-color: #64748b #e2e8f0;
-}
-
-/* Force visible scrollbars for drawer content - iOS override */
-.drawer-content {
-  scrollbar-width: thick !important; /* Force thick scrollbars on Firefox */
-  scrollbar-color: #475569 #e2e8f0 !important;
-}
-
-.drawer-content::-webkit-scrollbar {
-  width: 20px !important; /* Even wider for iOS */
-  -webkit-appearance: none !important;
-  background: #e2e8f0 !important;
-  border-left: 1px solid #cbd5e1 !important;
-}
-
-.drawer-content::-webkit-scrollbar-track {
-  background: #f8fafc !important;
-  border-radius: 0 !important;
-  border: none !important;
-  -webkit-box-shadow: inset 2px 0 4px rgba(0,0,0,0.1) !important;
-}
-
-.drawer-content::-webkit-scrollbar-thumb {
-  background: #475569 !important;
-  border-radius: 0 !important;
-  border: none !important;
-  min-height: 40px !important;
-  -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
-}
-
-.drawer-content::-webkit-scrollbar-thumb:hover {
-  background: #475569 !important;
-}
-
-.drawer-content::-webkit-scrollbar-thumb:active {
-  background: #334155 !important;
-}
-
-.drawer-content::-webkit-scrollbar-corner {
-  background: #e2e8f0 !important;
-}
-
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  z-index: 4000;
-}
-
-/* Minimal iPad portrait mode safe area fix */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-  .container {
-    padding: 40px 20px !important;
-    padding-bottom: calc(30px + env(safe-area-inset-bottom)) !important;
-    min-height: calc(100vh - env(safe-area-inset-top) - 100px) !important;
-    margin-bottom: 0 !important;
-  }
-  
-  /* Minimal positioning for iPad */
-  .game-screen {
-    padding-bottom: env(safe-area-inset-bottom) !important;
-  }
 }
 
 /* Responsive Design */
@@ -725,7 +549,7 @@
   }
 }
 
-/* Very small screens - aggressive scaling */
+/* Very small screens - aggressive scaling (exclude iPad portrait) */
 @media (max-width: 320px) {
   .game-screen {
     transform: scale(0.75);
@@ -745,7 +569,7 @@
   }
 }
 
-/* Landscape mobile devices */
+/* Landscape mobile devices (exclude iPad portrait) */
 @media (max-height: 500px) and (orientation: landscape) {
   .game-screen {
     transform: scale(0.8);
@@ -762,6 +586,133 @@
   
   .main-content {
     gap: 8px;
+  }
+}
+
+/* iPad Portrait Mode - Remove ALL constraints, let JavaScript handle everything */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .game-screen {
+    /* Remove all constraints - let JavaScript handle positioning */
+    transform: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    transform-origin: top left !important;
+    padding: 0 !important; /* No padding - JavaScript will handle all spacing */
+    margin: 0 !important; /* No margin - JavaScript will handle all positioning */
+  }
+  
+  .container {
+    /* Remove ALL constraints - let JavaScript have full control */
+    transform: none !important;
+    transform-origin: top left !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important; /* Reset to allow JavaScript absolute positioning */
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-width: none !important;
+    display: flex !important; /* Maintain flex for layout */
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 20px !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Show inline submit section, hide sidebar one - make more specific than landscape rule */
+  .submit-section.submit-section-inline {
+    display: block !important;
+  }
+  
+  .submit-section.submit-section-sidebar {
+    display: none !important;
+  }
+}
+
+/* iPad Landscape Mode - Disable ALL CSS scaling, let JavaScript handle it exclusively */
+@media (orientation: landscape) and (min-height: 768px) and (max-height: 1024px) {
+  /* Debug: Test if media query matches at all */
+  body {
+    background: yellow !important;
+  }
+  .game-screen {
+    transform: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    transform-origin: top left !important;
+    /* Debug: This should make the background red if media query matches */
+    background: linear-gradient(135deg, #ff0000 0%, #990000 100%) !important;
+    /* Standard padding, JavaScript will handle keepout areas */
+    padding: 20px;
+  }
+  
+  .container {
+    transform: none; /* Will be set by JavaScript */
+    transform-origin: top left; /* Will be set by JavaScript */
+    /* Reset all layout properties - let JavaScript handle everything */
+    display: block !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    box-sizing: border-box !important;
+    max-width: none !important;
+  }
+  
+  .main-content {
+    /* Reset layout properties - let JavaScript handle everything */
+    flex: none !important;
+    display: block !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  
+  .game-sections-wrapper {
+    /* Reset layout properties */
+    display: block !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+  
+  /* Hide inline submit section, show sidebar submit section for landscape */
+  .submit-section.submit-section-inline {
+    display: none !important;
+  }
+  
+  .submit-section.submit-section-sidebar {
+    /* Let JavaScript control this - don't force hide */
+  }
+  
+  /* Hide the right panel since we're using mobile drawer layout */
+  .right-panel {
+    display: none !important;
+  }
+  
+  /* Mobile drawer - let JavaScript control visibility and positioning */
+  .mobile-drawer {
+    /* Don't force hide - let JavaScript control this */
+  }
+  
+  /* Hide the hamburger menu button in landscape since drawer is always open */
+  .drawer-toggle-top-right {
+    display: none !important;
+  }
+  
+  /* Standardize heading font sizes in iPad landscape mode */
+  .guess-title,
+  .selection-title {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem) !important; /* Match selection-title size */
   }
 }
 
@@ -811,22 +762,23 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Dynamic landscape scaling for all tablets - responsive to actual viewport */
-@media (min-width: 768px) and (orientation: landscape) {
+/* Dynamic landscape scaling for all tablets - responsive to actual viewport (exclude iPad) */
+@media (min-width: 1025px) and (orientation: landscape) {
   .game-screen {
     /* Debug marker - this will show in computed styles */
     --debug-media-query: "landscape-768px-applied";
     
-    /* Use optimal iPad landscape scaling from memory */
-    transform: scale(0.65) !important;
+    /* Remove fixed scaling - let JavaScript handle it */
+    transform: none !important;
     transform-origin: top left;
     
-    /* Container size adjusts inversely to scaling */
-    width: 153.85vw; /* 100vw / 0.65 */
-    height: 153.85vh; /* 100vh / 0.65 */
-    overflow: hidden;
-    /* Add bottom margin to avoid home indicator overlay */
-    margin-bottom: 40px;
+    /* Use normal viewport size but allow overflow */
+    width: 100vw;
+    height: auto !important; /* Let height be determined by content */
+    min-height: 100vh; /* Minimum full viewport height */
+    overflow: visible; /* Allow content to expand */
+    /* Remove bottom margin */
+    margin-bottom: 0;
   }
   
   .container {
@@ -854,8 +806,8 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     flex-direction: column;
     align-items: center; /* Center the game sections horizontally */
     justify-content: flex-start; /* Align content to top */
-    /* Center the main content by offsetting 30% of right panel width */
-    margin-left: calc(290px * 1.2 * 0.30); /* 30% of right panel width (104.4px) */
+    /* Remove the margin offset that was pushing content to the right */
+    margin-left: auto;
     margin-right: auto;
   }
   
@@ -926,13 +878,13 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     gap: clamp(15px, 3vw, 25px);
   }
   
-  /* Settings drawer positioning for iPad landscape - full height with content padding */
+  /* Settings drawer positioning for iPad landscape - normal height */
   .settings-drawer {
-    /* Position from top like original but with increased height */
+    /* Position from top with normal height */
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    height: calc(130vh) !important; /* 30% taller than viewport */
+    height: 100vh !important; /* Normal viewport height */
     width: calc(300px * 1.2) !important; /* 20% wider */
     background: transparent !important;
     z-index: 200 !important;
@@ -955,7 +907,7 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     flex-shrink: 0 !important;
   }
   
-  /* Settings drawer content - white background with CSS mask for transparent cutout */
+  /* Settings drawer content - simplified without CSS mask */
   .settings-drawer .menu-drawer-container .drawer-content {
     flex: 1 !important;
     overflow-y: auto !important;
@@ -967,28 +919,14 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     background: white !important; /* White background */
     border-radius: 0 12px 0 0 !important;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
-    min-height: calc(130vh - 100px) !important; /* 30% taller content area */
-    max-height: none !important; /* No height restrictions */
+    min-height: calc(100vh - 100px) !important; /* Normal height instead of 130vh */
+    max-height: calc(100vh - 100px) !important; /* Set max height to prevent overflow */
     /* Always show scrollbar for better UX */
     scrollbar-width: auto !important;
     scrollbar-color: #64748b #e2e8f0 !important;
-    
-    /* CSS mask to create transparent cutout at top */
-    -webkit-mask: linear-gradient(to bottom, 
-      transparent 0%, 
-      transparent calc(1.8rem + 1.1rem + clamp(10px, 2vw, 20px) + clamp(20px, 4vw, 40px)), 
-      white calc(1.8rem + 1.1rem + clamp(10px, 2vw, 20px) + clamp(20px, 4vw, 40px)), 
-      white 100%
-    ) !important;
-    mask: linear-gradient(to bottom, 
-      transparent 0%, 
-      transparent calc(1.8rem + 1.1rem + clamp(10px, 2vw, 20px) + clamp(20px, 4vw, 40px)), 
-      white calc(1.8rem + 1.1rem + clamp(10px, 2vw, 20px) + clamp(20px, 4vw, 40px)), 
-      white 100%
-    ) !important;
-    
-    /* Add top padding to push content below the transparent area */
-    padding-top: calc(1.8rem + 1.1rem + clamp(10px, 2vw, 20px) + clamp(20px, 4vw, 40px) + 15px) !important;
+    /* Remove CSS mask - it was interfering with scrolling */
+    /* Use normal padding instead of excessive top padding */
+    padding-top: 15px !important;
   }
   
   /* Force visible scrollbars for settings drawer - iOS override */
@@ -1057,4 +995,157 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
 .Toastify__toast-container--bottom-left,
 .Toastify__toast-container--bottom-center {
   z-index: 9999 !important;
+}
+
+/* iPad Portrait mode: Pre-position drawer content to prevent jumping */
+@media (orientation: portrait) and (min-width: 768px) and (max-width: 1024px) {
+  /* Move title up halfway to the top of the screen */
+  .title-section {
+    margin-top: 10px !important; /* Much smaller top margin to move it up */
+    margin-bottom: 10px !important;
+  }
+  
+  /* Pre-position mobile drawer content to prevent jumping */
+  .mobile-drawer .drawer-content {
+    /* Position absolutely from the start */
+    position: absolute !important;
+    /* Position 20px below the hamburger menu button bottom edge */
+    top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
+    /* Align right edge with the icon's center */
+    right: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
+    /* Size to match settings drawer */
+    width: clamp(450px, 60vw, 630px) !important;
+    /* Set height to fit content, not extend much beyond score element */
+    height: auto !important;
+    max-height: calc(100vh - 20px - 48px - 30px - 40px) !important; /* Leave room at bottom */
+    /* Scale to match settings drawer */
+    transform: scale(0.85) !important;
+    transform-origin: top right !important;
+    /* Visual styles */
+    background: white !important;
+    border-radius: 0 12px 0 0 !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
+    padding: 15px !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    overflow-y: scroll !important; /* Force scroll instead of auto */
+    -webkit-overflow-scrolling: touch !important;
+    /* Custom scrollbar implementation */
+    scrollbar-width: thick !important;
+    scrollbar-color: #475569 #e2e8f0 !important;
+    touch-action: pan-y !important;
+    /* Remove any conflicting styles */
+    min-height: unset !important;
+    margin: 0 !important;
+    flex: unset !important;
+  }
+  
+  /* Custom scrollbar styles for mobile drawer in iPad portrait */
+  .mobile-drawer .drawer-content::-webkit-scrollbar {
+    width: 20px !important;
+    -webkit-appearance: none !important;
+    background: #e2e8f0 !important;
+    border-left: 1px solid #cbd5e1 !important;
+  }
+  
+  .mobile-drawer .drawer-content::-webkit-scrollbar-track {
+    background: #f8fafc !important;
+    border-radius: 0 !important;
+    border: none !important;
+    -webkit-box-shadow: inset 2px 0 4px rgba(0,0,0,0.1) !important;
+  }
+  
+  .mobile-drawer .drawer-content::-webkit-scrollbar-thumb {
+    background: #475569 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    min-height: 40px !important;
+    -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
+  }
+  
+  .mobile-drawer .drawer-content::-webkit-scrollbar-thumb:hover {
+    background: #475569 !important;
+  }
+  
+  .mobile-drawer .drawer-content::-webkit-scrollbar-thumb:active {
+    background: #334155 !important;
+  }
+  
+  .mobile-drawer .drawer-content::-webkit-scrollbar-corner {
+    background: #e2e8f0 !important;
+  }
+  
+  /* Pre-position settings drawer content to prevent jumping */
+  .settings-drawer .drawer-content {
+    /* Position absolutely from the start */
+    position: absolute !important;
+    /* Position 20px below the settings button bottom edge */
+    top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
+    /* Align left edge with the icon's center */
+    left: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
+    /* Size to match mobile drawer */
+    width: clamp(450px, 60vw, 630px) !important;
+    /* Set height to fit content, not extend much beyond content */
+    height: auto !important;
+    max-height: calc(100vh - 20px - 48px - 30px - 40px) !important; /* Leave room at bottom */
+    /* Scale to match mobile drawer */
+    transform: scale(0.85) !important;
+    transform-origin: top left !important;
+    /* Visual styles */
+    background: white !important;
+    border-radius: 0 12px 0 0 !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
+    padding: 15px !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    overflow-y: scroll !important; /* Force scroll instead of auto */
+    -webkit-overflow-scrolling: touch !important;
+    /* Custom scrollbar implementation */
+    scrollbar-width: thick !important;
+    scrollbar-color: #475569 #e2e8f0 !important;
+    touch-action: pan-y !important;
+    /* Remove any conflicting styles */
+    min-height: unset !important;
+    margin: 0 !important;
+    flex: unset !important;
+  }
+  
+  /* Custom scrollbar styles for settings drawer in iPad portrait */
+  .settings-drawer .drawer-content::-webkit-scrollbar {
+    width: 20px !important;
+    -webkit-appearance: none !important;
+    background: #e2e8f0 !important;
+    border-left: 1px solid #cbd5e1 !important;
+  }
+  
+  .settings-drawer .drawer-content::-webkit-scrollbar-track {
+    background: #f8fafc !important;
+    border-radius: 0 !important;
+    border: none !important;
+    -webkit-box-shadow: inset 2px 0 4px rgba(0,0,0,0.1) !important;
+  }
+  
+  .settings-drawer .drawer-content::-webkit-scrollbar-thumb {
+    background: #475569 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    min-height: 40px !important;
+    -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
+  }
+  
+  .settings-drawer .drawer-content::-webkit-scrollbar-thumb:hover {
+    background: #475569 !important;
+  }
+  
+  .settings-drawer .drawer-content::-webkit-scrollbar-thumb:active {
+    background: #334155 !important;
+  }
+  
+  .settings-drawer .drawer-content::-webkit-scrollbar-corner {
+    background: #e2e8f0 !important;
+  }
 }

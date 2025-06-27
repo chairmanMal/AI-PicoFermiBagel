@@ -560,6 +560,22 @@
   }
 }
 
+/* iPad Portrait Mode - Override any component-level scaling */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .selection-area {
+    transform: none !important;
+    transform-origin: top left !important;
+  }
+}
+
+/* iPad Landscape Mode - Override any component-level scaling */
+@media (min-height: 768px) and (max-height: 1024px) and (orientation: landscape) {
+  .selection-area {
+    transform: none !important;
+    transform-origin: top left !important;
+  }
+}
+
 @keyframes numberSelect {
   0% { 
     border-color: #d1d5db;

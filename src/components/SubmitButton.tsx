@@ -12,6 +12,17 @@ const SubmitButton: React.FC = () => {
     settings
   } = useGameStore();
 
+  // Debug logging
+  const containerInfo = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (containerInfo.current) {
+      const parentClasses = containerInfo.current.parentElement?.className || 'unknown';
+      const isInOrangeContainer = !!containerInfo.current.closest('.orange-portrait-container');
+      console.log(`🔍 SubmitButton render - guesses: ${gameState.guesses.length}, gameActive: ${gameState.isGameActive}, parent: ${parentClasses}, inOrange: ${isInOrangeContainer}`);
+    }
+  });
+  console.log(`🔍 SubmitButton render - guesses: ${gameState.guesses.length}, gameActive: ${gameState.isGameActive}`);
+
   const historyListRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new guesses are added
@@ -63,7 +74,7 @@ const SubmitButton: React.FC = () => {
   const buttonConfig = getButtonContent();
 
   return (
-    <div className="submit-button-area">
+    <div className="submit-button-area" ref={containerInfo}>
       {(gameState.isGameWon || (!gameState.isGameActive && !gameState.isGameWon)) && (
         <motion.div
           className="game-end-message"
@@ -132,7 +143,7 @@ const SubmitButton: React.FC = () => {
 
       {/* Scrollable Guess History */}
       <div className="guess-history-section">
-        <h4 className="history-title">Recent Guesses</h4>
+        <h4 className="history-title">Recent Guesses ({gameState.guesses.length})</h4>
         <div className="guess-history-list" ref={historyListRef}>
           {gameState.guesses.length > 0 ? (
             gameState.guesses.map((guess, index) => (
