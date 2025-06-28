@@ -399,14 +399,17 @@ const GameScreen: React.FC = () => {
               gameWrapper.style.transform = '';
               gameWrapper.style.transformOrigin = 'top center';
               
+              // Force layout calculation by accessing offsetHeight
+              gameWrapper.offsetHeight;
+              
               // Measure content and container
               const containerRect = orangeContainer.getBoundingClientRect();
               const contentHeight = gameWrapper.scrollHeight;
               const contentWidth = gameWrapper.scrollWidth;
               
-              // Calculate available space (subtract padding)
-              const availableHeight = containerRect.height - 20; // 10px padding top/bottom
-              const availableWidth = containerRect.width - 20; // 10px padding left/right
+              // Calculate available space (no padding subtraction - use full container)
+              const availableHeight = containerRect.height;
+              const availableWidth = containerRect.width;
               
               // Calculate scale factors
               const scaleX = availableWidth / contentWidth;
@@ -420,18 +423,20 @@ const GameScreen: React.FC = () => {
                 scaleX: scaleX.toFixed(3),
                 scaleY: scaleY.toFixed(3),
                 finalScale: scale.toFixed(3),
-                willScale: scale < 1 ? 'YES' : 'NO'
+                willScale: scale < 1 ? 'YES' : 'NO',
+                contentOverflow: contentHeight > availableHeight ? 'HEIGHT' : contentWidth > availableWidth ? 'WIDTH' : 'NONE'
               });
               
               // Apply scaling if content doesn't fit
               if (scale < 1) {
                 gameWrapper.style.transform = `scale(${scale})`;
+                gameWrapper.style.transformOrigin = 'top center';
                 console.log(`🎯 ✅ Applied auto-scaling: ${scale.toFixed(3)}x to orange container content`);
               } else {
                 console.log(`🎯 ✅ No scaling needed - content fits perfectly`);
               }
             }
-          }, 100); // Allow time for layout to stabilize
+          }, 200); // Longer delay to ensure all content is rendered
         }
       }, 100); // Allow time for title positioning to complete
     }
@@ -1529,6 +1534,62 @@ const GameScreen: React.FC = () => {
     return cleanup;
   }, []);
 
+  // Re-run auto-scaling when guesses change (for iPad portrait mode)
+  useEffect(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isPortrait = height > width;
+    const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
+    
+    if (isIpadPortrait) {
+      // Delay to allow DOM to update after guess changes
+      setTimeout(() => {
+        const orangeContainer = document.querySelector('.orange-portrait-container') as HTMLElement;
+        const gameWrapper = orangeContainer?.querySelector('.game-sections-wrapper') as HTMLElement;
+        
+        if (orangeContainer && gameWrapper) {
+          console.log(`🎯 🔄 RE-SCALING after guess change (${gameState.guesses.length} guesses)`);
+          
+          // Reset any existing transforms
+          gameWrapper.style.transform = '';
+          gameWrapper.style.transformOrigin = 'top center';
+          
+          // Force layout calculation
+          gameWrapper.offsetHeight;
+          
+          // Measure content and container
+          const containerRect = orangeContainer.getBoundingClientRect();
+          const contentHeight = gameWrapper.scrollHeight;
+          const contentWidth = gameWrapper.scrollWidth;
+          
+          // Calculate available space
+          const availableHeight = containerRect.height;
+          const availableWidth = containerRect.width;
+          
+          // Calculate scale factors
+          const scaleX = availableWidth / contentWidth;
+          const scaleY = availableHeight / contentHeight;
+          const scale = Math.min(scaleX, scaleY, 1);
+          
+          console.log(`🎯 🔄 RE-SCALING CALCULATION:`, {
+            guesses: gameState.guesses.length,
+            containerSize: `${containerRect.width.toFixed(0)}x${containerRect.height.toFixed(0)}`,
+            contentSize: `${contentWidth}x${contentHeight}`,
+            finalScale: scale.toFixed(3),
+            willScale: scale < 1 ? 'YES' : 'NO'
+          });
+          
+          // Apply scaling if needed
+          if (scale < 1) {
+            gameWrapper.style.transform = `scale(${scale})`;
+            gameWrapper.style.transformOrigin = 'top center';
+            console.log(`🎯 ✅ RE-APPLIED auto-scaling: ${scale.toFixed(3)}x after guess change`);
+          }
+        }
+      }, 100);
+    }
+  }, [gameState.guesses.length]); // Re-run when number of guesses changes
+
   // Position and scale menu drawer content in iPad portrait mode
   useEffect(() => {
     const width = window.innerWidth;
@@ -1686,8 +1747,8 @@ const GameScreen: React.FC = () => {
             const titleSection = document.querySelector('.title-section');
             let orangeTop = 120; // Default fallback
             let orangeHeight = height - 140; // Default fallback (120 + 20)
-            const orangeLeft = 20; // Same as green container
-            const orangeWidth = `calc(100vw - 40px)`; // Same as green container
+            const orangeLeft = 10; // Smaller margins for more width
+            const orangeWidth = `calc(100vw - 20px)`; // Full width minus smaller margins
             
             if (titleSection) {
               const titleRect = titleSection.getBoundingClientRect();
@@ -1712,7 +1773,7 @@ const GameScreen: React.FC = () => {
                   flexDirection: 'column',
                   justifyContent: 'flex-start',
                   alignItems: 'center',
-                  padding: '10px',
+                  padding: '0px', // Remove padding to allow full width
                   overflow: 'visible', // Allow content to be visible
                 }}
               >
@@ -1723,7 +1784,7 @@ const GameScreen: React.FC = () => {
                   flexDirection: 'column', 
                   gap: 'clamp(15px, 3vw, 25px)', 
                   justifyContent: 'flex-start', 
-                  alignItems: 'center', 
+                  alignItems: 'center', // Keep other sections centered 
                   overflowY: 'visible',
                   transformOrigin: 'top center'
                 }}>
@@ -1733,7 +1794,7 @@ const GameScreen: React.FC = () => {
                   <div className="guess-section" ref={guessElementRef} style={{ border: '3px solid cyan', backgroundColor: 'rgba(0,255,255,0.1)' }}>
                     <GuessArea />
                   </div>
-                  {/* Number Selection */}
+                  {/* Number Selection - Natural width */}
                   <div className="selection-section">
                     <SelectionArea />
                   </div>
@@ -1742,7 +1803,7 @@ const GameScreen: React.FC = () => {
                     border: '2px solid blue', 
                     backgroundColor: 'rgba(0,0,255,0.1)', 
                     flex: '1', // Allow it to grow to fill remaining space
-                    minHeight: '200px', // Reduced minimum height
+                    minHeight: '0', // Let it be as small as needed
                     maxHeight: 'none', // Allow unlimited growth
                     overflow: 'visible',
                     display: 'flex',

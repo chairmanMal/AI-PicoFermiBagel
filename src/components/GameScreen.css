@@ -442,14 +442,12 @@
     width: 100%;
   }
   
-  /* Responsive section widths - dynamic tablet sizing */
+  /* Responsive section widths - fully dynamic */
   .guess-section,
   .submit-section,
   .selection-section {
-    width: min(
-      calc(8 * clamp(50px, 10vw, 70px) + 7 * clamp(12px, 2.5vw, 17px) + 2rem),
-      calc(100vw - 30px)
-    );
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
   }
 }
 
@@ -489,10 +487,8 @@
   .submit-section,
   .selection-section {
     padding: clamp(12px, 2.5vw, 20px);
-    width: min(
-      calc(8 * clamp(45px, 9vw, 60px) + 7 * clamp(11px, 2vw, 15px) + 2rem),
-      calc(100vw - 20px)
-    );
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
   }
 }
 
@@ -542,10 +538,8 @@
   .guess-section,
   .submit-section,
   .selection-section {
-    width: min(
-      calc(8 * clamp(35px, 7vw, 50px) + 7 * clamp(9px, 1.5vw, 12px) + 2rem),
-      calc(100vw - 16px)
-    );
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
   }
 }
 
@@ -590,7 +584,7 @@
 }
 
 /* iPad Portrait Mode - Remove ALL constraints, let JavaScript handle everything */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+@media (orientation: portrait) and (min-width: 375px) {
   .game-screen {
     /* Remove all constraints - let JavaScript handle positioning */
     transform: none !important;
@@ -629,6 +623,23 @@
   
   .submit-section.submit-section-sidebar {
     display: none !important;
+  }
+  
+  /* Remove all artificial expansion - let content be natural */
+  .selection-section {
+    width: 100% !important; /* Use natural container width */
+    max-width: none !important; /* Remove constraints */
+    margin-left: 0 !important; /* No artificial breakout */
+    margin-right: 0 !important;
+  }
+  
+  /* Apply same natural sizing to all sections for consistency */
+  .guess-section,
+  .submit-section {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
 
@@ -827,10 +838,8 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   .submit-section,
   .selection-section {
     padding: 15px 20px; /* More padding */
-    width: min(
-      calc(1.2 * (8 * 55px + 7 * 12px + 2rem)), /* 20% wider buttons */
-      calc(100% - 20px)
-    );
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
     margin: 0 auto;
   }
   

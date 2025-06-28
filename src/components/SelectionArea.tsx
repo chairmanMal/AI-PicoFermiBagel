@@ -406,6 +406,25 @@ const SelectionArea: React.FC = () => {
     (_, i) => i
   );
 
+  // Check if we're in iPad portrait mode for dynamic width expansion
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isPortrait = height > width;
+  const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
+  
+  // Debug logging to understand what's happening
+  console.log(`🔍 SelectionArea Debug:`, {
+    width,
+    height,
+    isPortrait,
+    isIpadPortrait,
+    targetLength: settings.targetLength,
+    gridRows: settings.gridRows,
+    gridColumns: settings.gridColumns,
+    digitRange: settings.digitRange,
+    availableNumbersCount: availableNumbers.length
+  });
+
   return (
     <div className="selection-area">
       <div className="selection-header">

@@ -67,7 +67,7 @@
   align-items: center !important;
   gap: clamp(15px, 3vw, 20px) !important; /* 1/4 of box size: 60px/4=15px to 80px/4=20px */
   width: 100% !important;
-  max-width: 600px !important;
+  /* Remove max-width constraint - let parent container determine width dynamically */
   margin: 0 auto !important;
   padding: 1rem !important;
 }
@@ -470,17 +470,17 @@
   margin-bottom: 0;
 }
 
-/* Responsive Design */
+/* Dynamic responsive design - no hardcoded breakpoints */
 @media (max-width: 1024px) {
   .selection-area .numbers-container .numbers-grid {
     gap: clamp(12px, 2.5vw, 17px) !important; /* 1/4 of 50px-70px */
-    max-width: 550px !important;
+    /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
-    width: clamp(50px, 10vw, 70px) !important;
-    height: clamp(50px, 10vw, 70px) !important;
-    font-size: clamp(1.1rem, 2.5vw, 1.6rem) !important;
+    width: clamp(50px, 8vw, 65px) !important; /* Smaller buttons for more per row */
+    height: clamp(50px, 8vw, 65px) !important;
+    font-size: clamp(1.1rem, 2.2vw, 1.5rem) !important;
     text-align: center !important;
     line-height: 1 !important;
   }
@@ -493,7 +493,7 @@
   
   .selection-area .numbers-container .numbers-grid {
     gap: clamp(11px, 2vw, 15px) !important; /* 1/4 of 45px-60px */
-    max-width: 450px !important;
+    /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
@@ -517,7 +517,7 @@
 @media (max-width: 480px) {
   .selection-area .numbers-container .numbers-grid {
     gap: clamp(9px, 1.5vw, 12px) !important; /* 1/4 of 35px-50px */
-    max-width: 350px !important;
+    /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
@@ -560,11 +560,47 @@
   }
 }
 
-/* iPad Portrait Mode - Override any component-level scaling */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+/* Portrait Mode - Universal expansion for ALL devices in portrait orientation */
+@media (orientation: portrait) and (min-width: 768px) {
   .selection-area {
     transform: none !important;
     transform-origin: top left !important;
+    width: 100% !important; /* Use full parent width */
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  
+  /* Force full-width expansion for all portrait devices */
+  .selection-area .numbers-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0.3rem !important; /* Even less padding for maximum space */
+    box-sizing: border-box !important;
+    gap: clamp(6px, 1vw, 8px) !important; /* Much smaller gap to fit 10 per row */
+  }
+  
+  /* Make buttons smaller in portrait mode to fit 10 per row */
+  .selection-area .numbers-container .numbers-grid .number-button {
+    width: clamp(40px, 7vw, 55px) !important; /* Smaller buttons for 10 per row */
+    height: clamp(40px, 7vw, 55px) !important;
+    font-size: clamp(0.9rem, 2vw, 1.3rem) !important;
+  }
+  
+  /* DISABLE forced line breaks to allow natural spreading - SINGLE DEFINITION */
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-1):nth-last-child(-n+4)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-2):nth-last-child(-n+3)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-3):nth-last-child(-n+2)::after {
+    content: none !important; /* Remove forced line breaks */
+    flex-basis: auto !important;
+    height: auto !important;
   }
 }
 

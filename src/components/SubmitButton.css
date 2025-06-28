@@ -144,6 +144,9 @@
   width: 100%;
   max-width: 400px;
   margin-top: 10px; /* Reduced margin to move label up */
+  flex: 1; /* Fill remaining space in submit section */
+  display: flex;
+  flex-direction: column;
 }
 
 .history-title {
@@ -156,7 +159,8 @@
 }
 
 .guess-history-list {
-  height: 220px; /* Fixed height to show exactly 5 items (44px per item) */
+  flex: 1; /* Dynamically fill available space */
+  min-height: 220px; /* Minimum height to show 5 items */
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -408,5 +412,20 @@
   
   .feedback-display {
     font-size: 0.75rem;
+  }
+}
+
+/* iPad Portrait Mode - Allow guess history to expand to full width and height */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .guess-history-section {
+    max-width: none !important; /* Remove width constraint */
+    width: 100% !important; /* Use full available width */
+    flex: 1 !important; /* Fill remaining vertical space */
+  }
+  
+  .guess-history-list {
+    flex: 1 !important; /* Fill all available space */
+    min-height: 100px !important; /* Minimal height to ensure it's visible */
+    max-height: none !important; /* Remove any height constraints */
   }
 } 
