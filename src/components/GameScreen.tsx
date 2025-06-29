@@ -264,6 +264,13 @@ const GameScreen: React.FC = () => {
     // console.log('🎯 🚨 ========= APPLYING IPAD PORTRAIT LAYOUT WITH JAVASCRIPT ========= 🚨');
     // console.log('🎯 🚨 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
     
+    // Reset body/html scrolling (in case coming from iPhone portrait)
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    
     const container = document.querySelector('.container') as HTMLElement;
     const mobileDrawer = document.querySelector('.mobile-drawer') as HTMLElement;
     const submitSidebar = document.querySelector('.submit-section-sidebar') as HTMLElement;
@@ -296,10 +303,10 @@ const GameScreen: React.FC = () => {
       // Container extends horizontally from left side of settings icon to right side of hamburger icon
       // Vertically from top of screen down to orange border boundary
       
-      // Settings icon: 20px from left + safe area, 48px wide
-      // Hamburger icon: 20px from right + safe area, 48px wide
-      const settingsIconLeft = 20; // Ignoring safe area for simplicity
-      const hamburgerIconRight = 20; // Distance from right edge
+      // Settings icon: 4px from left + safe area, 48px wide (doubled margin)
+      // Hamburger icon: 4px from right + safe area, 48px wide (doubled margin)
+      const settingsIconLeft = 4; // Doubled from 2px to 4px
+      const hamburgerIconRight = 4; // Doubled from 2px to 4px
       const containerLeft = settingsIconLeft; // Start at left side of settings icon
       const containerRight = hamburgerIconRight; // End at right side of hamburger icon
       const containerWidth = `calc(100vw - ${containerLeft + containerRight}px)`; // Full width minus icon margins
@@ -379,9 +386,9 @@ const GameScreen: React.FC = () => {
           const newTop = subtitleBottom;
           const newHeight = window.innerHeight - subtitleBottom - bottomMargin; // End 20px from bottom
           
-          // Update positioning with proper constraints - match green container
-          const containerLeft = 20; // Same as green container
-          const containerWidth = `calc(100vw - 40px)`; // Same as green container
+          // Update positioning with proper constraints - match green container (doubled margins)
+          const containerLeft = 4; // Doubled from 2px to 4px
+          const containerWidth = `calc(100vw - 8px)`; // Doubled from 4px to 8px
           
           orangeContainer.style.setProperty('position', 'fixed', 'important'); // Fixed to viewport
           orangeContainer.style.setProperty('top', `${newTop}px`, 'important');
@@ -619,8 +626,8 @@ const GameScreen: React.FC = () => {
           padding: 0px !important;
           position: absolute !important;
           top: 0px !important;
-          left: 20px !important;
-          width: calc(100vw - 40px) !important;
+          left: 4px !important;
+          width: calc(100vw - 8px) !important;
           height: 100vh !important;
           min-height: 100vh !important;
           max-width: none !important;
@@ -643,8 +650,8 @@ const GameScreen: React.FC = () => {
           padding: 0px !important;
           position: absolute !important;
           top: 0px !important;
-          left: 20px !important;
-          width: calc(100vw - 40px) !important;
+          left: 4px !important;
+          width: calc(100vw - 8px) !important;
           height: 100vh !important;
           min-height: 100vh !important;
           max-width: none !important;
@@ -655,10 +662,174 @@ const GameScreen: React.FC = () => {
     }, 500);
   }, [setIsMenuDrawerOpen, setIsSettingsDrawerOpen, settings]);
 
-
+  const applyIphonePortraitLayout = useCallback(() => {
+    console.log('🎯 🚨 ========= APPLYING IPHONE PORTRAIT LAYOUT ========= 🚨');
+    console.log('🎯 🚨 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
+    
+    // Reset body/html scrolling (in case coming from other modes)
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    
+    const container = document.querySelector('.container') as HTMLElement;
+    const titleSection = document.querySelector('.title-section') as HTMLElement;
+    const gameScreen = document.querySelector('.game-screen') as HTMLElement;
+    
+    console.log('🎯 ELEMENTS FOUND:', {
+      container: !!container,
+      gameScreen: !!gameScreen,
+      titleSection: !!titleSection
+    });
+    
+    // First, modify the parent game-screen to allow normal positioning
+    if (gameScreen) {
+      gameScreen.style.cssText = 'display: block !important; position: relative !important; overflow: visible !important;';
+      console.log('🎯 🚨 IPHONE: Set game-screen to normal block positioning');
+    } else {
+      console.log('🎯 ❌ IPHONE: Game screen element NOT FOUND');
+      return;
+    }
+    
+    if (container) {
+      // Use reduced side padding for iPhone (50% smaller)
+      const containerLeft = 5; // Reduced from 10px to 5px (50% smaller)
+      const containerRight = 5; // Reduced from 10px to 5px (50% smaller)
+      const containerWidth = `calc(100vw - ${containerLeft + containerRight}px)`;
+      
+      // Apply normal container positioning
+      container.style.setProperty('display', 'flex', 'important');
+      container.style.setProperty('flex-direction', 'column', 'important');
+      container.style.setProperty('justify-content', 'flex-start', 'important');
+      container.style.setProperty('align-items', 'center', 'important');
+      container.style.setProperty('gap', '7px', 'important'); // Reduced from 15px to 7px (50% smaller)
+      container.style.setProperty('margin', '0', 'important');
+      container.style.setProperty('padding', '0px', 'important');
+      container.style.setProperty('position', 'relative', 'important');
+      container.style.setProperty('top', 'auto', 'important');
+      container.style.setProperty('left', `${containerLeft}px`, 'important');
+      container.style.setProperty('width', containerWidth, 'important');
+      container.style.setProperty('height', 'auto', 'important');
+      container.style.setProperty('min-height', '100vh', 'important');
+      container.style.setProperty('box-sizing', 'border-box', 'important');
+      container.style.setProperty('overflow', 'visible', 'important');
+      
+      console.log('🎯 🚨 APPLIED REDUCED CONTAINER POSITIONING FOR IPHONE (50% smaller gaps)');
+    }
+    
+    if (titleSection) {
+      const titleTopMargin = 60; // iPhone-specific: 60px from top (doubled from 30px)
+      
+      titleSection.style.position = 'static';
+      titleSection.style.zIndex = '10';
+      titleSection.style.width = '100%';
+      titleSection.style.textAlign = 'center';
+      titleSection.style.margin = `${titleTopMargin}px 0 1px 0`; // Keep reduced bottom margin at 1px
+      titleSection.style.display = 'block';
+      titleSection.style.visibility = 'visible';
+      titleSection.style.opacity = '1';
+      
+      console.log(`🎯 IPHONE: Title positioned with ${titleTopMargin}px top margin (doubled from 30px)`);
+    }
+    
+    // Set up iPhone container with proper height constraints and ONLY list scrolling
+    setTimeout(() => {
+      const iphoneContainer = document.querySelector('.iphone-portrait-container') as HTMLElement;
+      if (iphoneContainer) {
+        const titleRect = titleSection?.getBoundingClientRect();
+        const titleBottom = titleRect ? titleRect.bottom + 10 : 120;
+        
+        // Get safe area bottom value for home indicator (50% reduced margins)
+        const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || '0px';
+        const safeAreaBottomValue = parseInt(safeAreaBottom) || 0;
+        const homeIndicatorMargin = Math.max(safeAreaBottomValue + 10, 20); // Reduced from +20/40 to +10/20 (50% smaller)
+        
+        const availableHeight = window.innerHeight - titleBottom - homeIndicatorMargin;
+        
+        // Position the iPhone container normally
+        iphoneContainer.style.setProperty('position', 'relative', 'important');
+        iphoneContainer.style.setProperty('top', 'auto', 'important');
+        iphoneContainer.style.setProperty('left', 'auto', 'important');
+        iphoneContainer.style.setProperty('width', '100%', 'important');
+        iphoneContainer.style.setProperty('height', `${availableHeight}px`, 'important');
+        iphoneContainer.style.setProperty('overflow', 'hidden', 'important');
+        iphoneContainer.style.setProperty('z-index', '2', 'important');
+        iphoneContainer.style.setProperty('display', 'flex', 'important');
+        iphoneContainer.style.setProperty('flex-direction', 'column', 'important');
+        iphoneContainer.style.setProperty('margin', '0 auto', 'important');
+        
+        console.log(`🎯 ✅ IPHONE: Container positioned normally - height: ${availableHeight}px`);
+        
+        // Set up the game wrapper with normal layout
+        const gameWrapper = iphoneContainer.querySelector('.game-sections-wrapper') as HTMLElement;
+        if (gameWrapper) {
+          gameWrapper.style.setProperty('height', '100%', 'important');
+          gameWrapper.style.setProperty('overflow', 'hidden', 'important');
+          gameWrapper.style.setProperty('display', 'flex', 'important');
+          gameWrapper.style.setProperty('flex-direction', 'column', 'important');
+          gameWrapper.style.setProperty('gap', '4px', 'important'); // Reduced from 8px to 4px (50% smaller)
+          gameWrapper.style.setProperty('padding', '5px', 'important'); // Reduced from 10px to 5px (50% smaller)
+          
+          // Set appropriate heights for each section
+          setTimeout(() => {
+            const guessSection = gameWrapper.querySelector('.guess-section') as HTMLElement;
+            const selectionSection = gameWrapper.querySelector('.selection-section') as HTMLElement;
+            const recentGuessSection = gameWrapper.querySelector('.recent-guess-section') as HTMLElement;
+            
+            if (guessSection && selectionSection && recentGuessSection) {
+              // Set flexible heights
+              guessSection.style.setProperty('height', 'auto', 'important');
+              guessSection.style.setProperty('flex', 'none', 'important');
+              guessSection.style.setProperty('overflow', 'visible', 'important');
+              
+              selectionSection.style.setProperty('height', 'auto', 'important');
+              selectionSection.style.setProperty('flex', 'none', 'important');
+              selectionSection.style.setProperty('overflow', 'visible', 'important');
+              
+              // Recent guesses gets remaining space
+              const usedSpace = guessSection.offsetHeight + selectionSection.offsetHeight + 20; // Reduced from 40px to 20px (50% smaller)
+              const remainingHeight = availableHeight - usedSpace;
+              recentGuessSection.style.setProperty('height', `${Math.max(remainingHeight, 200)}px`, 'important');
+              recentGuessSection.style.setProperty('flex', 'none', 'important');
+              recentGuessSection.style.setProperty('overflow', 'hidden', 'important');
+              
+              // ONLY the guess list scrolls
+              setTimeout(() => {
+                const guessList = recentGuessSection.querySelector('.guess-history-list') as HTMLElement;
+                if (guessList) {
+                  const recentGuessesHeader = recentGuessSection.querySelector('.recent-guesses-header, .history-title') as HTMLElement;
+                  const headerHeight = recentGuessesHeader?.offsetHeight || 40;
+                  const listHeight = Math.max(remainingHeight, 200) - headerHeight - 10; // Reduced from 20px to 10px padding (50% smaller)
+                  
+                  guessList.style.setProperty('height', `${listHeight}px`, 'important');
+                  guessList.style.setProperty('overflow-y', 'auto', 'important');
+                  guessList.style.setProperty('overflow-x', 'hidden', 'important');
+                  guessList.style.setProperty('flex', 'none', 'important');
+                  
+                  console.log(`🎯 ✅ IPHONE: Flexible heights - Recent: ${Math.max(remainingHeight, 200)}px, List: ${listHeight}px`);
+                }
+              }, 50);
+            }
+          }, 100);
+        }
+      }
+    }, 200);
+    
+    console.log('🎯 ✅ IPHONE PORTRAIT LAYOUT COMPLETE');
+  }, []);
 
   const resetIpadLayout = useCallback(() => {
     console.log('🎯 Resetting iPad layout');
+    
+    // Reset body/html scrolling (always reset these)
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.style.height = '';
+    document.body.style.margin = '';
+    document.body.style.padding = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
     
     const gameScreen = document.querySelector('.game-screen') as HTMLElement;
     const container = document.querySelector('.container') as HTMLElement;
@@ -720,6 +891,7 @@ const GameScreen: React.FC = () => {
       mainContent.style.alignItems = ''; // Reset align items
       mainContent.style.maxWidth = ''; // Reset max width
       mainContent.style.border = '';
+      mainContent.style.paddingBottom = ''; // Reset iPhone portrait padding
     }
     
     // Reset non-iPad auto-scaling transforms
@@ -870,6 +1042,13 @@ const GameScreen: React.FC = () => {
     }
     
     const isIphone = width <= 767;
+    
+    // Skip iPhone portrait mode - it has its own dedicated layout function
+    if (isIphone && isPortrait) {
+      console.log(`🎯 Skipping universal scaling for iPhone portrait - using applyIphonePortraitLayout()`);
+      return;
+    }
+    
     const targetLength = settings.targetLength || 3;
     const gridSize = targetLength <= 3 ? 'small' : (targetLength <= 6 ? 'medium' : 'large');
     
@@ -879,12 +1058,8 @@ const GameScreen: React.FC = () => {
     let scaleFactor = 1.0;
     
     if (isIphone) {
-      // iPhone: Scale based on screen size and content
-      if (isPortrait) {
-        scaleFactor = targetLength <= 3 ? 1.0 : (targetLength <= 6 ? 0.9 : 0.8);
-      } else {
-        scaleFactor = targetLength <= 3 ? 0.8 : (targetLength <= 6 ? 0.7 : 0.6);
-      }
+      // iPhone landscape only (portrait is handled separately)
+      scaleFactor = targetLength <= 3 ? 0.8 : (targetLength <= 6 ? 0.7 : 0.6);
     } else {
       // Desktop/Large screens: Minimal scaling needed
       scaleFactor = targetLength <= 3 ? 1.0 : (targetLength <= 6 ? 0.95 : 0.9);
@@ -964,7 +1139,7 @@ const GameScreen: React.FC = () => {
       
       setUseDrawer(needsDrawer);
       
-      // Apply iPad-specific layouts with JavaScript
+      // Apply device-specific layouts with JavaScript
       if (isIpadLandscape) {
         console.log('📏 🎯 CALLING applyIpadLandscapeLayout()');
         applyIpadLandscapeLayout();
@@ -972,8 +1147,15 @@ const GameScreen: React.FC = () => {
         console.log('📏 🎯 CALLING applyIpadPortraitLayout()');
         applyIpadPortraitLayout();
       } else {
-        console.log('📏 🎯 CALLING resetIpadLayout()');
-        resetIpadLayout();
+        // Check if this is iPhone (mobile device)
+        const isMobile = width < 768; // iPhone/mobile devices
+        if (isMobile && isPortrait) {
+          console.log('📏 🎯 CALLING applyIphonePortraitLayout()');
+          applyIphonePortraitLayout();
+        } else {
+          console.log('📏 🎯 CALLING resetIpadLayout()');
+          resetIpadLayout();
+        }
       }
       
       // Apply non-iPad auto-scaling after layout setup
@@ -992,7 +1174,7 @@ const GameScreen: React.FC = () => {
       window.removeEventListener('resize', checkScreenSize);
       window.removeEventListener('orientationchange', checkScreenSize);
     };
-  }, [settings, applyIpadLandscapeLayout, applyIpadPortraitLayout, resetIpadLayout, applyNonIpadAutoScaling]); // Removed gameState to prevent layout recalc on every guess change
+  }, [settings, applyIpadLandscapeLayout, applyIpadPortraitLayout, applyIphonePortraitLayout, resetIpadLayout, applyNonIpadAutoScaling]); // Removed gameState to prevent layout recalc on every guess change
 
   // Effect to apply non-iPad auto-scaling on content changes
   useEffect(() => {
@@ -1762,7 +1944,7 @@ const GameScreen: React.FC = () => {
           <p className="game-subtitle">A Number-based Logical Guessing Game</p>
         </div>
 
-        {/* Orange container for iPad portrait mode only */}
+        {/* Special containers for iPad portrait and iPhone portrait modes */}
         {(() => {
           const width = window.innerWidth;
           const height = window.innerHeight;
@@ -1771,6 +1953,7 @@ const GameScreen: React.FC = () => {
           const isIpadLandscape = isLandscape && height >= 768 && height <= 1366;
           const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
           const isMobile = width < 768; // iPhone and other mobile devices
+          const isIphonePortrait = isMobile && isPortrait;
           
           // Use orange container for iPad portrait mode (special layout)
           if (isIpadPortrait) {
@@ -1805,7 +1988,7 @@ const GameScreen: React.FC = () => {
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
                     alignItems: 'center',
-                    padding: '10px', // Small padding for content spacing
+                    padding: '2px', // Reduced padding by 50% again for minimal spacing
                     overflow: 'visible', // Allow content to be visible
                   }}
               >
@@ -1814,7 +1997,7 @@ const GameScreen: React.FC = () => {
                   height: '100%',
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: 'clamp(15px, 3vw, 25px)', 
+                  gap: 'clamp(4px, 0.75vw, 6px)', // Reduced gap by 50% again for minimal spacing between sections
                   justifyContent: 'flex-start', 
                   alignItems: 'center', // Keep other sections centered 
                   overflowY: 'visible',
@@ -1856,7 +2039,87 @@ const GameScreen: React.FC = () => {
             );
           }
           
-          // For all other modes (mobile, iPad landscape, desktop), use main-content layout
+          // Use iPhone portrait container (mimicking iPad approach but with iPhone-specific settings)
+          if (isIphonePortrait) {
+            const titleSection = document.querySelector('.title-section');
+            let iphoneTop = 120; // Default fallback
+            let iphoneHeight = height - 140; // Default fallback
+            const iphoneLeft = 0; // No margins for full width
+            const iphoneWidth = `100vw`; // Full viewport width
+            
+            if (titleSection) {
+              const titleRect = titleSection.getBoundingClientRect();
+              iphoneTop = titleRect.bottom + 10; // 10px gap below subtitle
+              iphoneHeight = height - iphoneTop - 20; // Extend to 20px from bottom
+            }
+            
+            return (
+              <div
+                className="iphone-portrait-container"
+                style={{
+                  position: 'fixed', // Use fixed positioning like iPad
+                  top: iphoneTop,
+                  left: iphoneLeft,
+                  width: iphoneWidth,
+                  height: iphoneHeight,
+                  // border: '2px solid blue', // Debug - removed for production
+                  boxSizing: 'border-box',
+                  background: 'transparent',
+                  zIndex: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  padding: '2px', // Same as iPad's minimal padding
+                  overflow: 'visible', // Allow content to be visible
+                }}
+              >
+                <div className="game-sections-wrapper" style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: 'clamp(4px, 0.75vw, 6px)', // Reduced gap by 50% to match iPad portrait 
+                  justifyContent: 'flex-start', 
+                  alignItems: 'center',
+                  overflowY: 'visible',
+                  transformOrigin: 'top center'
+                }}>
+                  {/* Target Display - Shows when enabled */}
+                  <TargetDisplay />
+                  {/* Guess Area with Circular Submit Button */}
+                  <div className="guess-section" ref={guessElementRef} style={{ 
+                    position: 'relative'
+                  }}>
+                    <GuessArea />
+                    {/* Circular Submit Button positioned dynamically */}
+                    <div className="circular-submit-position">
+                      <CircularSubmitButton />
+                    </div>
+                  </div>
+                  {/* Number Selection */}
+                  <div className="selection-section">
+                    <SelectionArea />
+                  </div>
+                  {/* Recent Guess History - Fill remaining space */}
+                  <div className="recent-guess-section" style={{ 
+                    flex: '1',
+                    minHeight: '0',
+                    maxHeight: 'none',
+                    overflow: 'visible',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
+                    position: 'relative'
+                  }}>
+                    <RecentGuessHistory />
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // For all other modes (iPad landscape, desktop), use main-content layout
           return (
             <div className="main-content">
               {/* Game Sections Wrapper */}

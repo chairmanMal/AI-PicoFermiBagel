@@ -641,6 +641,13 @@
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
+  
+  /* Reduce internal padding of white sections for iPad portrait mode to extend closer to screen edges */
+  .guess-section,
+  .submit-section,
+  .selection-section {
+    padding: clamp(8px, 1.5vw, 12px) !important; /* Reverted back - this was fine */
+  }
 }
 
 /* iPad Landscape Mode - Disable ALL CSS scaling, let JavaScript handle it exclusively */
@@ -732,9 +739,9 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   touch-action: manipulation;
 }
 
-/* Prevent landscape on phones AND iPad Mini specifically */
-@media (max-width: 767px) and (orientation: landscape),
-       (min-width: 768px) and (max-width: 820px) and (max-height: 600px) and (orientation: landscape) {
+/* Note: iPhone orientation is now locked to portrait via iOS Info.plist */
+/* iPad Mini landscape prevention kept for web compatibility */
+@media (min-width: 768px) and (max-width: 820px) and (max-height: 600px) and (orientation: landscape) {
   .game-screen {
     position: relative;
   }
@@ -755,11 +762,13 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     text-align: center;
     z-index: 10000;
     padding: 20px;
+    backdrop-filter: blur(10px);
   }
   
   .game-screen > *:not(::before) {
     opacity: 0.1;
     pointer-events: none;
+    filter: blur(5px);
   }
 }
 
