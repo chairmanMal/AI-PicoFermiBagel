@@ -1,0 +1,143 @@
+.recent-guess-history {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Fill available space */
+  min-height: 0; /* Allow shrinking */
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  overflow: hidden; /* Ensure content stays within rounded corners */
+}
+
+.history-title {
+  margin: 0;
+  color: #374151;
+  font-size: 1rem;
+  text-align: center;
+  padding: 12px 8px 8px 8px;
+  background: #f9fafb;
+  /* No border or border-radius - part of the same container */
+}
+
+.guess-history-list {
+  flex: 1; /* Fill available space */
+  overflow-y: auto;
+  background: #f9fafb;
+  padding: 0 8px 8px 8px; /* No top padding since header has its own padding */
+  scroll-behavior: smooth;
+  min-height: 200px; /* Minimum height for better visibility */
+  /* No border - the container will have the border */
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-item.winner {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.history-item.empty {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  opacity: 0.6;
+}
+
+.guess-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
+
+.feedback-display {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.history-item.winner .feedback-display {
+  color: #059669;
+  font-weight: 700;
+}
+
+.history-info {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Scrollbar styling */
+.guess-history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.guess-history-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.guess-history-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.guess-history-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .guess-history-list {
+    min-height: 180px;
+  }
+
+  .history-item {
+    padding: 6px 10px;
+  }
+
+  .guess-display {
+    font-size: 0.85rem;
+  }
+
+  .feedback-display {
+    font-size: 0.8rem;
+  }
+}
+
+/* iPad Portrait Mode - Allow guess history to expand to full available space */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .recent-guess-history {
+    flex: 1 !important; /* Fill all remaining vertical space */
+  }
+  
+  .guess-history-list {
+    flex: 1 !important; /* Fill all available space */
+    min-height: 250px !important; /* Larger minimum for iPad */
+    max-height: none !important; /* Remove any height constraints */
+  }
+} 

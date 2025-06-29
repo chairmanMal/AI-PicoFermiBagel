@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 0;
+  left: 0;
   top: 50%;
   transform: translateY(-30%);
 }
@@ -128,7 +128,7 @@
 }
 
 .guess-box.drag-over {
-  background: #dbeafe !important; /* Light blue background */
+  /* background: #dbeafe !important; */ /* Light blue background - removed for production */
   border-color: #3b82f6 !important;
   border-width: 4px !important;
   transform: scale(1.15) !important; /* Slightly more expansion */

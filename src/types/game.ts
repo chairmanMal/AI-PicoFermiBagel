@@ -64,11 +64,9 @@ export interface ScratchpadState {
 
 export type ScratchpadColor = 
   | 'default'
-  | 'maybe'
-  | 'likely'
-  | 'unlikely'
   | 'bagel'
-  | 'not-bagel';
+  | 'pico'
+  | 'fermi';
 
 export interface ScoreData {
   score: number;

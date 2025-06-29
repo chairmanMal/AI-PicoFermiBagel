@@ -42,7 +42,7 @@
   justify-content: center;
   position: absolute;
   top: 6px;
-  right: 0;
+  left: 0;
 }
 
 .help-button:hover {
@@ -191,28 +191,16 @@
   color: #991b1b !important;
 }
 
-.selection-area .numbers-container .numbers-grid .number-button.hint-not-bagel {
-  background-color: #a7f3d0 !important;
-  border-color: #10b981 !important;
-  color: #064e3b !important;
-}
-
-.selection-area .numbers-container .numbers-grid .number-button.hint-maybe {
+.selection-area .numbers-container .numbers-grid .number-button.hint-pico {
   background-color: #fde68a !important;
   border-color: #f59e0b !important;
   color: #92400e !important;
 }
 
-.selection-area .numbers-container .numbers-grid .number-button.hint-likely {
-  background-color: #bfdbfe !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-}
-
-.selection-area .numbers-container .numbers-grid .number-button.hint-unlikely {
-  background-color: #fed7aa !important;
-  border-color: #f97316 !important;
-  color: #9a3412 !important;
+.selection-area .numbers-container .numbers-grid .number-button.hint-fermi {
+  background-color: #a7f3d0 !important;
+  border-color: #10b981 !important;
+  color: #064e3b !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.dragging {

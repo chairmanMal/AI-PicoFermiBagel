@@ -196,8 +196,8 @@ export const useGameStore = create<GameStore>()(
             const lockedPositions = new Set(state.gameState.lockedPositions);
             const activePosition = state.gameState.activeGuessPosition;
             
-            console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
-            console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
+            // console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
+            // console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
             
             // Check if digit is already in the guess (redundant)
             const isRedundant = currentGuess.includes(digit);
@@ -221,7 +221,7 @@ export const useGameStore = create<GameStore>()(
               activePosition + 1
             );
             
-            console.log('🔢 AUTOFILL DEBUG: Next position:', activePosition, '→', nextPosition);
+            // console.log('🔢 AUTOFILL DEBUG: Next position:', activePosition, '→', nextPosition);
             
             set({
               gameState: {
@@ -234,20 +234,20 @@ export const useGameStore = create<GameStore>()(
           }
 
           case 'SUBMIT_GUESS': {
-            console.log('🚀 SUBMIT_GUESS: Starting submission process');
-            console.log('🚀 Current guess:', state.gameState.currentGuess);
-            console.log('🚀 Settings:', state.settings);
-            console.log('🚀 Digit range:', state.settings.digitRange);
+            // console.log('🚀 SUBMIT_GUESS: Starting submission process');
+            // console.log('🚀 Current guess:', state.gameState.currentGuess);
+            // console.log('🚀 Settings:', state.settings);
+            // console.log('🚀 Digit range:', state.settings.digitRange);
             
             const isValid = isValidGuess(state.gameState.currentGuess, state.settings.digitRange);
-            console.log('🚀 Is guess valid?', isValid);
+            // console.log('🚀 Is guess valid?', isValid);
             
             if (!isValid) {
-              console.log('🚀 ❌ GUESS INVALID - ABORTING SUBMISSION');
+              // console.log('🚀 ❌ GUESS INVALID - ABORTING SUBMISSION');
               return;
             }
             
-            console.log('🚀 ✅ GUESS VALID - PROCEEDING WITH SUBMISSION');
+            // console.log('🚀 ✅ GUESS VALID - PROCEEDING WITH SUBMISSION');
             const guess = state.gameState.currentGuess as number[];
             const feedback = evaluateGuess(guess, state.gameState.target);
             const rowDeltas = state.hintState.purchasedHints.rowDeltaHints > 0 
@@ -404,7 +404,7 @@ export const useGameStore = create<GameStore>()(
                   newHintState.purchasedHints.notBagelNumbers.add(targetNumber);
                   // Update scratchpad color
                   const newScratchpadState = { ...state.scratchpadState };
-                  newScratchpadState.numberColors.set(targetNumber, 'not-bagel');
+                  newScratchpadState.numberColors.set(targetNumber, 'fermi');
                   set({ scratchpadState: newScratchpadState });
                 }
                 break;
@@ -442,7 +442,7 @@ export const useGameStore = create<GameStore>()(
                   
                   // Update scratchpad color
                   const newScratchpadState = { ...state.scratchpadState };
-                  newScratchpadState.numberColors.set(selectedNumber, isInTarget ? 'not-bagel' : 'bagel');
+                  newScratchpadState.numberColors.set(selectedNumber, isInTarget ? 'fermi' : 'bagel');
                   set({ scratchpadState: newScratchpadState });
                 }
                 break;

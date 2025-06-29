@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronRight, Menu, Settings } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
-import { getBuildString, getBuildDateString } from '../config/version';
+// import { getBuildString, getBuildDateString } from '../config/version'; // Removed for production
 import { soundUtils } from '../utils/soundUtils';
 import GuessArea from './GuessArea';
 import SelectionArea from './SelectionArea';
-import SubmitButton from './SubmitButton';
+import CircularSubmitButton from './CircularSubmitButton';
+import RecentGuessHistory from './RecentGuessHistory';
 
 import ScoreArea from './ScoreArea';
 import Scratchpad from './Scratchpad';
@@ -109,8 +110,8 @@ const GameScreen: React.FC = () => {
       container.style.boxSizing = 'border-box';
       container.style.width = '100vw'; // Full viewport width
       container.style.maxWidth = 'none';
-      container.style.border = '5px solid lime'; // Debug
-      container.style.background = 'rgba(0,255,0,0.2)'; // Debug
+      // container.style.border = '5px solid lime'; // Debug - removed for production
+      // container.style.background = 'rgba(0,255,0,0.2)'; // Debug - removed for production
     }
     
     if (titleSection) {
@@ -124,7 +125,7 @@ const GameScreen: React.FC = () => {
       titleSection.style.zIndex = '10';
       titleSection.style.textAlign = 'center';
       titleSection.style.margin = '0';
-      titleSection.style.border = '2px solid yellow'; // Debug
+      // titleSection.style.border = '2px solid yellow'; // Debug - removed for production
     }
     
     if (mainContent) {
@@ -138,7 +139,7 @@ const GameScreen: React.FC = () => {
       mainContent.style.marginTop = '80px'; // More space from title
       mainContent.style.transform = `scale(${scaleFactor})`;
       mainContent.style.transformOrigin = 'top left';
-      mainContent.style.border = '2px solid orange'; // Debug
+              // mainContent.style.border = '2px solid orange'; // Debug - removed for production
     }
     
     if (submitSidebar && submitInline) {
@@ -158,7 +159,7 @@ const GameScreen: React.FC = () => {
       submitSidebar.style.transform = `scale(${scaleFactor})`; // Same scaling as other columns
       submitSidebar.style.margin = '5px'; // 5px margin on all sides
       submitSidebar.style.marginTop = '80px'; // More space from title
-      submitSidebar.style.border = '3px solid red'; // Debug
+              // submitSidebar.style.border = '3px solid red'; // Debug - removed for production
     } else {
       console.log('🎯 LANDSCAPE: Submit elements not found', {
         submitSidebar: !!submitSidebar,
@@ -187,7 +188,7 @@ const GameScreen: React.FC = () => {
         drawer.style.marginTop = '80px'; // Start below title
         drawer.style.marginRight = '5px'; // Maximum 5px right margin
         drawer.style.background = 'transparent';
-        drawer.style.border = '3px solid purple'; // Debug
+        // drawer.style.border = '3px solid purple'; // Debug - removed for production
         return true;
       }
       return false;
@@ -260,8 +261,8 @@ const GameScreen: React.FC = () => {
   }, [setIsMenuDrawerOpen]);
 
   const applyIpadPortraitLayout = useCallback(() => {
-    console.log('🎯 🚨 ========= APPLYING IPAD PORTRAIT LAYOUT WITH JAVASCRIPT ========= 🚨');
-    console.log('🎯 🚨 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
+    // console.log('🎯 🚨 ========= APPLYING IPAD PORTRAIT LAYOUT WITH JAVASCRIPT ========= 🚨');
+    // console.log('🎯 🚨 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
     
     const container = document.querySelector('.container') as HTMLElement;
     const mobileDrawer = document.querySelector('.mobile-drawer') as HTMLElement;
@@ -327,8 +328,8 @@ const GameScreen: React.FC = () => {
       container.style.setProperty('min-height', '100vh', 'important');
       container.style.setProperty('max-width', 'none', 'important');
       container.style.setProperty('box-sizing', 'border-box', 'important');
-      container.style.setProperty('border', '5px solid lime', 'important');
-      container.style.setProperty('background', 'rgba(0,255,0,0.2)', 'important');
+      // container.style.setProperty('border', '5px solid lime', 'important'); // Debug - removed for production
+      // container.style.setProperty('background', 'rgba(0,255,0,0.2)', 'important'); // Debug - removed for production
       
       console.log('🎯 🚨 FORCED CONTAINER POSITIONING FROM SETTINGS TO HAMBURGER ICON');
       
@@ -365,7 +366,7 @@ const GameScreen: React.FC = () => {
       titleSection.style.display = 'block'; // Ensure it's visible
       titleSection.style.visibility = 'visible'; // Ensure it's visible
       titleSection.style.opacity = '1'; // Ensure it's visible
-      titleSection.style.border = '2px solid yellow'; // Debug
+      // titleSection.style.border = '2px solid yellow'; // Debug - removed for production
       console.log(`🎯 PORTRAIT: Title section positioned with ${titleTopMargin}px top margin to clear icons`);
       
       // Position the orange container correctly after title is positioned
@@ -624,8 +625,6 @@ const GameScreen: React.FC = () => {
           min-height: 100vh !important;
           max-width: none !important;
           box-sizing: border-box !important;
-          border: 5px solid lime !important;
-          background: rgba(0,255,0,0.2) !important;
         `;
         console.log('🎯 🚨 FORCED CONTAINER STYLES WITH CSSTEXT');
       }
@@ -650,8 +649,6 @@ const GameScreen: React.FC = () => {
           min-height: 100vh !important;
           max-width: none !important;
           box-sizing: border-box !important;
-          border: 5px solid lime !important;
-          background: rgba(0,255,0,0.2) !important;
         `;
         console.log('🎯 🚨 FORCED CONTAINER STYLES WITH CSSTEXT (SECOND ATTEMPT)');
       }
@@ -958,12 +955,12 @@ const GameScreen: React.FC = () => {
       // Only use side panel for large landscape devices (desktop/large tablets)
       const needsDrawer = isIpad || (isLandscape ? width < 1200 : true);
       
-      console.log(`📏 ========= SCREEN SIZE DEBUG =========`);
-      console.log(`📏 Viewport: ${width}x${height}`);
-      console.log(`📏 Landscape: ${isLandscape}, Portrait: ${isPortrait}`);
-      console.log(`📏 iPad Landscape: ${isIpadLandscape}, iPad Portrait: ${isIpadPortrait}`);
-      console.log(`📏 Is iPad: ${isIpad}, Needs Drawer: ${needsDrawer}`);
-      console.log(`📏 =====================================`);
+          // console.log(`📏 ========= SCREEN SIZE DEBUG =========`);
+    // console.log(`📏 Viewport: ${width}x${height}`);
+    // console.log(`📏 Landscape: ${isLandscape}, Portrait: ${isPortrait}`);
+    // console.log(`📏 iPad Landscape: ${isIpadLandscape}, iPad Portrait: ${isIpadPortrait}`);
+    // console.log(`📏 Is iPad: ${isIpad}, Needs Drawer: ${needsDrawer}`);
+    // console.log(`📏 =====================================`);
       
       setUseDrawer(needsDrawer);
       
@@ -1029,9 +1026,9 @@ const GameScreen: React.FC = () => {
 
   // Reset all settings to defaults on app startup (once per session)
   useEffect(() => {
-    console.log(`🚀 PicoFermiBagel ${getBuildString()} LOADED - Latest Version Confirmed!`);
-    console.log(`🚀 Build Date: ${getBuildDateString()}`);
-    console.log('🚀 If you see this message, you have the latest build with debug logging');
+    // console.log(`🚀 PicoFermiBagel ${getBuildString()} LOADED - Latest Version Confirmed!`);
+    // console.log(`🚀 Build Date: ${getBuildDateString()}`);
+    // console.log('🚀 If you see this message, you have the latest build with debug logging');
     
     // Only reset if this is truly the first load (check if we've already reset)
     const hasReset = sessionStorage.getItem('pfb-reset-done');
@@ -1590,6 +1587,43 @@ const GameScreen: React.FC = () => {
     }
   }, [gameState.guesses.length]); // Re-run when number of guesses changes
 
+  // Simplified positioning for circular submit button - just vertically center in cyan container
+  useEffect(() => {
+    const positionButton = () => {
+      const submitButtons = document.querySelectorAll('.circular-submit-position');
+      submitButtons.forEach((el) => {
+        const guessSection = el.closest('.guess-section');
+        
+        if (guessSection) {
+          // Adjusted vertical centering to account for header spacing imbalance (responsive)
+          (el as HTMLElement).style.position = 'absolute';
+          (el as HTMLElement).style.right = '20px';
+          (el as HTMLElement).style.top = 'calc(50% + clamp(7px, 1.5vw, 10px))'; // Responsive adjustment based on header margin
+          (el as HTMLElement).style.transform = 'translateY(-50%)';
+          (el as HTMLElement).style.zIndex = '10';
+          
+          // console.log('🎯 Submit button positioned: responsive adjustment for header spacing imbalance');
+        }
+      });
+    };
+
+    // Reposition on resize and orientation change
+    const handleResize = () => {
+      setTimeout(positionButton, 50);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Initial positioning
+    setTimeout(positionButton, 10);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [settings.gridRows, settings.gridColumns]); // Re-run when game mode changes
+
   // Position and scale menu drawer content in iPad portrait mode
   useEffect(() => {
     const width = window.innerWidth;
@@ -1720,8 +1754,6 @@ const GameScreen: React.FC = () => {
       )}
 
       <div className="container" style={{
-        border: '3px solid green', // Debug: container border
-        backgroundColor: 'rgba(0,255,0,0.1)', // Debug: container background
         position: 'relative', // Ensure orange container is positioned relative to this
       }}>
         {/* Game Title - Outside main content for absolute positioning */}
@@ -1747,8 +1779,8 @@ const GameScreen: React.FC = () => {
             const titleSection = document.querySelector('.title-section');
             let orangeTop = 120; // Default fallback
             let orangeHeight = height - 140; // Default fallback (120 + 20)
-            const orangeLeft = 10; // Smaller margins for more width
-            const orangeWidth = `calc(100vw - 20px)`; // Full width minus smaller margins
+            const orangeLeft = 0; // No margins for full width
+            const orangeWidth = `100vw`; // Full viewport width
             
             if (titleSection) {
               const titleRect = titleSection.getBoundingClientRect();
@@ -1759,23 +1791,23 @@ const GameScreen: React.FC = () => {
             return (
               <div
                 className="orange-portrait-container"
-                style={{
-                  position: 'fixed', // Use fixed positioning relative to viewport, not parent
-                  top: orangeTop,
-                  left: orangeLeft,
-                  width: orangeWidth,
-                  height: orangeHeight,
-                  border: '2px solid orange',
-                  boxSizing: 'border-box',
-                  background: 'transparent',
-                  zIndex: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  padding: '0px', // Remove padding to allow full width
-                  overflow: 'visible', // Allow content to be visible
-                }}
+                                  style={{
+                    position: 'fixed', // Use fixed positioning relative to viewport, not parent
+                    top: orangeTop,
+                    left: orangeLeft,
+                    width: orangeWidth,
+                    height: orangeHeight,
+                    // border: '2px solid orange', // Debug - removed for production
+                    boxSizing: 'border-box',
+                    background: 'transparent',
+                    zIndex: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    padding: '10px', // Small padding for content spacing
+                    overflow: 'visible', // Allow content to be visible
+                  }}
               >
                 <div className="game-sections-wrapper" style={{ 
                   width: '100%', 
@@ -1790,29 +1822,34 @@ const GameScreen: React.FC = () => {
                 }}>
                   {/* Target Display - Shows when enabled */}
                   <TargetDisplay />
-                  {/* Guess Area */}
-                  <div className="guess-section" ref={guessElementRef} style={{ border: '3px solid cyan', backgroundColor: 'rgba(0,255,255,0.1)' }}>
+                  {/* Guess Area with Circular Submit Button */}
+                  <div className="guess-section" ref={guessElementRef} style={{ 
+                    position: 'relative'
+                  }}>
                     <GuessArea />
+                    {/* Circular Submit Button positioned dynamically between info icon and container bottom */}
+                    <div 
+                      className="circular-submit-position"
+                    >
+                      <CircularSubmitButton />
+                    </div>
                   </div>
                   {/* Number Selection - Natural width */}
                   <div className="selection-section">
                     <SelectionArea />
                   </div>
-                  {/* Submit Button and Recent Guesses */}
-                  <div className="submit-section submit-section-inline" style={{ 
-                    border: '2px solid blue', 
-                    backgroundColor: 'rgba(0,0,255,0.1)', 
+                  {/* Recent Guess History - Now has more space */}
+                  <div className="recent-guess-section" style={{ 
                     flex: '1', // Allow it to grow to fill remaining space
                     minHeight: '0', // Let it be as small as needed
                     maxHeight: 'none', // Allow unlimited growth
                     overflow: 'visible',
                     display: 'flex',
                     flexDirection: 'column',
-                    // Debug: Force visibility and dimensions
                     width: '100%',
                     position: 'relative'
                   }}>
-                    <SubmitButton />
+                    <RecentGuessHistory />
                   </div>
                 </div>
               </div>
@@ -1821,27 +1858,33 @@ const GameScreen: React.FC = () => {
           
           // For all other modes (mobile, iPad landscape, desktop), use main-content layout
           return (
-            <div className="main-content" style={{ border: '2px solid orange', backgroundColor: 'rgba(255,165,0,0.1)' }}>
+            <div className="main-content">
               {/* Game Sections Wrapper */}
               <div className="game-sections-wrapper">
                 {/* Target Display - Shows when enabled */}
                 <TargetDisplay />
-                {/* Guess Area */}
-                <div className="guess-section" ref={guessElementRef} style={{ border: '3px solid cyan', backgroundColor: 'rgba(0,255,255,0.1)' }}>
+                {/* Guess Area with Circular Submit Button */}
+                <div className="guess-section" ref={guessElementRef} style={{ 
+                  position: 'relative'
+                }}>
                   <GuessArea />
+                  {/* Circular Submit Button positioned dynamically between info icon and container bottom */}
+                  <div 
+                    className="circular-submit-position"
+                  >
+                    <CircularSubmitButton />
+                  </div>
                 </div>
                 {/* Number Selection */}
                 <div className="selection-section">
                   <SelectionArea />
                 </div>
-                {/* Submit Button and Recent Guesses - Only show inline for mobile and portrait modes */}
+                {/* Recent Guess History - Only show inline for mobile and portrait modes */}
                 {(() => {
                   const shouldShowInlineSubmit = isMobile || isIpadPortrait || (!isIpadLandscape && isPortrait);
                   if (shouldShowInlineSubmit) {
                     return (
-                      <div className="submit-section submit-section-inline" style={{ 
-                        border: '2px solid blue', 
-                        backgroundColor: 'rgba(0,0,255,0.1)',
+                      <div className="recent-guess-section" style={{ 
                         flex: '1', // Allow it to grow to fill remaining space
                         minHeight: '200px', // Minimum height for content
                         maxHeight: 'none', // Allow unlimited growth
@@ -1849,18 +1892,18 @@ const GameScreen: React.FC = () => {
                         display: 'flex',
                         flexDirection: 'column'
                       }}>
-                        <SubmitButton />
+                        <RecentGuessHistory />
                       </div>
                     );
                   }
-                  return null; // Don't show inline submit in landscape modes where sidebar is used
+                  return null; // Don't show recent guesses in landscape modes where sidebar is used
                 })()}
               </div>
             </div>
           );
         })()}
 
-        {/* Submit Section as Sidebar - Only for iPad Landscape and Desktop */}
+        {/* Recent Guess History as Sidebar - Only for iPad Landscape and Desktop */}
         {(() => {
           const width = window.innerWidth;
           const height = window.innerHeight;
@@ -1870,18 +1913,48 @@ const GameScreen: React.FC = () => {
           const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
           const isMobile = width < 768; // iPhone and other mobile devices
           
-          // Show sidebar submit only in iPad landscape and desktop landscape modes
+          // Show sidebar recent guesses only in iPad landscape and desktop landscape modes
           // Hide in: iPad portrait, mobile (iPhone), and desktop portrait
           const shouldShowSidebar = isIpadLandscape || (!isMobile && !isIpadPortrait && isLandscape);
           
           if (shouldShowSidebar) {
             return (
-              <div className="submit-section submit-section-sidebar">
-                <SubmitButton />
+              <div className="recent-guess-section submit-section-sidebar">
+                <RecentGuessHistory />
               </div>
             );
           }
           return null;
+        })()}
+        
+        {/* Circular Submit Button - Show in ALL layouts */}
+        {(() => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          const isLandscape = width > height;
+          const isPortrait = height > width;
+          const isIpadLandscape = isLandscape && height >= 768 && height <= 1366;
+          const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
+          const isMobile = width < 768; // iPhone and other mobile devices
+          
+          // For landscape modes where we have a sidebar layout, position the button differently
+          const shouldShowSidebar = isIpadLandscape || (!isMobile && !isIpadPortrait && isLandscape);
+          
+          if (shouldShowSidebar) {
+            // In sidebar layouts, position the button between main content and sidebar
+            return (
+              <div className="circular-submit-landscape" style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 30
+              }}>
+                <CircularSubmitButton />
+              </div>
+            );
+          }
+          return null; // Button is already positioned in portrait layouts via the guess section
         })()}
 
         {/* Desktop Right Panel - Dynamically aligned with guess section */}
@@ -1902,10 +1975,7 @@ const GameScreen: React.FC = () => {
         {/* Mobile/Small Screen Drawer */}
         {useDrawer && (
                       <>
-            <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
-              border: '3px solid purple', // Debug: drawer border
-              backgroundColor: 'rgba(128,0,128,0.1)' // Debug: drawer background
-            }}>
+            <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
               <div className="drawer-header">
                 <button
                   className="drawer-close"

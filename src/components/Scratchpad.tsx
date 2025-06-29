@@ -73,23 +73,15 @@ const Scratchpad: React.FC = () => {
               </div>
               <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
                 <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fecaca; border: 1px solid #ef4444;"></div>
-                <span><strong>Bagel</strong> - Definitely NOT in target</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fed7aa; border: 1px solid #f97316;"></div>
-                <span><strong>Unlikely</strong> - Probably not in target</span>
+                <span><strong>Bagel</strong> - NOT in target</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
                 <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fde68a; border: 1px solid #f59e0b;"></div>
-                <span><strong>Maybe</strong> - Might be in target</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-                <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #bfdbfe; border: 1px solid #3b82f6;"></div>
-                <span><strong>Likely</strong> - Probably in target</span>
+                <span><strong>Pico</strong> - In target, wrong position</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
                 <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #a7f3d0; border: 1px solid #10b981;"></div>
-                <span><strong>Not Bagel</strong> - Definitely IN target</span>
+                <span><strong>Fermi</strong> - In target, correct position</span>
               </div>
             </div>
           </div>
@@ -118,20 +110,16 @@ const Scratchpad: React.FC = () => {
 
   const colorMeanings: Record<ScratchpadColor, { label: string; description: string }> = {
     default: { label: 'Unknown', description: 'No information yet' },
-    maybe: { label: 'Maybe', description: 'Might be in target' },
-    likely: { label: 'Likely', description: 'Probably in target' },
-    unlikely: { label: 'Unlikely', description: 'Probably not in target' },
-    bagel: { label: 'Bagel', description: 'Definitely NOT in target' },
-    'not-bagel': { label: 'Not Bagel', description: 'Definitely IN target' },
+    bagel: { label: 'Bagel', description: 'NOT in target' },
+    pico: { label: 'Pico', description: 'In target, wrong position' },
+    fermi: { label: 'Fermi', description: 'In target, correct position' },
   };
 
   const colorCycle: ScratchpadColor[] = [
     'default',
     'bagel',
-    'unlikely',
-    'maybe', 
-    'likely',
-    'not-bagel'
+    'pico',
+    'fermi'
   ];
 
   const handleNumberClick = (number: number) => {

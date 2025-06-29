@@ -56,7 +56,7 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     indicator.textContent = digit.toString();
     document.body.appendChild(indicator);
     setDragIndicatorElement(indicator);
-    console.log(`🎯 Created global drag indicator for digit ${digit} at ${x}, ${y}`);
+    // console.log(`🎯 Created global drag indicator for digit ${digit} at ${x}, ${y}`);
     return indicator;
   }, [digit]);
 
@@ -65,7 +65,7 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     if (dragIndicatorElement) {
       dragIndicatorElement.style.left = `${x - 35}px`;
       dragIndicatorElement.style.top = `${y - 35}px`;
-      console.log(`🎯 Updated drag indicator position to ${x}, ${y}`);
+      // console.log(`🎯 Updated drag indicator position to ${x}, ${y}`);
     }
   }, [dragIndicatorElement]);
 
@@ -74,7 +74,7 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
       try {
         document.body.removeChild(dragIndicatorElement);
-        console.log(`🎯 Removed drag indicator for digit ${digit}`);
+        // console.log(`🎯 Removed drag indicator for digit ${digit}`);
       } catch (error) {
         console.warn(`🎯 Failed to remove drag indicator for digit ${digit}:`, error);
       }
@@ -101,18 +101,18 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       setDragStart({ x: relativeX, y: relativeY });
       setIsLongPressing(true);
       
-      console.log(`🎯 Touch start on digit ${digit}:`, {
-        touchClient: `${touch.clientX}, ${touch.clientY}`,
-        buttonRect: `${rect.left}, ${rect.top}, ${rect.width}x${rect.height}`,
-        relative: `${relativeX}, ${relativeY}`
-      });
+      // console.log(`🎯 Touch start on digit ${digit}:`, {
+      //   touchClient: `${touch.clientX}, ${touch.clientY}`,
+      //   buttonRect: `${rect.left}, ${rect.top}, ${rect.width}x${rect.height}`,
+      //   relative: `${relativeX}, ${relativeY}`
+      // });
       
       // Start drag after a short delay to differentiate from tap
       dragTimeoutRef.current = setTimeout(() => {
         setIsLongPressing(false);
         setIsDragging(true);
         createDragIndicator(touch.clientX, touch.clientY);
-        console.log(`🎯 Drag started for digit ${digit} at:`, touch.clientX, touch.clientY);
+        // console.log(`🎯 Drag started for digit ${digit} at:`, touch.clientX, touch.clientY);
       }, 200); // Slightly longer delay for better UX
     }
   }, [digit]);
@@ -139,10 +139,10 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       if (!isDragging) {
         setIsDragging(true);
         createDragIndicator(touch.clientX, touch.clientY);
-        console.log(`🎯 Drag started during move for digit ${digit}`);
+        // console.log(`🎯 Drag started during move for digit ${digit}`);
       }
       updateDragIndicator(touch.clientX, touch.clientY);
-      console.log(`🎯 Touch move for digit ${digit}:`, touch.clientX, touch.clientY);
+      // console.log(`🎯 Touch move for digit ${digit}:`, touch.clientX, touch.clientY);
     }
   }, [dragStart, isDragging, digit, createDragIndicator, updateDragIndicator]);
 
@@ -273,7 +273,7 @@ const SelectionArea: React.FC = () => {
         if (indicator.textContent && /^\d$/.test(indicator.textContent)) {
           try {
             document.body.removeChild(indicator);
-            console.log('🧹 Cleaned up orphaned drag indicator');
+            // console.log('🧹 Cleaned up orphaned drag indicator');
           } catch (error) {
             console.warn('🧹 Failed to clean up orphaned indicator:', error);
           }
@@ -345,8 +345,12 @@ const SelectionArea: React.FC = () => {
               <span><strong>Bagel</strong> - Not in target number</span>
             </div>
             <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
+              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fde68a; border: 1px solid #f59e0b;"></div>
+              <span><strong>Pico</strong> - In target, wrong position</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
               <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #a7f3d0; border: 1px solid #10b981;"></div>
-              <span><strong>Not Bagel</strong> - In target number</span>
+              <span><strong>Fermi</strong> - In target, correct position</span>
             </div>
             <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
               <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #e5e7eb; border: 1px solid #9ca3af;"></div>
@@ -354,10 +358,9 @@ const SelectionArea: React.FC = () => {
             </div>
           </div>
           <div style="border-top: 1px solid #e5e7eb; padding-top: 16px;">
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Auto-fill:</strong> Tap numbers to fill the highlighted position (blue outline)</p>
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Manual:</strong> Click a guess box first, then tap a number</p>
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Drag & Drop:</strong> Hold and drag numbers to specific positions</p>
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Lock:</strong> Long-press filled positions to lock them</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Auto-fill:</strong> Tap numbers to fill the highlighted guess position (blue outline)</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Manual:</strong> Click a guess box first (moves blue outline), then tap a number to fill that guess position</p>
+            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Drag & Drop:</strong> Hold and drag a number to a specific guess position and release to assign that position your dragged number</p>
           </div>
         </div>
       </div>
@@ -385,16 +388,12 @@ const SelectionArea: React.FC = () => {
       return 'bagel';
     }
     if (hintState.purchasedHints.notBagelNumbers.has(digit)) {
-      return 'not-bagel';
+      return 'fermi'; // Update to use fermi instead of not-bagel
     }
     
-    // Only show bagel color from scratchpad
+    // Show all scratchpad colors in Number Selection
     const scratchpadColor = scratchpadState.numberColors.get(digit) || 'default';
-    if (scratchpadColor === 'bagel') {
-      return 'bagel';
-    }
-    
-    return 'default';
+    return scratchpadColor;
   };
 
   const isNumberUsedInSubmittedGuesses = (digit: number): boolean => {
@@ -407,23 +406,23 @@ const SelectionArea: React.FC = () => {
   );
 
   // Check if we're in iPad portrait mode for dynamic width expansion
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const isPortrait = height > width;
-  const isIpadPortrait = isPortrait && width >= 768 && width <= 1024;
+  // const width = window.innerWidth;
+  // const height = window.innerHeight;
+  // const isPortrait = height > width;
+  // const isIpadPortrait = isPortrait && width >= 768 && width <= 1024; // Removed for production
   
   // Debug logging to understand what's happening
-  console.log(`🔍 SelectionArea Debug:`, {
-    width,
-    height,
-    isPortrait,
-    isIpadPortrait,
-    targetLength: settings.targetLength,
-    gridRows: settings.gridRows,
-    gridColumns: settings.gridColumns,
-    digitRange: settings.digitRange,
-    availableNumbersCount: availableNumbers.length
-  });
+  // console.log(`🔍 SelectionArea Debug:`, {
+  //   width,
+  //   height,
+  //   isPortrait,
+  //   isIpadPortrait,
+  //   targetLength: settings.targetLength,
+  //   gridRows: settings.gridRows,
+  //   gridColumns: settings.gridColumns,
+  //   digitRange: settings.digitRange,
+  //   availableNumbersCount: availableNumbers.length
+  // });
 
   return (
     <div className="selection-area">

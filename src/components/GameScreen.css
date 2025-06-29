@@ -645,17 +645,17 @@
 
 /* iPad Landscape Mode - Disable ALL CSS scaling, let JavaScript handle it exclusively */
 @media (orientation: landscape) and (min-height: 768px) and (max-height: 1024px) {
-  /* Debug: Test if media query matches at all */
-  body {
+  /* Debug: Test if media query matches at all - removed for production */
+  /* body {
     background: yellow !important;
-  }
+  } */
   .game-screen {
     transform: none !important;
     width: 100vw !important;
     height: 100vh !important;
     transform-origin: top left !important;
-    /* Debug: This should make the background red if media query matches */
-    background: linear-gradient(135deg, #ff0000 0%, #990000 100%) !important;
+    /* Debug: This should make the background red if media query matches - removed for production */
+    /* background: linear-gradient(135deg, #ff0000 0%, #990000 100%) !important; */
     /* Standard padding, JavaScript will handle keepout areas */
     padding: 20px;
   }

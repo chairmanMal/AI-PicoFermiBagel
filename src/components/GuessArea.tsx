@@ -238,10 +238,10 @@ const GuessArea: React.FC = () => {
           ">×</button>
         </div>
         <div style="padding: 0 20px 20px;">
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Blue Outline:</strong> Auto-fill position - numbers will go here when tapped</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Manual Selection:</strong> Click any unlocked box to make it the active position</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Blue Outline:</strong> This is considered the active position. A tapped number in the selection grid will be assigned to this guess location. After autofill-ing, the active position will automatically advance</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Manual Selection:</strong> Click any unlocked box to make it the active position for autofill</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Long-press any filled box to lock/unlock it</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Long-press any filled guess position to lock/unlock it from changing values. Locking also causes the autofill advancing to skip that position</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
