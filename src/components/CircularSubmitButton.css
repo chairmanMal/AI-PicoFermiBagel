@@ -99,13 +99,15 @@
   left: 0;
 }
 
-.circular-text {
+/* Curved text element that follows the circular path */
+.curved-text-element {
   fill: white;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 900;
   font-family: 'Arial', sans-serif;
-  letter-spacing: 1.5px;
+  letter-spacing: 2.2px;
   text-transform: uppercase;
+  text-anchor: start;
 }
 
 .center-icon {
@@ -129,9 +131,14 @@
   z-index: 2;
 }
 
-
-
 /* Responsive adjustments */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+  .curved-text-element {
+    font-size: 13px;
+    letter-spacing: 0.1px;
+  }
+}
+
 @media (max-width: 768px) {
   .circular-submit-btn {
     width: 67px;
@@ -159,8 +166,9 @@
     left: 25.5px;
   }
   
-  .circular-text {
+  .curved-text-element {
     font-size: 11px;
+    letter-spacing: 0.5px;
   }
 }
 
@@ -191,9 +199,10 @@
     left: 22px;
   }
   
-      .circular-text {
-      font-size: 10px;
-    }
+  .curved-text-element {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
   
   .center-icon {
     width: 16px;
@@ -235,4 +244,13 @@
     font-size: 0.6rem;
     padding: 2px 4px;
   }
+}
+
+/* Separator text styling */
+.separator-text {
+  fill: white;
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'Arial', sans-serif;
+  text-anchor: middle;
 } 

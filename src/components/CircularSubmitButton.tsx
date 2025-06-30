@@ -49,44 +49,35 @@ const CircularSubmitButton: React.FC = () => {
         
         {/* Curved text around the button */}
         <div className="curved-text">
+          <svg viewBox="0 0 100 100" className="text-circle">
+            <defs>
+              {/* Path for text to follow - moved away from outer ring */}
+              <path 
+                id="text-circle-path" 
+                d="M 50, 50 m -30, 0 a 30,30 0 1,1 60,0 a 30,30 0 1,1 -60,0" 
+                fill="none"
+              />
+            </defs>
+            
+            <text className="curved-text-element">
+              <textPath href="#text-circle-path" startOffset="0%">
+                {isGameEnded ? " • NEW GAME • NEW GAME • NEW GAME" : " • SUBMIT • SUBMIT • SUBMIT"}
+              </textPath>
+            </text>
+          </svg>
+          
+          {/* Center content */}
           {isGameEnded ? (
-            <>
-              <svg viewBox="0 0 100 100" className="text-circle">
-                <defs>
-                  <path id="circle-path" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" />
-                </defs>
-                <text className="circular-text">
-                  <textPath href="#circle-path">
-                    NEW GAME • NEW GAME • NEW GAME
-                  </textPath>
-                </text>
-              </svg>
-              <RotateCcw className="center-icon" size={20} />
-            </>
+            <RotateCcw className="center-icon" size={20} />
           ) : (
-            <>
-              <svg viewBox="0 0 100 100" className="text-circle">
-                <defs>
-                  <path id="circle-path" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" />
-                </defs>
-                <text className="circular-text">
-                  <textPath href="#circle-path">
-                    SUBMIT • SUBMIT • SUBMIT
-                  </textPath>
-                </text>
-              </svg>
-              <div className="center-icon target-dot"></div>
-            </>
+            <div className="center-icon target-dot"></div>
           )}
         </div>
       </motion.button>
       
-
-
       {/* Guess validation messages below the button */}
       {!canSubmitGuess() && gameState.isGameActive && (
         <div className="guess-validation">
-
           {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
             <span className="validation-message">
               • Numbers must be 0-{settings.digitRange}
