@@ -1225,6 +1225,14 @@ const GameScreen: React.FC = () => {
     // Initialize sound volume from settings
     soundUtils.setVolume(settings.soundVolume);
     
+    // Activate audio if sound is already enabled
+    if (settings.soundEnabled) {
+      console.log('🎵 🎯 Sound already enabled on startup - activating audio...');
+      soundUtils.activateAudio().catch(error => {
+        console.error('🎵 ❌ Failed to activate audio on startup:', error);
+      });
+    }
+    
     // Simplified startup - no complex layout fixes that cause icon movement
     console.log('🔧 Simplified startup - skipping complex layout fixes to prevent icon movement');
     
@@ -1249,7 +1257,7 @@ const GameScreen: React.FC = () => {
       });
     });
     
-  }, [settings.soundVolume]);
+  }, [settings.soundVolume, settings.soundEnabled]);
 
   // Debug current game state
   useEffect(() => {

@@ -101,13 +101,7 @@ const SubmitButton: React.FC = () => {
       {/* Validation hints below the button row */}
       {!canSubmitGuess() && gameState.isGameActive && (
         <div className="validation-hints">
-          {(() => {
-            const filledDigits = gameState.currentGuess.filter(d => d !== null) as number[];
-            const uniqueDigits = new Set(filledDigits);
-            return filledDigits.length !== uniqueDigits.size;
-          })() && (
-            <span className="hint">• Remove duplicate numbers (click a box, then select a new number, or double-click to clear)</span>
-          )}
+
           {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
             <span className="hint">• Numbers must be 0-{settings.digitRange}</span>
           )}

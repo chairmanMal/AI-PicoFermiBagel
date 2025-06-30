@@ -49,12 +49,17 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    updateSettings({ soundVolume: newVolume });
+    const rawVolume = parseFloat(e.target.value);
+    // Snap to nearest 10% increment (0.0, 0.1, 0.2, ..., 1.0)
+    const snappedVolume = Math.round(rawVolume * 10) / 10;
     
-    // Play a test sound immediately to demonstrate the volume change
+    console.log(`🎵 Volume slider: raw=${rawVolume.toFixed(2)}, snapped=${snappedVolume.toFixed(1)}`);
+    
+    updateSettings({ soundVolume: snappedVolume });
+    
+    // Play a throttled test sound to demonstrate the volume change without crackling
     import('../utils/soundUtils').then(({ soundUtils }) => {
-      soundUtils.playDigitPlaceSound();
+      soundUtils.playVolumeTestSound();
     });
   };
 
@@ -236,14 +241,17 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             >
               <label>
                 <Volume2 size={16} />
-                Volume: {Math.round((settings.soundVolume || 0.2) * 100)}%
+                Volume: {Math.round((settings.soundVolume || 0.1) * 100)}% 
+                <span style={{ fontSize: '0.8em', opacity: 0.7 }}>
+                  (Level {Math.round((settings.soundVolume || 0.1) * 10)})
+                </span>
               </label>
               <input
                 type="range"
                 min="0"
                 max="1"
-                step="0.01"
-                value={settings.soundVolume || 0.2}
+                step="0.1"
+                value={settings.soundVolume || 0.1}
                 onChange={handleVolumeChange}
                 onTouchStart={handleVolumeSliderStart}
                 onTouchMove={handleVolumeSliderMove}
@@ -251,9 +259,22 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
                 onMouseMove={handleVolumeSliderMove}
                 className="range-slider volume-slider"
                 style={{
-                  background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.2) * 100}%, #e5e7eb ${(settings.soundVolume || 0.2) * 100}%, #e5e7eb 100%)`
+                  background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.1) * 100}%, #e5e7eb ${(settings.soundVolume || 0.1) * 100}%, #e5e7eb 100%)`
                 }}
               />
+              <div className="volume-ticks" style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                fontSize: '0.7em', 
+                opacity: 0.6,
+                marginTop: '2px'
+              }}>
+                <span>0%</span>
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+                <span>100%</span>
+              </div>
             </div>
           )}
 

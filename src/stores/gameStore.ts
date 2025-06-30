@@ -31,7 +31,7 @@ const defaultSettings: GameSettings = {
   showTarget: false,
   selectionAreaPosition: 'bottom',
   soundEnabled: true,
-  soundVolume: 0.2, // Default to 20% volume
+  soundVolume: 0.1, // Reduced from 0.2 to 0.1 (10% instead of 20%)
   gridRows: 1,
   gridColumns: 3,
   clearGuessAfterSubmit: true,
@@ -493,6 +493,14 @@ export const useGameStore = create<GameStore>()(
               // Update sound volume if changed
               if (action.settings.soundVolume !== undefined) {
                 soundUtils.setVolume(action.settings.soundVolume);
+              }
+
+              // Activate audio if sound is being enabled
+              if (action.settings.soundEnabled === true && state.settings.soundEnabled === false) {
+                console.log('🎵 🎯 Sound enabled - activating audio automatically...');
+                soundUtils.activateAudio().catch(error => {
+                  console.error('🎵 ❌ Failed to activate audio on sound enable:', error);
+                });
               }
 
               // Start new game if game-affecting settings changed

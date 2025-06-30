@@ -1,250 +1,755 @@
-// Simple sound utility for audio feedback
+// High-performance sound utility with iOS silent mode compatibility
 class SoundUtils {
+  private masterVolume: number = 0.1; // Reduced from 0.2 to 0.1 (10% instead of 20%)
+  private audioContextActivated: boolean = false;
   private audioContext: AudioContext | null = null;
-  private masterVolume: number = 0.2; // Default to 20% volume
+  private audioBuffers: Map<string, AudioBuffer> = new Map();
+  private preCalculatedAudio: Map<number, Map<string, HTMLAudioElement[]>> = new Map(); // Pre-calculated volume levels
+  private currentVolumeLevel: number = 5; // Current volume level (0-50 for 0-100% in 2% increments)
+  private currentIndex: Map<string, number> = new Map(); // Round-robin for HTML5 audio
+  private lastVolumeTestTime: number = 0; // Prevent overlapping volume test sounds
+  private volumeStabilityTimer: number | null = null; // Timer for volume stability
+  private pendingVolumeLevel: number | null = null; // Pending volume level to generate
+  private isGeneratingLevel: boolean = false; // Prevent overlapping level generation
 
   constructor() {
-    // Initialize AudioContext on first use
+    console.log('🎵 SoundUtils constructor - initializing hybrid audio system with lazy volume loading...');
+    this.configureMediaSession();
     this.initializeAudioContext();
+    this.initializeRoundRobinIndices();
+    this.generateVolumeLevel(5); // Generate default level (10%) immediately
   }
 
   private initializeAudioContext() {
     try {
+      // Create AudioContext (will be suspended on iOS until activated)
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('🎵 🎼 AudioContext created, state:', this.audioContext.state);
+      
+      // Pre-generate all audio buffers
+      this.generateAudioBuffers();
     } catch (error) {
-      console.warn('Audio context not supported:', error);
+      console.error('🎵 ❌ Failed to create AudioContext:', error);
     }
   }
 
-  private async ensureAudioContext() {
-    if (!this.audioContext) {
-      this.initializeAudioContext();
+  private initializeRoundRobinIndices() {
+    // Initialize round-robin indices for all sound types
+    const soundNames = ['digit', 'drip', 'complete', 'dud', 'lost', 'won'];
+    soundNames.forEach(name => {
+      this.currentIndex.set(name, 0);
+    });
+  }
+
+  private async generateVolumeLevel(level: number) {
+    if (this.preCalculatedAudio.has(level)) {
+      console.log(`🎵 📊 Volume level ${level} already exists, skipping generation`);
+      return;
     }
 
-    if (this.audioContext && this.audioContext.state === 'suspended') {
-      try {
-        await this.audioContext.resume();
-      } catch (error) {
-        console.warn('Failed to resume audio context:', error);
+    if (this.isGeneratingLevel) {
+      console.log(`🎵 ⚠️ Already generating a volume level, skipping...`);
+      return;
+    }
+
+    this.isGeneratingLevel = true;
+    const volumePercent = level * 10; // 0%, 10%, 20%, etc.
+    
+    // Use exponential curve for much better volume progression
+    // Level 0 = 0%, Level 1 = ~1%, Level 5 = ~16%, Level 10 = 100%
+    const volumeDecimal = level === 0 ? 0 : Math.pow(level / 10, 2.5);
+    
+    console.log(`🎵 📊 Generating volume level ${level} (${volumePercent}% slider) with amplitude ${(volumeDecimal * 100).toFixed(1)}%...`);
+    
+    try {
+      // Create audio elements for this specific volume level
+      const levelAudioMap = new Map<string, HTMLAudioElement[]>();
+      
+      const sounds = {
+        digit: this.createToneDataUrlWithVolume(800, 0.08, volumeDecimal),
+        drip: this.createSweepDataUrlWithVolume(1200, 400, 0.15, volumeDecimal),
+        complete: this.createToneDataUrlWithVolume(1200, 0.15, volumeDecimal),
+        dud: this.createToneDataUrlWithVolume(200, 0.12, volumeDecimal),
+        lost: this.createSequenceDataUrlWithVolume([400, 350, 300, 250], volumeDecimal),
+        won: this.createSequenceDataUrlWithVolume([523, 659, 784, 1047], volumeDecimal)
+      };
+
+      // Create 2 instances of each sound for overlapping playback
+      const poolSize = 2;
+      
+      for (const [name, dataUrl] of Object.entries(sounds)) {
+        const audioPool: HTMLAudioElement[] = [];
+        
+        for (let i = 0; i < poolSize; i++) {
+          const audio = new Audio();
+          
+          // Configure for iOS compatibility and silent mode - CRITICAL FOR SILENT MODE!
+          audio.setAttribute('webkit-playsinline', 'true');
+          audio.setAttribute('playsinline', 'true');
+          audio.preload = 'auto';
+          audio.volume = 1.0; // Always max volume since amplitude is controlled at generation level
+          
+          // iOS-specific attributes for silent mode audio
+          audio.muted = false;
+          audio.defaultMuted = false;
+          
+          // Set source and ensure it's loaded
+          audio.src = dataUrl;
+          audio.load();
+          
+          // Wait for audio to be ready
+          await new Promise<void>((resolve) => {
+            const timeout = setTimeout(() => {
+              console.log(`🎵 ⚠️ Audio element ${i} for ${name} took too long to load, continuing anyway`);
+              resolve();
+            }, 2000);
+            
+            const onReady = () => {
+              clearTimeout(timeout);
+              audio.removeEventListener('canplaythrough', onReady);
+              audio.removeEventListener('error', onError);
+              resolve();
+            };
+            
+            const onError = (e: Event) => {
+              clearTimeout(timeout);
+              audio.removeEventListener('canplaythrough', onReady);
+              audio.removeEventListener('error', onError);
+              console.error(`🎵 ❌ Audio element ${i} for ${name} failed to load:`, e);
+              resolve(); // Continue anyway
+            };
+            
+            if (audio.readyState >= 3) { // HAVE_FUTURE_DATA or better
+              onReady();
+            } else {
+              audio.addEventListener('canplaythrough', onReady);
+              audio.addEventListener('error', onError);
+            }
+          });
+          
+          audioPool.push(audio);
+        }
+        
+        levelAudioMap.set(name, audioPool);
       }
+      
+      // Store this volume level
+      this.preCalculatedAudio.set(level, levelAudioMap);
+      
+      // Clean up data URLs to prevent memory leaks
+      Object.values(sounds).forEach(url => URL.revokeObjectURL(url));
+      
+      console.log(`🎵 ✅ Volume level ${level} (${volumePercent}% slider) generated with ${(volumeDecimal * 100).toFixed(1)}% amplitude`);
+      
+    } catch (error) {
+      console.error(`🎵 ❌ Failed to generate volume level ${level}:`, error);
+    } finally {
+      this.isGeneratingLevel = false;
+    }
+  }
+
+  private generateAudioBuffers() {
+    if (!this.audioContext) return;
+
+    console.log('🎵 🎼 Generating audio buffers...');
+    
+    const sounds = {
+      digit: () => this.createToneBuffer(800, 0.08),
+      drip: () => this.createSweepBuffer(1200, 400, 0.15),
+      complete: () => this.createToneBuffer(1200, 0.15),
+      dud: () => this.createToneBuffer(200, 0.12),
+      lost: () => this.createSequenceBuffer([400, 350, 300, 250]),
+      won: () => this.createSequenceBuffer([523, 659, 784, 1047])
+    };
+
+    for (const [name, generator] of Object.entries(sounds)) {
+      try {
+        const buffer = generator();
+        this.audioBuffers.set(name, buffer);
+        console.log(`🎵 🎼 Generated buffer for ${name}`);
+      } catch (error) {
+        console.error(`🎵 ❌ Failed to generate buffer for ${name}:`, error);
+      }
+    }
+    
+    console.log('🎵 ✅ All audio buffers generated and ready');
+  }
+
+  private createToneBuffer(frequency: number, duration: number): AudioBuffer {
+    if (!this.audioContext) throw new Error('AudioContext not available');
+    
+    const sampleRate = this.audioContext.sampleRate;
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+    const channelData = buffer.getChannelData(0);
+    
+    for (let i = 0; i < samples; i++) {
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+      const envelope = Math.exp(-i / (sampleRate * 0.1)); // Fade out
+      const amplitude = 0.25 * this.masterVolume; // Use masterVolume as amplitude multiplier
+      channelData[i] = sample * envelope * amplitude;
+    }
+    
+    return buffer;
+  }
+
+  private createSweepBuffer(startFreq: number, endFreq: number, duration: number): AudioBuffer {
+    if (!this.audioContext) throw new Error('AudioContext not available');
+    
+    const sampleRate = this.audioContext.sampleRate;
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+    const channelData = buffer.getChannelData(0);
+    
+    for (let i = 0; i < samples; i++) {
+      const progress = i / samples;
+      const frequency = startFreq + (endFreq - startFreq) * progress;
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+      const envelope = Math.exp(-progress * 5); // Exponential decay
+      const amplitude = 0.25 * this.masterVolume; // Use masterVolume as amplitude multiplier
+      channelData[i] = sample * envelope * amplitude;
+    }
+    
+    return buffer;
+  }
+
+  private createSequenceBuffer(frequencies: number[]): AudioBuffer {
+    if (!this.audioContext) throw new Error('AudioContext not available');
+    
+    const sampleRate = this.audioContext.sampleRate;
+    const noteDuration = 0.15;
+    const totalSamples = Math.floor(sampleRate * noteDuration * frequencies.length);
+    const buffer = this.audioContext.createBuffer(1, totalSamples, sampleRate);
+    const channelData = buffer.getChannelData(0);
+    
+    const samplesPerNote = Math.floor(sampleRate * noteDuration);
+    for (let noteIndex = 0; noteIndex < frequencies.length; noteIndex++) {
+      const frequency = frequencies[noteIndex];
+      for (let i = 0; i < samplesPerNote; i++) {
+        const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+        const envelope = Math.exp(-i / (sampleRate * 0.05)); // Quick fade
+        const amplitude = 0.15 * this.masterVolume; // Use masterVolume as amplitude multiplier
+        const sampleIndex = noteIndex * samplesPerNote + i;
+        if (sampleIndex < totalSamples) {
+          channelData[sampleIndex] = sample * envelope * amplitude;
+        }
+      }
+    }
+    
+    return buffer;
+  }
+
+  private configureMediaSession() {
+    console.log('🎵 📱 Configuring Media Session for iOS compatibility...');
+    
+    try {
+      // Configure Media Session API to indicate this is media content
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: 'PicoFermiBagel Game Audio',
+          artist: 'Game Sounds',
+          album: 'Interactive Audio',
+        });
+        
+        // Set playback state to indicate active media
+        navigator.mediaSession.playbackState = 'playing';
+        
+        console.log('🎵 📱 ✅ Media Session configured for iOS');
+      } else {
+        console.log('🎵 📱 ⚠️ Media Session API not available');
+      }
+    } catch (error) {
+      console.error('🎵 📱 ❌ Failed to configure Media Session:', error);
+    }
+  }
+
+  // Create a truly silent audio data URL for iOS activation
+  private createSilentDataUrl(): string {
+    // Create a minimal silent WAV file (1 sample at 0 amplitude)
+    const sampleRate = 44100;
+    const samples = 1; // Just one silent sample
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header for silent audio
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples * 2, true);
+    
+    // Generate complete silence (0 amplitude)
+    for (let i = 0; i < samples; i++) {
+      view.setInt16(44 + i * 2, 0, true); // Absolute silence
+    }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  // Public method to activate audio when sound is enabled
+  public async activateAudio() {
+    if (this.audioContextActivated) {
+      console.log('🎵 🎯 Audio already activated, skipping...');
+      return;
+    }
+
+    console.log('🎵 🎯 Activating Web Audio API for iOS...');
+    console.log('🎵 🔍 AudioContext state before activation:', this.audioContext?.state);
+    
+    try {
+      // First, use silent HTML5 audio to unlock iOS audio context
+      const silentDataUrl = this.createSilentDataUrl();
+      const silentAudio = new Audio();
+      silentAudio.src = silentDataUrl;
+      silentAudio.volume = 0;
+      silentAudio.muted = true;
+      
+      console.log('🎵 🔇 Playing silent activation sound for iOS...');
+      
+      // Use Promise.race to timeout the silent audio play
+      try {
+        await Promise.race([
+          silentAudio.play(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Silent audio timeout')), 1000))
+        ]);
+        console.log('🎵 🔇 Silent audio played successfully');
+      } catch (error) {
+        console.log('🎵 🔇 Silent audio play failed or timed out, continuing anyway:', error);
+      }
+      
+      silentAudio.pause();
+      silentAudio.currentTime = 0;
+      
+      // Clean up the silent audio URL
+      URL.revokeObjectURL(silentDataUrl);
+      
+      // Now resume the Web Audio API context
+      if (this.audioContext) {
+        console.log('🎵 🔍 AudioContext state after silent play:', this.audioContext.state);
+        
+        if (this.audioContext.state === 'suspended') {
+          console.log('🎵 🔄 Resuming suspended AudioContext...');
+          await this.audioContext.resume();
+          console.log('🎵 ✅ AudioContext resumed, new state:', this.audioContext.state);
+        } else {
+          console.log('🎵 ✅ AudioContext already running, state:', this.audioContext.state);
+        }
+        
+        // Set activation flag regardless of state - if AudioContext is running, we're good
+        if (this.audioContext.state === 'running') {
+          this.audioContextActivated = true;
+          console.log('🎵 🎯 Web Audio API activated and ready for instant playback');
+          
+          // Test play a very quiet sound to verify it's working
+          console.log('🎵 🧪 Testing audio with quiet test sound...');
+          this.testAudioPlayback();
+        } else {
+          console.error('🎵 ❌ AudioContext failed to reach running state:', this.audioContext.state);
+          // Try to force activation anyway since sometimes it works even in other states
+          this.audioContextActivated = true;
+          console.log('🎵 🔧 Force-activating audio despite AudioContext state');
+        }
+      } else {
+        console.error('🎵 ❌ AudioContext is null');
+      }
+      
+    } catch (error) {
+      console.error('🎵 ❌ Failed to activate audio:', error);
+      // Try to activate anyway - sometimes it works despite errors
+      if (this.audioContext && this.audioContext.state === 'running') {
+        this.audioContextActivated = true;
+        console.log('🎵 🔧 Force-activating audio despite activation error');
+      }
+    }
+  }
+
+  // Test method to verify audio is working
+  private testAudioPlayback() {
+    if (!this.audioContext || !this.audioContextActivated) {
+      console.log('🎵 🧪 Cannot test - audio not activated');
+      return;
+    }
+
+    const buffer = this.audioBuffers.get('digit');
+    if (!buffer) {
+      console.log('🎵 🧪 Cannot test - no test buffer available');
+      return;
+    }
+
+    try {
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+      
+      source.buffer = buffer;
+      gainNode.gain.value = 0.01; // Very quiet test
+      
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      source.start();
+      console.log('🎵 🧪 ✅ Test sound played successfully');
+      
+    } catch (error) {
+      console.error('🎵 🧪 ❌ Test sound failed:', error);
     }
   }
 
   // Volume control methods
   setVolume(volume: number) {
-    this.masterVolume = Math.max(0, Math.min(1, volume)); // Clamp between 0 and 1
+    this.masterVolume = Math.max(0, Math.min(1, volume)); // Clamp to 0-100% range
+    
+    // Round to nearest 10% increment BEFORE any processing
+    const roundedVolume = Math.round(this.masterVolume * 10) / 10;
+    this.masterVolume = roundedVolume;
+    
+    // Convert to discrete volume level (0-10 for 0-100% in 10% increments)
+    const newVolumeLevel = Math.round(this.masterVolume * 10);
+    const oldVolumeLevel = this.currentVolumeLevel;
+    
+    // Clamp to available volume levels (0-10)
+    const clampedVolumeLevel = Math.max(0, Math.min(10, newVolumeLevel));
+    
+    if (clampedVolumeLevel !== oldVolumeLevel) {
+      console.log(`🎵 🔊 Volume level target: ${clampedVolumeLevel} (${clampedVolumeLevel * 10}%)`);
+      
+      // If the target level already exists, switch immediately
+      if (this.preCalculatedAudio.has(clampedVolumeLevel)) {
+        this.currentVolumeLevel = clampedVolumeLevel;
+        console.log(`🎵 ⚡ Instant switch to existing level ${clampedVolumeLevel}`);
+      } else {
+        // Set pending level and start stability timer
+        this.pendingVolumeLevel = clampedVolumeLevel;
+        
+        // Clear existing timer
+        if (this.volumeStabilityTimer !== null) {
+          clearTimeout(this.volumeStabilityTimer);
+        }
+        
+        // Set timer to generate level after 1 second of stability
+        this.volumeStabilityTimer = window.setTimeout(() => {
+          if (this.pendingVolumeLevel !== null) {
+            const levelToGenerate = this.pendingVolumeLevel;
+            console.log(`🎵 ⏱️ Volume stable for 1s, generating level ${levelToGenerate}...`);
+            
+            this.generateVolumeLevel(levelToGenerate).then(() => {
+              // Switch to the newly generated level
+              if (this.preCalculatedAudio.has(levelToGenerate)) {
+                this.currentVolumeLevel = levelToGenerate;
+                console.log(`🎵 ✅ Switched to newly generated level ${levelToGenerate}`);
+              }
+            });
+            
+            this.pendingVolumeLevel = null;
+          }
+        }, 1000);
+        
+        console.log(`🎵 ⏱️ Starting 1s stability timer for level ${clampedVolumeLevel}`);
+      }
+    } else {
+      console.log(`🎵 🔊 Volume level unchanged at ${clampedVolumeLevel} (${clampedVolumeLevel * 10}%)`);
+    }
+  }
+
+  // Method for playing volume test sound with throttling
+  playVolumeTestSound() {
+    const now = Date.now();
+    // Throttle volume test sounds to prevent crackling
+    if (now - this.lastVolumeTestTime < 100) {
+      return;
+    }
+    this.lastVolumeTestTime = now;
+    
+    // Calculate actual amplitude for logging
+    const actualAmplitude = this.currentVolumeLevel === 0 ? 0 : Math.pow(this.currentVolumeLevel / 10, 2.5);
+    
+    console.log(`🎵 🔊 Playing volume test sound at level ${this.currentVolumeLevel} (${this.currentVolumeLevel * 10}% slider, ${(actualAmplitude * 100).toFixed(1)}% amplitude)`);
+    this.playSound('digit');
   }
 
   getVolume(): number {
     return this.masterVolume;
   }
 
-  // Play a simple beep sound for digit placement
-  async playDigitPlaceSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
-
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-
-      // Pleasant click sound: short, mid-frequency tone
-      oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
-      oscillator.type = 'sine';
-
-      // Quick fade in/out for a clean click
-      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.2 * this.masterVolume, this.audioContext.currentTime + 0.01);
-      gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.08);
-
-      oscillator.start(this.audioContext.currentTime);
-      oscillator.stop(this.audioContext.currentTime + 0.08);
-    } catch (error) {
-      console.warn('Failed to play digit place sound:', error);
+  private playSound(soundName: string) {
+    console.log(`🎵 🎯 Attempting to play ${soundName} sound...`);
+    console.log(`🎵 🔍 AudioContext state: ${this.audioContext?.state}`);
+    console.log(`🎵 🔍 Master volume: ${this.masterVolume}`);
+    
+    // Try HTML5 Audio first for iOS silent mode compatibility
+    const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
+    if (levelAudioMap) {
+      const audioPool = levelAudioMap.get(soundName);
+      if (audioPool && audioPool.length > 0) {
+        try {
+          const currentIdx = this.currentIndex.get(soundName) || 0;
+          const audio = audioPool[currentIdx];
+          
+          // Stop any currently playing instance to prevent overlaps
+          if (!audio.paused) {
+            audio.pause();
+          }
+          
+          // Reset audio to beginning for instant playback
+          audio.currentTime = 0;
+          
+          // Keep volume at 1.0 for iOS silent mode compatibility - amplitude is controlled at generation level
+          audio.volume = 1.0;
+          
+          // Update index for next play BEFORE playing to prevent race conditions
+          this.currentIndex.set(soundName, (currentIdx + 1) % audioPool.length);
+          
+          // Play the sound immediately
+          const playPromise = audio.play();
+          console.log(`🎵 🎵 ${soundName} sound started via HTML5 Audio (index ${currentIdx})`);
+          
+          // Handle the promise in the background
+          playPromise.then(() => {
+            console.log(`🎵 ✅ ${soundName} HTML5 audio playback completed`);
+          }).catch(error => {
+            console.error(`🎵 ❌ HTML5 audio failed for ${soundName}:`, error);
+            // Only fallback to Web Audio API if not regenerating
+            if (!this.isGeneratingLevel) {
+              this.playWithWebAudio(soundName);
+            }
+          });
+          
+          return; // Successfully triggered HTML5 audio
+          
+        } catch (error) {
+          console.error(`🎵 ❌ HTML5 audio error for ${soundName}:`, error);
+          // Fall through to Web Audio API only if not regenerating
+          if (this.isGeneratingLevel) {
+            console.log(`🎵 ⚠️ Skipping Web Audio fallback during regeneration`);
+            return;
+          }
+        }
+      }
     }
+    
+    // Fallback to Web Audio API (only if not regenerating)
+    if (!this.isGeneratingLevel) {
+      this.playWithWebAudio(soundName);
+    } else {
+      console.log(`🎵 ⚠️ Skipping audio playback during regeneration`);
+    }
+  }
+
+  private playWithWebAudio(soundName: string) {
+    console.log(`🎵 🎼 Falling back to Web Audio API for ${soundName}...`);
+    
+    if (!this.audioContext || !this.audioContextActivated) {
+      console.warn(`🎵 ⚠️ Audio context not activated, cannot play ${soundName} sound`);
+      return;
+    }
+
+    const buffer = this.audioBuffers.get(soundName);
+    if (!buffer) {
+      console.error(`🎵 ❌ Audio buffer ${soundName} not found`);
+      return;
+    }
+
+    try {
+      // Create buffer source and gain node for instant playback
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+      
+      source.buffer = buffer;
+      gainNode.gain.value = 1.0; // Use full volume since amplitude is controlled at generation level
+      
+      // Connect: source -> gain -> destination
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      // Play immediately
+      source.start();
+      
+      console.log(`🎵 🎼 ${soundName} sound started via Web Audio API`);
+      
+      // Add ended event listener to confirm playback
+      source.onended = () => {
+        console.log(`🎵 ✅ ${soundName} Web Audio playback completed`);
+      };
+      
+    } catch (error) {
+      console.error(`🎵 ❌ Failed to play ${soundName} with Web Audio:`, error);
+    }
+  }
+
+  // Play a simple beep sound for digit placement
+  playDigitPlaceSound() {
+    this.playSound('digit');
   }
 
   // Play a 'drip' sound for drag and drop placement
-  async playDripSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
-
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-
-      // Drip sound: starts high and drops down quickly
-      oscillator.frequency.setValueAtTime(1200, this.audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.15);
-      oscillator.type = 'sine';
-
-      // Quick attack, then fade out like a water drop
-      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.25 * this.masterVolume, this.audioContext.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.02 * this.masterVolume, this.audioContext.currentTime + 0.15);
-
-      oscillator.start(this.audioContext.currentTime);
-      oscillator.stop(this.audioContext.currentTime + 0.15);
-    } catch (error) {
-      console.warn('Failed to play drip sound:', error);
-    }
+  playDripSound() {
+    this.playSound('drip');
   }
 
   // Play a success sound for completing a guess
-  async playGuessCompleteSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
-
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-
-      // Higher pitch for completion
-      oscillator.frequency.setValueAtTime(1200, this.audioContext.currentTime);
-      oscillator.type = 'sine';
-
-      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3 * this.masterVolume, this.audioContext.currentTime + 0.02);
-      gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.15);
-
-      oscillator.start(this.audioContext.currentTime);
-      oscillator.stop(this.audioContext.currentTime + 0.15);
-    } catch (error) {
-      console.warn('Failed to play guess complete sound:', error);
-    }
+  playGuessCompleteSound() {
+    this.playSound('complete');
   }
 
   // Play a "dud" sound for redundant/invalid digit placement
-  async playDudSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
-
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-
-      // Low, buzzy sound for error
-      oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
-      oscillator.type = 'sawtooth';
-
-      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.08 * this.masterVolume, this.audioContext.currentTime + 0.01);
-      gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.12);
-
-      oscillator.start(this.audioContext.currentTime);
-      oscillator.stop(this.audioContext.currentTime + 0.12);
-    } catch (error) {
-      console.warn('Failed to play dud sound:', error);
-    }
+  playDudSound() {
+    this.playSound('dud');
   }
 
   // Play a "blupper" sound for game loss
-  async playGameLostSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
-
-      // Create a descending tone sequence
-      const frequencies = [400, 350, 300, 250];
-      let delay = 0;
-
-      for (const freq of frequencies) {
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime + delay);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime + delay);
-        gainNode.gain.linearRampToValueAtTime(0.1 * this.masterVolume, this.audioContext.currentTime + delay + 0.02);
-        gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + delay + 0.15);
-
-        oscillator.start(this.audioContext.currentTime + delay);
-        oscillator.stop(this.audioContext.currentTime + delay + 0.15);
-
-        delay += 0.12;
-      }
-    } catch (error) {
-      console.warn('Failed to play game lost sound:', error);
-    }
+  playGameLostSound() {
+    this.playSound('lost');
   }
 
   // Play a celebration sound for game win
-  async playGameWonSound() {
-    try {
-      await this.ensureAudioContext();
-      
-      if (!this.audioContext) return;
+  playGameWonSound() {
+    this.playSound('won');
+  }
 
-      // Create an ascending celebratory sequence
-      const frequencies = [523, 659, 784, 1047]; // C5, E5, G5, C6
-      let delay = 0;
-
-      for (const freq of frequencies) {
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime + delay);
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime + delay);
-        gainNode.gain.linearRampToValueAtTime(0.12 * this.masterVolume, this.audioContext.currentTime + delay + 0.02);
-        gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + delay + 0.2);
-
-        oscillator.start(this.audioContext.currentTime + delay);
-        oscillator.stop(this.audioContext.currentTime + delay + 0.2);
-
-        delay += 0.15;
+  private createToneDataUrlWithVolume(frequency: number, duration: number, volume: number): string {
+    // Create a simple sine wave as a data URL with specific volume
+    const sampleRate = 44100;
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
       }
-
-      // Add a final flourish
-      setTimeout(() => {
-        if (this.audioContext) {
-          const oscillator = this.audioContext.createOscillator();
-          const gainNode = this.audioContext.createGain();
-
-          oscillator.connect(gainNode);
-          gainNode.connect(this.audioContext.destination);
-
-          oscillator.frequency.setValueAtTime(1047, this.audioContext.currentTime);
-          oscillator.type = 'sine';
-
-          gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-          gainNode.gain.linearRampToValueAtTime(0.15 * this.masterVolume, this.audioContext.currentTime + 0.02);
-          gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.4);
-
-          oscillator.start(this.audioContext.currentTime);
-          oscillator.stop(this.audioContext.currentTime + 0.4);
-        }
-      }, 600);
-    } catch (error) {
-      console.warn('Failed to play game won sound:', error);
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples * 2, true);
+    
+    // Generate sine wave with specific volume
+    for (let i = 0; i < samples; i++) {
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+      const envelope = Math.exp(-i / (sampleRate * 0.1)); // Fade out
+      const amplitude = 0.25 * volume; // Use volume parameter as amplitude multiplier
+      view.setInt16(44 + i * 2, sample * envelope * 32767 * amplitude, true);
     }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  private createSweepDataUrlWithVolume(startFreq: number, endFreq: number, duration: number, volume: number): string {
+    // Create a frequency sweep (for drip sound) with specific volume
+    const sampleRate = 44100;
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header (same as above)
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples * 2, true);
+    
+    // Generate frequency sweep with specific volume
+    for (let i = 0; i < samples; i++) {
+      const progress = i / samples;
+      const frequency = startFreq + (endFreq - startFreq) * progress;
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+      const envelope = Math.exp(-progress * 5); // Exponential decay
+      const amplitude = 0.25 * volume; // Use volume parameter as amplitude multiplier
+      view.setInt16(44 + i * 2, sample * envelope * 32767 * amplitude, true);
+    }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  private createSequenceDataUrlWithVolume(frequencies: number[], volume: number): string {
+    // Create a sequence of tones with specific volume
+    const sampleRate = 44100;
+    const noteDuration = 0.15;
+    const totalSamples = Math.floor(sampleRate * noteDuration * frequencies.length);
+    const buffer = new ArrayBuffer(44 + totalSamples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + totalSamples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, totalSamples * 2, true);
+    
+    // Generate sequence with specific volume
+    const samplesPerNote = Math.floor(sampleRate * noteDuration);
+    for (let noteIndex = 0; noteIndex < frequencies.length; noteIndex++) {
+      const frequency = frequencies[noteIndex];
+      for (let i = 0; i < samplesPerNote; i++) {
+        const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+        const envelope = Math.exp(-i / (sampleRate * 0.05)); // Quick fade
+        const amplitude = 0.15 * volume; // Use volume parameter as amplitude multiplier
+        const sampleIndex = noteIndex * samplesPerNote + i;
+        if (sampleIndex < totalSamples) {
+          view.setInt16(44 + sampleIndex * 2, sample * envelope * 32767 * amplitude, true);
+        }
+      }
+    }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
   }
 }
 
 // Create a singleton instance
-export const soundUtils = new SoundUtils(); 
+export const soundUtils = new SoundUtils();

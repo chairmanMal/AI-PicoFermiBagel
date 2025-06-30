@@ -86,15 +86,7 @@ const CircularSubmitButton: React.FC = () => {
       {/* Guess validation messages below the button */}
       {!canSubmitGuess() && gameState.isGameActive && (
         <div className="guess-validation">
-          {(() => {
-            const filledDigits = gameState.currentGuess.filter(d => d !== null) as number[];
-            const uniqueDigits = new Set(filledDigits);
-            return filledDigits.length !== uniqueDigits.size;
-          })() && (
-            <span className="validation-message">
-              • Remove duplicate numbers
-            </span>
-          )}
+
           {gameState.currentGuess.some(d => d !== null && (d < 0 || d > settings.digitRange)) && (
             <span className="validation-message">
               • Numbers must be 0-{settings.digitRange}
