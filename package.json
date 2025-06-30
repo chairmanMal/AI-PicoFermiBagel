@@ -9,6 +9,7 @@
     "build:no-increment": "tsc && vite build && npx cap sync ios",
     "build:web-only": "node scripts/increment-build.js && tsc && vite build",
     "build:web-only:no-increment": "tsc && vite build",
+    "build-and-xcode": "node scripts/increment-build.js && tsc && vite build && npx cap sync ios && npx cap open ios",
     "preview": "vite preview",
     "electron": "wait-on tcp:5173 && cross-env IS_DEV=true electron .",
     "electron:pack": "electron-builder",

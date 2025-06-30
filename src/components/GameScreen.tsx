@@ -264,6 +264,128 @@ const GameScreen: React.FC = () => {
     // console.log('🎯 🚨 ========= APPLYING IPAD PORTRAIT LAYOUT WITH JAVASCRIPT ========= 🚨');
     // console.log('🎯 🚨 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
     
+    // CRITICAL: First reset ALL landscape layout styles before applying portrait layout
+    console.log('🎯 🚨 PORTRAIT: First resetting ALL landscape styles...');
+    
+    // Reset all landscape-specific styles first
+    const landscapeElements = {
+      container: document.querySelector('.container') as HTMLElement,
+      mobileDrawer: document.querySelector('.mobile-drawer') as HTMLElement,
+      submitSidebar: document.querySelector('.submit-section-sidebar') as HTMLElement,
+      submitInline: document.querySelector('.submit-section-inline') as HTMLElement,
+      mainContent: document.querySelector('.main-content') as HTMLElement,
+      titleSection: document.querySelector('.title-section') as HTMLElement,
+      gameScreen: document.querySelector('.game-screen') as HTMLElement
+    };
+    
+    // Reset landscape container styles
+    if (landscapeElements.container) {
+      landscapeElements.container.style.display = '';
+      landscapeElements.container.style.flexDirection = '';
+      landscapeElements.container.style.justifyContent = '';
+      landscapeElements.container.style.gap = '';
+      landscapeElements.container.style.padding = '';
+      landscapeElements.container.style.position = '';
+      landscapeElements.container.style.top = '';
+      landscapeElements.container.style.left = '';
+      landscapeElements.container.style.width = '';
+      landscapeElements.container.style.height = '';
+      landscapeElements.container.style.minHeight = '';
+      landscapeElements.container.style.maxWidth = '';
+      landscapeElements.container.style.boxSizing = '';
+    }
+    
+    // Reset landscape main content styles
+    if (landscapeElements.mainContent) {
+      landscapeElements.mainContent.style.flex = '';
+      landscapeElements.mainContent.style.width = '';
+      landscapeElements.mainContent.style.minWidth = '';
+      landscapeElements.mainContent.style.maxWidth = '';
+      landscapeElements.mainContent.style.marginTop = '';
+      landscapeElements.mainContent.style.margin = '';
+      landscapeElements.mainContent.style.transform = '';
+      landscapeElements.mainContent.style.transformOrigin = '';
+    }
+    
+    // Reset landscape title styles
+    if (landscapeElements.titleSection) {
+      landscapeElements.titleSection.style.position = '';
+      landscapeElements.titleSection.style.top = '';
+      landscapeElements.titleSection.style.left = '';
+      landscapeElements.titleSection.style.right = '';
+      landscapeElements.titleSection.style.width = '';
+      landscapeElements.titleSection.style.transform = '';
+      landscapeElements.titleSection.style.zIndex = '';
+      landscapeElements.titleSection.style.textAlign = '';
+      landscapeElements.titleSection.style.margin = '';
+    }
+    
+    // Reset landscape submit section styles
+    if (landscapeElements.submitSidebar && landscapeElements.submitInline) {
+      landscapeElements.submitSidebar.style.display = '';
+      landscapeElements.submitSidebar.style.flex = '';
+      landscapeElements.submitSidebar.style.width = '';
+      landscapeElements.submitSidebar.style.minWidth = '';
+      landscapeElements.submitSidebar.style.maxWidth = '';
+      landscapeElements.submitSidebar.style.flexDirection = '';
+      landscapeElements.submitSidebar.style.justifyContent = '';
+      landscapeElements.submitSidebar.style.alignItems = '';
+      landscapeElements.submitSidebar.style.height = '';
+      landscapeElements.submitSidebar.style.transformOrigin = '';
+      landscapeElements.submitSidebar.style.transform = '';
+      landscapeElements.submitSidebar.style.margin = '';
+      landscapeElements.submitSidebar.style.marginTop = '';
+    }
+    
+    // Reset landscape mobile drawer styles
+    if (landscapeElements.mobileDrawer) {
+      landscapeElements.mobileDrawer.style.display = '';
+      landscapeElements.mobileDrawer.style.position = '';
+      landscapeElements.mobileDrawer.style.transform = '';
+      landscapeElements.mobileDrawer.style.transformOrigin = '';
+      landscapeElements.mobileDrawer.style.flex = '';
+      landscapeElements.mobileDrawer.style.width = '';
+      landscapeElements.mobileDrawer.style.minWidth = '';
+      landscapeElements.mobileDrawer.style.maxWidth = '';
+      landscapeElements.mobileDrawer.style.height = '';
+      landscapeElements.mobileDrawer.style.maxHeight = '';
+      landscapeElements.mobileDrawer.style.alignSelf = '';
+      landscapeElements.mobileDrawer.style.margin = '';
+      landscapeElements.mobileDrawer.style.marginTop = '';
+      landscapeElements.mobileDrawer.style.marginRight = '';
+      landscapeElements.mobileDrawer.style.background = '';
+      
+      // Reset drawer content and header
+      const drawerContent = landscapeElements.mobileDrawer.querySelector('.drawer-content') as HTMLElement;
+      const drawerHeader = landscapeElements.mobileDrawer.querySelector('.drawer-header') as HTMLElement;
+      if (drawerContent) {
+        drawerContent.style.height = '';
+        drawerContent.style.flex = '';
+        drawerContent.style.paddingTop = '';
+        drawerContent.style.marginTop = '';
+        drawerContent.style.background = '';
+        drawerContent.style.boxShadow = '';
+        drawerContent.style.borderRadius = '';
+        drawerContent.style.padding = '';
+        drawerContent.style.overflowY = '';
+        drawerContent.style.scrollbarWidth = '';
+        drawerContent.style.scrollbarColor = '';
+        drawerContent.style.transform = '';
+        drawerContent.style.transformOrigin = '';
+      }
+      if (drawerHeader) {
+        drawerHeader.style.display = '';
+      }
+    }
+    
+    // Show hamburger menu button (hidden in landscape)
+    const portraitHamburgerButton = document.querySelector('.drawer-toggle-top-right') as HTMLElement;
+    if (portraitHamburgerButton) {
+      portraitHamburgerButton.style.display = '';
+    }
+    
+    console.log('🎯 🚨 PORTRAIT: Landscape styles reset complete, now applying portrait layout...');
+    
     // Reset body/html scrolling (in case coming from iPhone portrait)
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
