@@ -6,6 +6,7 @@ import RecentGuessHistory from './RecentGuessHistory';
 import Scratchpad from './Scratchpad';
 import HintPurchasing from './HintPurchasing';
 import ScoreArea from './ScoreArea';
+import CircularSubmitButton from './CircularSubmitButton';
 
 interface LandscapeLayoutProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
@@ -15,29 +16,48 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
   const landscapeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log('🎯 ========= DISABLE AUTOSCALING + FORCE EDGES (BUILD 655) ========= 🎯');
+    console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 660 - FIXED LAYOUT INTERFERENCE ========= 🎯');
     console.log('🎯 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
     
-    // Step 1: AGGRESSIVELY remove ALL padding/margins that could interfere
+    // Step 1: COMPLETELY RESET any portrait layout interference
     const elementsToReset = [
       document.querySelector('.game-screen'),
       document.querySelector('body'),
       document.querySelector('html'),
       document.querySelector('#root'),
       document.querySelector('.app'),
-      document.querySelector('.landscape-container')
+      document.querySelector('.landscape-container'),
+      document.querySelector('.container'),
+      document.querySelector('.title-section'),
+      document.querySelector('.orange-portrait-container') // Reset portrait container
     ];
     
     elementsToReset.forEach(element => {
       if (element) {
         const el = element as HTMLElement;
+        // Reset ALL positioning and styling that could interfere
         el.style.setProperty('padding', '0', 'important');
         el.style.setProperty('margin', '0', 'important');
         el.style.setProperty('box-sizing', 'border-box', 'important');
+        el.style.setProperty('position', 'static', 'important');
+        el.style.setProperty('top', 'auto', 'important');
+        el.style.setProperty('left', 'auto', 'important');
+        el.style.setProperty('right', 'auto', 'important');
+        el.style.setProperty('bottom', 'auto', 'important');
+        el.style.setProperty('width', 'auto', 'important');
+        el.style.setProperty('height', 'auto', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+        el.style.setProperty('transform-origin', 'top left', 'important');
       }
     });
     
-    console.log('🎯 ALL INTERFERING ELEMENTS: Padding/margin forcibly removed');
+    // Hide portrait container completely
+    const portraitContainer = document.querySelector('.orange-portrait-container') as HTMLElement;
+    if (portraitContainer) {
+      portraitContainer.style.setProperty('display', 'none', 'important');
+    }
+    
+    console.log('🎯 ALL INTERFERING ELEMENTS: Reset and portrait container hidden');
     
     // Step 2: DISABLE GameScreen auto-scaling that's interfering
     const gameContainer = document.querySelector('.container') as HTMLElement;
@@ -104,7 +124,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       console.log('🎯 TITLE SECTION: Forcibly positioned');
     }
     
-    // Step 5: Calculate and FORCE orange border positioning
+    // Step 5: Calculate orange border positioning WITHOUT submit button space
     setTimeout(() => {
       if (!titleSection) return;
       
@@ -114,21 +134,43 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       const subtitleRect = subtitle.getBoundingClientRect();
       const subtitleBottom = subtitleRect.bottom;
       
-      // ORANGE BORDER: MUST match red border edges EXACTLY
+      // ORANGE BORDER: NO submit button space - overlay button instead
       const orangeBorder = {
-        top: subtitleBottom + 15,
+        top: subtitleBottom + 15, // Normal gap, no submit button space
         left: redBorder.left, // EXACTLY 5px from left screen edge
         width: redBorder.width, // EXACTLY same width as red border
-        height: redBorder.bottom - (subtitleBottom + 15),
+        height: redBorder.bottom - (subtitleBottom + 15), // Normal height
         right: redBorder.right, // EXACTLY 5px from right screen edge
         bottom: redBorder.bottom // EXACTLY 20px from bottom screen edge
       };
       
-      console.log('🎯 FORCED ORANGE BORDER:', orangeBorder);
+      console.log('🎯 FORCED ORANGE BORDER (NO SUBMIT SPACE):', orangeBorder);
       console.log('🎯 ORANGE RIGHT EDGE: ' + orangeBorder.right + ' (should be ' + (viewportWidth - 5) + ')');
       console.log('🎯 ORANGE BOTTOM EDGE: ' + orangeBorder.bottom + ' (should be ' + (viewportHeight - 20) + ')');
       
-      // Step 6: FORCE landscape content container to exact positions
+      // Step 6: OVERLAY submit button above orange border (no spacing effect)
+      const submitButton = document.querySelector('.landscape-submit-button') as HTMLElement;
+      if (submitButton) {
+        const columnGap = 5;
+        const totalGaps = 2 * columnGap;
+        const availableColumnWidth = orangeBorder.width - totalGaps;
+        const columnWidth = Math.floor(availableColumnWidth / 3);
+        
+        // Position button OVERLAYING the orange border, centered over Column 1
+        const submitTop = orangeBorder.top + 10; // 10px into orange border
+        const submitLeft = orangeBorder.left + (columnWidth / 2) - 38; // Center over Column 1 (76px button width)
+        
+        submitButton.style.setProperty('position', 'fixed', 'important');
+        submitButton.style.setProperty('top', `${submitTop}px`, 'important');
+        submitButton.style.setProperty('left', `${submitLeft}px`, 'important');
+        submitButton.style.setProperty('width', '76px', 'important'); // Exact CircularSubmitButton size
+        submitButton.style.setProperty('height', '76px', 'important');
+        submitButton.style.setProperty('z-index', '150', 'important');
+        
+        console.log('🎯 SUBMIT BUTTON: Overlaid above orange border, centered over Column 1');
+      }
+      
+      // Step 7: FORCE landscape content container to exact positions
       const landscapeContent = document.querySelector('.landscape-content') as HTMLElement;
       if (landscapeContent) {
         // FORCE the container to exact screen positions
@@ -169,19 +211,19 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         }, 100);
       }
       
-      // Step 7: Configure columns with optimized scratchpad
+      // Step 8: Configure columns with improved scaling
       const columnGap = 5;
       const totalGaps = 2 * columnGap;
       const availableColumnWidth = orangeBorder.width - totalGaps;
       const columnWidth = Math.floor(availableColumnWidth / 3);
       
       const columns = [
-        { element: document.querySelector('.landscape-column-1') as HTMLElement, name: 'COLUMN 1' },
-        { element: document.querySelector('.landscape-column-2') as HTMLElement, name: 'COLUMN 2' },
-        { element: document.querySelector('.landscape-column-3') as HTMLElement, name: 'COLUMN 3' }
+        { element: document.querySelector('.landscape-column-1') as HTMLElement, name: 'COLUMN 1', needsScaling: true },
+        { element: document.querySelector('.landscape-column-2') as HTMLElement, name: 'COLUMN 2', needsScaling: false },
+        { element: document.querySelector('.landscape-column-3') as HTMLElement, name: 'COLUMN 3', needsScaling: false }
       ];
       
-      columns.forEach(({ element: column, name }, index) => {
+      columns.forEach(({ element: column, name, needsScaling }, index) => {
         if (!column) return;
         
         column.style.setProperty('width', `${columnWidth}px`, 'important');
@@ -189,90 +231,131 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         column.style.setProperty('max-height', `${orangeBorder.height}px`, 'important');
         column.style.setProperty('display', 'flex', 'important');
         column.style.setProperty('flex-direction', 'column', 'important');
-        column.style.setProperty('gap', '5px', 'important');
-        column.style.setProperty('justify-content', index === 1 ? 'center' : 'flex-start', 'important');
+        column.style.setProperty('gap', needsScaling ? '3px' : '5px', 'important'); // Tighter gap for Column 1
+        column.style.setProperty('justify-content', index === 1 ? 'flex-start' : 'flex-start', 'important');
         column.style.setProperty('align-items', 'stretch', 'important');
         column.style.setProperty('overflow', 'hidden', 'important');
         column.style.setProperty('background', 'transparent', 'important');
-        column.style.setProperty('padding', '5px', 'important');
+        column.style.setProperty('padding', needsScaling ? '3px' : '5px', 'important'); // Tighter padding for Column 1
         column.style.setProperty('box-sizing', 'border-box', 'important');
         column.style.setProperty('margin', '0', 'important');
         
         console.log(`🎯 ${name}: Configured and constrained`);
       });
       
-      // Step 8: OPTIMIZE SCRATCHPAD in Column 3
+      // Step 9: OPTIMIZE SCRATCHPAD in Column 3 - RESTORE GAPS BUT PREVENT EXPANSION
       const column3 = document.querySelector('.landscape-column-3') as HTMLElement;
       if (column3) {
-        // Optimize scratchpad layout
-        const scratchpad = column3.querySelector('.scratchpad') as HTMLElement;
-        if (scratchpad) {
-          // Reduce vertical spacing
-          scratchpad.style.setProperty('line-height', '1.0', 'important');
-          scratchpad.style.setProperty('gap', '2px', 'important');
+        // RESTORE gaps between scratchpad and hint purchasing (was 0px, now 8px)
+        column3.style.setProperty('gap', '8px', 'important');
+        
+        // Target the actual scratchpad component
+        const scratchpadComponent = column3.querySelector('.scratchpad') as HTMLElement;
+        if (scratchpadComponent) {
+          // Expand the scratchpad to fill available space but not beyond
+          scratchpadComponent.style.setProperty('flex', '1', 'important');
+          scratchpadComponent.style.setProperty('margin', '0', 'important');
+          scratchpadComponent.style.setProperty('padding', '5px', 'important');
+          scratchpadComponent.style.setProperty('min-height', '0', 'important'); // Allow shrinking
+          scratchpadComponent.style.setProperty('max-height', 'none', 'important'); // But don't force max
+          
+          // Target the numbers container (the white area) - FIX over-expansion
+          const numbersContainer = scratchpadComponent.querySelector('.numbers-container') as HTMLElement;
+          if (numbersContainer) {
+            numbersContainer.style.setProperty('background', 'white', 'important');
+            numbersContainer.style.setProperty('border-radius', '8px', 'important');
+            numbersContainer.style.setProperty('padding', '8px', 'important'); // Reduced from 10px
+            numbersContainer.style.setProperty('margin', '3px', 'important'); // Reduced from 5px
+            numbersContainer.style.setProperty('height', 'auto', 'important'); // Let it size naturally
+            numbersContainer.style.setProperty('max-height', 'calc(100% - 6px)', 'important'); // Prevent overflow
+            numbersContainer.style.setProperty('overflow', 'auto', 'important');
+          }
+          
+          // Target the numbers grid for auto-arrangement
+          const numbersGrid = scratchpadComponent.querySelector('.numbers-grid') as HTMLElement;
+          if (numbersGrid) {
+            numbersGrid.style.setProperty('display', 'grid', 'important');
+            numbersGrid.style.setProperty('grid-template-columns', 'repeat(auto-fit, minmax(35px, 1fr))', 'important'); // Auto-arrange
+            numbersGrid.style.setProperty('grid-gap', '4px', 'important'); // Tight spacing
+            numbersGrid.style.setProperty('align-content', 'start', 'important');
+            numbersGrid.style.setProperty('justify-content', 'start', 'important');
+            numbersGrid.style.setProperty('height', 'auto', 'important'); // Natural height
+          }
+          
+          // Optimize all number boxes
+          const numberBoxes = scratchpadComponent.querySelectorAll('.scratchpad-number');
+          numberBoxes.forEach(box => {
+            const boxEl = box as HTMLElement;
+            boxEl.style.setProperty('margin', '0', 'important');
+            boxEl.style.setProperty('padding', '6px', 'important');
+            boxEl.style.setProperty('font-size', '0.9rem', 'important');
+            boxEl.style.setProperty('line-height', '1.0', 'important');
+            boxEl.style.setProperty('min-height', '32px', 'important');
+            boxEl.style.setProperty('width', '100%', 'important');
+          });
         }
         
-        // Expand white area and optimize layout
-        const scratchpadGrid = column3.querySelector('.scratchpad-grid') as HTMLElement;
-        if (scratchpadGrid) {
-          scratchpadGrid.style.setProperty('margin', '5px', 'important');
-          scratchpadGrid.style.setProperty('padding', '10px', 'important'); // Expand to within 10px of pink area
-          scratchpadGrid.style.setProperty('width', 'calc(100% - 10px)', 'important'); // Expand to within 10px of sides
-          scratchpadGrid.style.setProperty('height', 'auto', 'important');
-          scratchpadGrid.style.setProperty('display', 'grid', 'important');
-          scratchpadGrid.style.setProperty('grid-template-columns', 'repeat(auto-fit, minmax(40px, 1fr))', 'important'); // Auto-arrange boxes
-          scratchpadGrid.style.setProperty('grid-gap', '3px', 'important'); // Tight spacing
-          scratchpadGrid.style.setProperty('align-content', 'start', 'important');
-          scratchpadGrid.style.setProperty('line-height', '1.0', 'important'); // Reduce line spacing
+        // Optimize hint purchasing to take fixed space (not expanding)
+        const hintPurchasing = column3.querySelector('.hint-purchasing') as HTMLElement;
+        if (hintPurchasing) {
+          hintPurchasing.style.setProperty('flex', '0 0 auto', 'important'); // Fixed size
+          hintPurchasing.style.setProperty('margin', '0', 'important');
+          hintPurchasing.style.setProperty('padding', '5px', 'important');
+          hintPurchasing.style.setProperty('max-height', '120px', 'important'); // Limit height
         }
         
-        // Optimize scratchpad content
-        const scratchpadContent = column3.querySelector('.scratchpad-content') as HTMLElement;
-        if (scratchpadContent) {
-          scratchpadContent.style.setProperty('line-height', '1.0', 'important'); // Tight line spacing
-          scratchpadContent.style.setProperty('font-size', '0.8em', 'important'); // Smaller font
-          scratchpadContent.style.setProperty('margin', '0', 'important');
-          scratchpadContent.style.setProperty('padding', '0', 'important');
+        // Optimize score area to take minimal space
+        const scoreArea = column3.querySelector('.score-area') as HTMLElement;
+        if (scoreArea) {
+          scoreArea.style.setProperty('flex', '0 0 auto', 'important'); // Fixed size
+          scoreArea.style.setProperty('margin', '0', 'important');
+          scoreArea.style.setProperty('padding', '5px', 'important');
+          scoreArea.style.setProperty('max-height', '80px', 'important'); // Limit height
         }
         
-        // Optimize all number boxes in scratchpad
-        const numberBoxes = column3.querySelectorAll('.scratchpad-number');
-        numberBoxes.forEach(box => {
-          const boxEl = box as HTMLElement;
-          boxEl.style.setProperty('margin', '1px', 'important'); // Minimal margins
-          boxEl.style.setProperty('padding', '4px', 'important'); // Compact padding
-          boxEl.style.setProperty('line-height', '1.0', 'important'); // Tight line height
-        });
-        
-        console.log('🎯 SCRATCHPAD: Optimized with expanded white area and tight spacing');
+        console.log('🎯 SCRATCHPAD: Optimized with controlled white area, restored gaps, fixed expansion');
       }
       
-      // Dynamic scaling for content that doesn't fit
+      // Step 10: IMPROVED SCALING for Column 1 to prevent clipping
       setTimeout(() => {
-        columns.forEach(({ element: column, name }) => {
-          if (!column) return;
-          
-          const availableHeight = orangeBorder.height - 10;
+        const column1 = document.querySelector('.landscape-column-1') as HTMLElement;
+        if (column1) {
+          const availableHeight = orangeBorder.height - 6; // Account for padding
           let totalContentHeight = 0;
-          const children = Array.from(column.children) as HTMLElement[];
+          const children = Array.from(column1.children) as HTMLElement[];
           
+          // Force layout calculation
           children.forEach(child => {
-            totalContentHeight += child.offsetHeight;
+            child.style.transform = 'none';
+            child.style.marginBottom = '0';
           });
-          totalContentHeight += (children.length - 1) * 5;
           
-          if (totalContentHeight > availableHeight) {
-            const scale = Math.max(0.6, availableHeight / totalContentHeight);
-            console.log(`🎯 ${name} SCALING:`, scale);
-            
+          // Wait for layout to settle
+          setTimeout(() => {
             children.forEach(child => {
-              child.style.transform = `scale(${scale})`;
-              child.style.transformOrigin = 'top center';
-              child.style.marginBottom = `${(1 - scale) * -20}px`;
+              totalContentHeight += child.offsetHeight;
             });
-          }
-        });
-      }, 200);
+            totalContentHeight += (children.length - 1) * 3; // Account for gaps
+            
+            if (totalContentHeight > availableHeight) {
+              const scale = Math.max(0.7, availableHeight / totalContentHeight); // Minimum 70% scale
+              console.log(`🎯 COLUMN 1 SCALING: ${scale.toFixed(3)} (content: ${totalContentHeight}px, available: ${availableHeight}px)`);
+              
+              children.forEach((child, index) => {
+                child.style.setProperty('transform', `scale(${scale})`, 'important');
+                child.style.setProperty('transform-origin', 'top center', 'important');
+                // Adjust margins to compensate for scaling
+                const marginAdjustment = (1 - scale) * -child.offsetHeight * 0.5;
+                if (index < children.length - 1) {
+                  child.style.setProperty('margin-bottom', `${marginAdjustment}px`, 'important');
+                }
+              });
+            } else {
+              console.log(`🎯 COLUMN 1: No scaling needed (content: ${totalContentHeight}px, available: ${availableHeight}px)`);
+            }
+          }, 50);
+        }
+      }, 300);
     }, 100);
     
     // Add FORCED RED BORDER debug visualization
@@ -305,7 +388,42 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       console.log('🎯 OLD CONTAINER: Hidden');
     }
     
-    console.log('🎯 ========= DISABLED AUTOSCALING + FORCED EDGES COMPLETE ========= 🎯');
+    console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 660 COMPLETE ========= 🎯');
+  }, []);
+
+  // Cleanup function to reset landscape styles when switching orientations
+  useEffect(() => {
+    return () => {
+      console.log('🎯 LANDSCAPE CLEANUP: Resetting landscape-specific styles');
+      
+      // Reset landscape-specific styles when component unmounts (orientation change)
+      const elementsToCleanup = [
+        '.title-section',
+        '.landscape-content',
+        '.landscape-submit-button',
+        '.red-border-debug',
+        '.container'
+      ];
+      
+      elementsToCleanup.forEach(selector => {
+        const element = document.querySelector(selector) as HTMLElement;
+        if (element) {
+          element.style.removeProperty('position');
+          element.style.removeProperty('top');
+          element.style.removeProperty('left');
+          element.style.removeProperty('width');
+          element.style.removeProperty('height');
+          element.style.removeProperty('z-index');
+          element.style.removeProperty('display');
+        }
+      });
+      
+      // Show portrait container if it exists
+      const portraitContainer = document.querySelector('.orange-portrait-container') as HTMLElement;
+      if (portraitContainer) {
+        portraitContainer.style.removeProperty('display');
+      }
+    };
   }, []);
 
   return (
@@ -326,6 +444,16 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         boxSizing: 'border-box'
       }}
     >
+      {/* Submit Button - Overlaid above orange border */}
+      <div className="landscape-submit-button" style={{
+        pointerEvents: 'auto',
+        padding: '0',
+        margin: '0',
+        boxSizing: 'border-box'
+      }}>
+        <CircularSubmitButton />
+      </div>
+      
       <div className="landscape-content" style={{
         pointerEvents: 'auto',
         padding: '0',
