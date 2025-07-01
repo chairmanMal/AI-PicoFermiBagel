@@ -14,6 +14,7 @@ import MenuArea from './MenuArea';
 import TargetDisplay from './TargetDisplay';
 import HintPurchasing from './HintPurchasing';
 import CustomScrollIndicator from './CustomScrollIndicator';
+import LandscapeLayout from './LandscapeLayout';
 import './GameScreen.css';
 
 const GameScreen: React.FC = () => {
@@ -32,8 +33,11 @@ const GameScreen: React.FC = () => {
   const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const gameScreenRef = useRef<HTMLDivElement>(null);
 
-  // JavaScript-based iPad layout functions
+  // JavaScript-based iPad layout functions - DISABLED (using LandscapeLayout component instead)
   const applyIpadLandscapeLayout = useCallback(() => {
+    // This function is now disabled - using separate LandscapeLayout component
+    console.log('🎯 LANDSCAPE: Using separate LandscapeLayout component instead of this function');
+    return;
     console.log('🎯 Applying iPad landscape layout with JavaScript');
     
     // Debug: Check if elements exist
@@ -1629,7 +1633,13 @@ const GameScreen: React.FC = () => {
       const isIpadLandscape = isLandscape && viewportHeight >= 768 && viewportHeight <= 1366; // Support all iPad sizes
       const isIpad = isIpadPortrait || isIpadLandscape;
       
-      // ONLY apply JavaScript scaling for iPad (both orientations)
+      // COMPLETELY DISABLE auto-scaling for iPad landscape - using separate LandscapeLayout component
+      if (isIpadLandscape) {
+        console.log('🎯 DISABLED GameScreen auto-scaling for iPad landscape - using LandscapeLayout component');
+        return;
+      }
+      
+      // ONLY apply JavaScript scaling for iPad portrait (landscape now handled by LandscapeLayout)
       if (!isIpad) {
         console.log(`🔍 Skipping JavaScript auto-scaling - not iPad (${viewportWidth}x${viewportHeight})`);
         return;
@@ -2085,6 +2095,11 @@ const GameScreen: React.FC = () => {
           const isMobile = width < 768; // iPhone and other mobile devices
           const isIphonePortrait = isMobile && isPortrait;
           
+          // Use separate landscape layout component for iPad landscape mode
+          if (isIpadLandscape) {
+            return <LandscapeLayout guessElementRef={guessElementRef} />;
+          }
+          
           // Use orange container for iPad portrait mode (special layout)
           if (isIpadPortrait) {
             // Calculate position dynamically - start just below subtitle, end 20px from bottom
@@ -2308,7 +2323,8 @@ const GameScreen: React.FC = () => {
           
           // Show sidebar recent guesses only in iPad landscape and desktop landscape modes
           // Hide in: iPad portrait, mobile (iPhone), and desktop portrait
-          const shouldShowSidebar = isIpadLandscape || (!isMobile && !isIpadPortrait && isLandscape);
+          // IMPORTANT: Don't show sidebar when using LandscapeLayout component
+          const shouldShowSidebar = !isIpadLandscape && ((!isMobile && !isIpadPortrait && isLandscape));
           
           if (shouldShowSidebar) {
             return (
@@ -2331,7 +2347,8 @@ const GameScreen: React.FC = () => {
           const isMobile = width < 768; // iPhone and other mobile devices
           
           // For landscape modes where we have a sidebar layout, position the button differently
-          const shouldShowSidebar = isIpadLandscape || (!isMobile && !isIpadPortrait && isLandscape);
+          // IMPORTANT: Don't show this button when using LandscapeLayout component
+          const shouldShowSidebar = !isIpadLandscape && ((!isMobile && !isIpadPortrait && isLandscape));
           
           if (shouldShowSidebar) {
             // In sidebar layouts, position the button between main content and sidebar
@@ -2351,50 +2368,72 @@ const GameScreen: React.FC = () => {
         })()}
 
         {/* Desktop Right Panel - Dynamically aligned with guess section */}
-        {!useDrawer && (
-          <div className="right-panel" ref={rightPanelRef}>
-            <div className="side-panel-section">
-              <Scratchpad />
+        {!useDrawer && (() => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          const isLandscape = width > height;
+          const isIpadLandscape = isLandscape && height >= 768 && height <= 1366;
+          
+          // Don't show right panel when using LandscapeLayout component
+          if (isIpadLandscape) {
+            return null;
+          }
+          
+          return (
+            <div className="right-panel" ref={rightPanelRef}>
+              <div className="side-panel-section">
+                <Scratchpad />
+              </div>
+              <div className="side-panel-section">
+                <HintPurchasing />
+              </div>
+              <div className="side-panel-section">
+                <ScoreArea />
+              </div>
             </div>
-            <div className="side-panel-section">
-              <HintPurchasing />
-            </div>
-            <div className="side-panel-section">
-              <ScoreArea />
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Mobile/Small Screen Drawer */}
-        {useDrawer && (
-                      <>
-            <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
-              <div className="drawer-header">
-                <button
-                  className="drawer-close"
-                  onClick={() => setIsMenuDrawerOpen(false)}
-                  aria-label="Close menu"
-                >
-                  <ChevronRight size={20} />
-                </button>
+        {useDrawer && (() => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          const isLandscape = width > height;
+          const isIpadLandscape = isLandscape && height >= 768 && height <= 1366;
+          
+          // Don't show mobile drawer when using LandscapeLayout component
+          if (isIpadLandscape) {
+            return null;
+          }
+          
+          return (
+            <>
+              <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
+                <div className="drawer-header">
+                  <button
+                    className="drawer-close"
+                    onClick={() => setIsMenuDrawerOpen(false)}
+                    aria-label="Close menu"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+                <div className="drawer-content" ref={mobileDrawerContentRef} style={{ position: 'relative' }}>
+                  <CustomScrollIndicator containerRef={mobileDrawerContentRef} />
+                  <div className="side-panel-section">
+                    <Scratchpad />
+                  </div>
+                  <div className="side-panel-section">
+                    <HintPurchasing />
+                  </div>
+                  <div className="side-panel-section">
+                    <ScoreArea />
+                  </div>
+                </div>
               </div>
-              <div className="drawer-content" ref={mobileDrawerContentRef} style={{ position: 'relative' }}>
-                <CustomScrollIndicator containerRef={mobileDrawerContentRef} />
-                <div className="side-panel-section">
-                  <Scratchpad />
-                </div>
-                <div className="side-panel-section">
-                  <HintPurchasing />
-                </div>
-                <div className="side-panel-section">
-                  <ScoreArea />
-                </div>
-              </div>
-            </div>
-
-
-          </>
-        )}
+            </>
+          );
+        })()}
 
 
       </div>
