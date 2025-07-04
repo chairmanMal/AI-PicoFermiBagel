@@ -134,12 +134,12 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       const subtitleRect = subtitle.getBoundingClientRect();
       const subtitleBottom = subtitleRect.bottom;
       
-      // ORANGE BORDER: NO submit button space - overlay button instead
+      // ORANGE BORDER: Simple positioning without submit button interference
       const orangeBorder = {
-        top: subtitleBottom + 15, // Normal gap, no submit button space
+        top: subtitleBottom + 20, // Simple 20px gap below subtitle
         left: redBorder.left, // EXACTLY 5px from left screen edge
         width: redBorder.width, // EXACTLY same width as red border
-        height: redBorder.bottom - (subtitleBottom + 15), // Normal height
+        height: redBorder.bottom - (subtitleBottom + 20), // Full remaining height
         right: redBorder.right, // EXACTLY 5px from right screen edge
         bottom: redBorder.bottom // EXACTLY 20px from bottom screen edge
       };
@@ -148,7 +148,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       console.log('🎯 ORANGE RIGHT EDGE: ' + orangeBorder.right + ' (should be ' + (viewportWidth - 5) + ')');
       console.log('🎯 ORANGE BOTTOM EDGE: ' + orangeBorder.bottom + ' (should be ' + (viewportHeight - 20) + ')');
       
-      // Step 6: OVERLAY submit button above orange border (no spacing effect)
+      // Step 6: POSITION submit button COMPLETELY INDEPENDENTLY - floating above Column 1
       const submitButton = document.querySelector('.landscape-submit-button') as HTMLElement;
       if (submitButton) {
         const columnGap = 5;
@@ -156,18 +156,22 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         const availableColumnWidth = orangeBorder.width - totalGaps;
         const columnWidth = Math.floor(availableColumnWidth / 3);
         
-        // Position button OVERLAYING the orange border, centered over Column 1
-        const submitTop = orangeBorder.top + 10; // 10px into orange border
+        // Position button ABOVE the orange border content, floating independently
+        const submitTop = orangeBorder.top + 15; // 15px inside the orange border area
         const submitLeft = orangeBorder.left + (columnWidth / 2) - 38; // Center over Column 1 (76px button width)
         
+        // REMOVE the button from any container constraints
         submitButton.style.setProperty('position', 'fixed', 'important');
         submitButton.style.setProperty('top', `${submitTop}px`, 'important');
         submitButton.style.setProperty('left', `${submitLeft}px`, 'important');
-        submitButton.style.setProperty('width', '76px', 'important'); // Exact CircularSubmitButton size
+        submitButton.style.setProperty('width', '76px', 'important');
         submitButton.style.setProperty('height', '76px', 'important');
-        submitButton.style.setProperty('z-index', '150', 'important');
+        submitButton.style.setProperty('z-index', '200', 'important'); // Higher z-index
+        submitButton.style.setProperty('pointer-events', 'auto', 'important');
+        submitButton.style.setProperty('margin', '0', 'important');
+        submitButton.style.setProperty('padding', '0', 'important');
         
-        console.log('🎯 SUBMIT BUTTON: Overlaid above orange border, centered over Column 1');
+        console.log(`🎯 SUBMIT BUTTON: Floating independently at (${submitLeft}, ${submitTop}) above Column 1`);
       }
       
       // Step 7: FORCE landscape content container to exact positions
@@ -189,7 +193,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         landscapeContent.style.setProperty('box-sizing', 'border-box', 'important');
         landscapeContent.style.setProperty('z-index', '20', 'important');
         landscapeContent.style.setProperty('background', 'transparent', 'important');
-        landscapeContent.style.setProperty('border', '2px solid orange', 'important'); // DEBUG
+        // landscapeContent.style.setProperty('border', '2px solid orange', 'important'); // DEBUG - REMOVED
         landscapeContent.style.setProperty('overflow', 'hidden', 'important');
         landscapeContent.style.setProperty('padding', '0', 'important');
         landscapeContent.style.setProperty('margin', '0', 'important');
@@ -232,11 +236,18 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         column.style.setProperty('display', 'flex', 'important');
         column.style.setProperty('flex-direction', 'column', 'important');
         column.style.setProperty('gap', needsScaling ? '3px' : '5px', 'important'); // Tighter gap for Column 1
-        column.style.setProperty('justify-content', index === 1 ? 'flex-start' : 'flex-start', 'important');
+        column.style.setProperty('justify-content', 'flex-start', 'important');
         column.style.setProperty('align-items', 'stretch', 'important');
         column.style.setProperty('overflow', 'hidden', 'important');
         column.style.setProperty('background', 'transparent', 'important');
-        column.style.setProperty('padding', needsScaling ? '3px' : '5px', 'important'); // Tighter padding for Column 1
+        
+        // Special padding for Column 1 to account for submit button
+        if (index === 0) {
+          column.style.setProperty('padding', '90px 3px 3px 3px', 'important'); // 90px top padding for submit button
+        } else {
+          column.style.setProperty('padding', needsScaling ? '3px' : '5px', 'important');
+        }
+        
         column.style.setProperty('box-sizing', 'border-box', 'important');
         column.style.setProperty('margin', '0', 'important');
         
@@ -271,27 +282,41 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             numbersContainer.style.setProperty('overflow', 'auto', 'important');
           }
           
-          // Target the numbers grid for auto-arrangement
+          // FORCE the numbers grid to be perfectly centered with CSS Grid
           const numbersGrid = scratchpadComponent.querySelector('.numbers-grid') as HTMLElement;
           if (numbersGrid) {
             numbersGrid.style.setProperty('display', 'grid', 'important');
-            numbersGrid.style.setProperty('grid-template-columns', 'repeat(auto-fit, minmax(35px, 1fr))', 'important'); // Auto-arrange
-            numbersGrid.style.setProperty('grid-gap', '4px', 'important'); // Tight spacing
-            numbersGrid.style.setProperty('align-content', 'start', 'important');
-            numbersGrid.style.setProperty('justify-content', 'start', 'important');
-            numbersGrid.style.setProperty('height', 'auto', 'important'); // Natural height
+            numbersGrid.style.setProperty('grid-template-columns', 'repeat(auto-fit, minmax(40px, 1fr))', 'important');
+            numbersGrid.style.setProperty('gap', '6px', 'important');
+            numbersGrid.style.setProperty('justify-content', 'center', 'important');
+            numbersGrid.style.setProperty('align-items', 'center', 'important');
+            numbersGrid.style.setProperty('justify-items', 'center', 'important');
+            numbersGrid.style.setProperty('align-content', 'center', 'important');
+            numbersGrid.style.setProperty('width', '100%', 'important');
+            numbersGrid.style.setProperty('height', 'auto', 'important');
+            numbersGrid.style.setProperty('margin', '0 auto', 'important');
+            numbersGrid.style.setProperty('padding', '0', 'important');
           }
           
-          // Optimize all number boxes
+          // FORCE all number boxes to be perfectly centered and sized
           const numberBoxes = scratchpadComponent.querySelectorAll('.scratchpad-number');
           numberBoxes.forEach(box => {
             const boxEl = box as HTMLElement;
-            boxEl.style.setProperty('margin', '0', 'important');
-            boxEl.style.setProperty('padding', '6px', 'important');
-            boxEl.style.setProperty('font-size', '0.9rem', 'important');
-            boxEl.style.setProperty('line-height', '1.0', 'important');
-            boxEl.style.setProperty('min-height', '32px', 'important');
-            boxEl.style.setProperty('width', '100%', 'important');
+            boxEl.style.setProperty('width', '40px', 'important');
+            boxEl.style.setProperty('height', '40px', 'important');
+            boxEl.style.setProperty('margin', '0 auto', 'important');
+            boxEl.style.setProperty('padding', '0', 'important');
+            boxEl.style.setProperty('display', 'flex', 'important');
+            boxEl.style.setProperty('align-items', 'center', 'important');
+            boxEl.style.setProperty('justify-content', 'center', 'important');
+            boxEl.style.setProperty('text-align', 'center', 'important');
+            boxEl.style.setProperty('font-size', '1rem', 'important');
+            boxEl.style.setProperty('font-weight', 'bold', 'important');
+            boxEl.style.setProperty('line-height', '1', 'important');
+            boxEl.style.setProperty('border-radius', '6px', 'important');
+            boxEl.style.setProperty('border', '2px solid #d1d5db', 'important');
+            boxEl.style.setProperty('background', 'white', 'important');
+            boxEl.style.setProperty('box-sizing', 'border-box', 'important');
           });
         }
         
@@ -304,13 +329,69 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
           hintPurchasing.style.setProperty('max-height', '120px', 'important'); // Limit height
         }
         
-        // Optimize score area to take minimal space
+        // AGGRESSIVELY RESTORE score area styling - FORCE white background
         const scoreArea = column3.querySelector('.score-area') as HTMLElement;
         if (scoreArea) {
-          scoreArea.style.setProperty('flex', '0 0 auto', 'important'); // Fixed size
+          // Force the score area to have its original styling
+          scoreArea.style.setProperty('flex', '0 0 auto', 'important');
           scoreArea.style.setProperty('margin', '0', 'important');
-          scoreArea.style.setProperty('padding', '5px', 'important');
-          scoreArea.style.setProperty('max-height', '80px', 'important'); // Limit height
+          scoreArea.style.setProperty('padding', '16px', 'important'); // Original padding
+          scoreArea.style.setProperty('max-height', '200px', 'important'); // More space
+          scoreArea.style.setProperty('background', 'linear-gradient(135deg, #f8fafc, #e2e8f0)', 'important');
+          scoreArea.style.setProperty('border-radius', '12px', 'important');
+          scoreArea.style.setProperty('border', '1px solid #e2e8f0', 'important');
+          scoreArea.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.1)', 'important');
+          scoreArea.style.setProperty('overflow', 'visible', 'important');
+          
+          // FORCE the current score section to have blue background
+          const currentScore = scoreArea.querySelector('.current-score') as HTMLElement;
+          if (currentScore) {
+            currentScore.style.setProperty('background', 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 'important');
+            currentScore.style.setProperty('color', 'white', 'important');
+            currentScore.style.setProperty('border-radius', '8px', 'important');
+            currentScore.style.setProperty('padding', '12px', 'important');
+            currentScore.style.setProperty('margin-bottom', '16px', 'important');
+          }
+          
+          // FORCE ALL score area sub-elements to have proper backgrounds
+          const scoreStats = scoreArea.querySelector('.score-stats') as HTMLElement;
+          if (scoreStats) {
+            scoreStats.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
+            scoreStats.style.setProperty('border-radius', '6px', 'important');
+            scoreStats.style.setProperty('border', '1px solid #e5e7eb', 'important');
+            scoreStats.style.setProperty('padding', '10px', 'important');
+          }
+          
+          // FORCE all stat items to have proper backgrounds
+          const statItems = scoreArea.querySelectorAll('.stat-item');
+          statItems.forEach(item => {
+            const itemEl = item as HTMLElement;
+            itemEl.style.setProperty('background', 'transparent', 'important');
+            itemEl.style.setProperty('border-bottom', '1px solid #f1f5f9', 'important');
+          });
+          
+          // FORCE score breakdown to have proper background
+          const scoreBreakdown = scoreArea.querySelector('.score-breakdown') as HTMLElement;
+          if (scoreBreakdown) {
+            scoreBreakdown.style.setProperty('background', 'rgba(255, 255, 255, 0.8)', 'important');
+            scoreBreakdown.style.setProperty('border-radius', '6px', 'important');
+            scoreBreakdown.style.setProperty('padding', '8px', 'important');
+            scoreBreakdown.style.setProperty('margin-bottom', '12px', 'important');
+            scoreBreakdown.style.setProperty('border', '1px solid #e5e7eb', 'important');
+          }
+          
+          // FORCE ALL score item elements to have white backgrounds
+          const scoreItems = scoreArea.querySelectorAll('.score-item');
+          scoreItems.forEach(item => {
+            const itemEl = item as HTMLElement;
+            itemEl.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
+            itemEl.style.setProperty('border-bottom', '1px solid #f1f5f9', 'important');
+            itemEl.style.setProperty('padding', '6px 8px', 'important');
+            itemEl.style.setProperty('margin-bottom', '2px', 'important');
+            itemEl.style.setProperty('border-radius', '4px', 'important');
+          });
+          
+          console.log('🎯 SCORE AREA: Aggressively restored all original styling');
         }
         
         console.log('🎯 SCRATCHPAD: Optimized with controlled white area, restored gaps, fixed expansion');
@@ -391,30 +472,31 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
     console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 660 COMPLETE ========= 🎯');
   }, []);
 
-  // Cleanup function to reset landscape styles when switching orientations
+  // Comprehensive cleanup function to reset landscape styles when switching orientations
   useEffect(() => {
     return () => {
-      console.log('🎯 LANDSCAPE CLEANUP: Resetting landscape-specific styles');
+      console.log('🎯 LANDSCAPE CLEANUP: Comprehensive reset of landscape-specific styles');
       
-      // Reset landscape-specific styles when component unmounts (orientation change)
+      // Reset ALL landscape-specific styles when component unmounts (orientation change)
       const elementsToCleanup = [
-        '.title-section',
-        '.landscape-content',
-        '.landscape-submit-button',
-        '.red-border-debug',
-        '.container'
+        { selector: '.title-section', properties: ['position', 'top', 'left', 'width', 'height', 'z-index', 'text-align', 'margin', 'transform', 'transform-origin'] },
+        { selector: '.landscape-content', properties: ['position', 'top', 'left', 'width', 'height', 'z-index', 'display', 'flex-direction', 'gap', 'align-items', 'justify-content', 'box-sizing', 'background', 'border', 'overflow', 'padding', 'margin'] },
+        { selector: '.landscape-submit-button', properties: ['position', 'top', 'left', 'width', 'height', 'z-index', 'pointer-events', 'margin', 'padding'] },
+        { selector: '.red-border-debug', properties: ['position', 'top', 'left', 'width', 'height', 'border', 'background', 'pointer-events', 'z-index', 'box-sizing'] },
+        { selector: '.container', properties: ['display', 'transform', 'transform-origin', 'margin-left', 'margin-top', 'margin-right', 'margin-bottom', 'position'] },
+        { selector: '.game-screen', properties: ['padding', 'margin', 'box-sizing', 'position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform', 'transform-origin'] },
+        { selector: 'body', properties: ['padding', 'margin', 'box-sizing', 'position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform', 'transform-origin'] },
+        { selector: 'html', properties: ['padding', 'margin', 'box-sizing', 'position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform', 'transform-origin'] },
+        { selector: '#root', properties: ['padding', 'margin', 'box-sizing', 'position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform', 'transform-origin'] },
+        { selector: '.app', properties: ['padding', 'margin', 'box-sizing', 'position', 'top', 'left', 'right', 'bottom', 'width', 'height', 'transform', 'transform-origin'] }
       ];
       
-      elementsToCleanup.forEach(selector => {
+      elementsToCleanup.forEach(({ selector, properties }) => {
         const element = document.querySelector(selector) as HTMLElement;
         if (element) {
-          element.style.removeProperty('position');
-          element.style.removeProperty('top');
-          element.style.removeProperty('left');
-          element.style.removeProperty('width');
-          element.style.removeProperty('height');
-          element.style.removeProperty('z-index');
-          element.style.removeProperty('display');
+          properties.forEach(property => {
+            element.style.removeProperty(property);
+          });
         }
       });
       
@@ -423,6 +505,14 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
       if (portraitContainer) {
         portraitContainer.style.removeProperty('display');
       }
+      
+      // Remove the red border debug element completely
+      const redBorderDebug = document.querySelector('.red-border-debug');
+      if (redBorderDebug) {
+        redBorderDebug.remove();
+      }
+      
+      console.log('🎯 LANDSCAPE CLEANUP: All landscape styles reset, ready for portrait mode');
     };
   }, []);
 
@@ -444,16 +534,6 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         boxSizing: 'border-box'
       }}
     >
-      {/* Submit Button - Overlaid above orange border */}
-      <div className="landscape-submit-button" style={{
-        pointerEvents: 'auto',
-        padding: '0',
-        margin: '0',
-        boxSizing: 'border-box'
-      }}>
-        <CircularSubmitButton />
-      </div>
-      
       <div className="landscape-content" style={{
         pointerEvents: 'auto',
         padding: '0',
@@ -488,6 +568,20 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             <ScoreArea />
           </div>
         </div>
+      </div>
+      
+      {/* Submit Button - Completely independent, floating above everything */}
+      <div className="landscape-submit-button" style={{
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        pointerEvents: 'auto',
+        zIndex: 200,
+        padding: '0',
+        margin: '0',
+        boxSizing: 'border-box'
+      }}>
+        <CircularSubmitButton />
       </div>
     </div>
   );

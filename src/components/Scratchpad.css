@@ -201,43 +201,26 @@
   align-items: center !important;
   width: 100% !important;
   text-align: center !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 8px !important;
+  padding: 15px !important;
+  margin: 0 !important;
 }
 
 .scratchpad .numbers-container .numbers-grid {
-  display: flex !important;
-  flex-wrap: wrap !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)) !important;
+  gap: 8px !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 11px !important; /* 1/4 of box size: 45px/4=11.25px ≈ 11px */
-  background: rgba(255, 255, 255, 0.9) !important;
-  padding: 15px !important;
-  border-radius: 8px !important;
-  max-width: 280px !important;
+  justify-items: center !important;
   width: 100% !important;
-  margin: 0 auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Force line breaks for center-justified text effect - 3-5 per row */
-/* Break after 5th item (max per row) */
-.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n)::after {
-  content: '' !important;
-  flex-basis: 100% !important;
-  height: 0 !important;
-}
-
-/* Break after 4th item if it's in the last group of remaining items */
-.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n-1):nth-last-child(-n+2)::after {
-  content: '' !important;
-  flex-basis: 100% !important;
-  height: 0 !important;
-}
-
-/* Break after 3rd item if it's the last group and would leave less than 3 */
-.scratchpad .numbers-container .numbers-grid .scratchpad-number:nth-child(5n-2):nth-last-child(-n+1)::after {
-  content: '' !important;
-  flex-basis: 100% !important;
-  height: 0 !important;
-}
+/* CSS Grid automatically handles optimal layout and centering */
 
 .scratchpad-number {
   position: relative;
@@ -256,6 +239,8 @@
   user-select: none;
   text-align: center;
   line-height: 1;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Ensure the number text is perfectly centered */
@@ -341,8 +326,8 @@
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .scratchpad .numbers-container .numbers-grid {
-    gap: 10px !important; /* 1/4 of 40px = 10px */
-    max-width: 260px !important;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)) !important;
+    gap: 6px !important;
   }
   
   .scratchpad-number {
@@ -376,10 +361,13 @@
     height: 28px;
   }
   
-  .scratchpad .numbers-container .numbers-grid {
-    gap: 9px !important; /* 1/4 of 35px = 8.75px ≈ 9px */
+  .scratchpad .numbers-container {
     padding: 12px !important;
-    max-width: 220px !important;
+  }
+  
+  .scratchpad .numbers-container .numbers-grid {
+    grid-template-columns: repeat(auto-fit, minmax(35px, 1fr)) !important;
+    gap: 5px !important;
   }
   
   .scratchpad-number {

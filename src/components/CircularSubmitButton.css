@@ -102,10 +102,10 @@
 /* Curved text element that follows the circular path */
 .curved-text-element {
   fill: white;
-  font-size: 20px;
+  font-size: 13.2px;
   font-weight: 900;
   font-family: 'Arial', sans-serif;
-  letter-spacing: 2.2px;
+  letter-spacing: 0.2px;
   text-transform: uppercase;
   text-anchor: start;
 }
@@ -132,12 +132,6 @@
 }
 
 /* Responsive adjustments */
-@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
-  .curved-text-element {
-    font-size: 13px;
-    letter-spacing: 0.1px;
-  }
-}
 
 @media (max-width: 768px) {
   .circular-submit-btn {
@@ -166,10 +160,7 @@
     left: 25.5px;
   }
   
-  .curved-text-element {
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
+
 }
 
 @media (max-width: 480px) {
@@ -199,10 +190,7 @@
     left: 22px;
   }
   
-  .curved-text-element {
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
+
   
   .center-icon {
     width: 16px;
@@ -249,7 +237,7 @@
 /* Separator text styling */
 .separator-text {
   fill: white;
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 900;
   font-family: 'Arial', sans-serif;
   text-anchor: middle;

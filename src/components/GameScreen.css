@@ -740,8 +740,8 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
 }
 
 /* Note: iPhone orientation is now locked to portrait via iOS Info.plist */
-/* iPad Mini landscape prevention kept for web compatibility */
-@media (min-width: 768px) and (max-width: 820px) and (max-height: 600px) and (orientation: landscape) {
+/* iPad Mini landscape prevention DISABLED - we now support landscape mode */
+/* @media (min-width: 768px) and (max-width: 820px) and (max-height: 600px) and (orientation: landscape) {
   .game-screen {
     position: relative;
   }
@@ -770,7 +770,7 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     pointer-events: none;
     filter: blur(5px);
   }
-}
+} */
 
 /* Animation Utilities */
 @keyframes fadeIn {
@@ -896,55 +896,58 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     gap: clamp(15px, 3vw, 25px);
   }
   
-  /* Settings drawer positioning for iPad landscape - normal height */
+  /* Settings drawer positioning for iPad landscape - USE PORTRAIT MODE POSITIONING */
   .settings-drawer {
-    /* Position from top with normal height */
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    height: 100vh !important; /* Normal viewport height */
-    width: calc(300px * 1.2) !important; /* 20% wider */
-    background: transparent !important;
-    z-index: 200 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease !important;
-    display: flex !important;
-    flex-direction: column !important;
+    /* Let it work exactly like portrait mode - no overrides */
+    z-index: 5000 !important; /* Higher than settings button (1000) */
   }
   
   .settings-drawer.open {
-    transform: translateX(0) !important;
+    /* Let it work exactly like portrait mode - no overrides */
   }
   
-  /* Settings drawer header - keep close icon at top */
+  /* Settings drawer header - USE PORTRAIT MODE POSITIONING */
   .settings-drawer .menu-drawer-container .drawer-header {
-    padding: calc(20px + env(safe-area-inset-top)) 20px 20px !important; /* Original top padding for close icon */
-    background: transparent !important;
-    display: flex !important;
-    justify-content: flex-start !important;
-    flex-shrink: 0 !important;
+    /* Let it work exactly like portrait mode - no overrides */
+    z-index: 5001 !important; /* Above drawer background */
   }
   
-  /* Settings drawer content - simplified without CSS mask */
+  /* Settings drawer content - USE PORTRAIT MODE POSITIONING */
   .settings-drawer .menu-drawer-container .drawer-content {
-    flex: 1 !important;
-    overflow-y: auto !important;
+    /* Position absolutely like portrait mode */
+    position: absolute !important;
+    /* Position 20px below the settings button bottom edge */
+    top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
+    /* Align left edge with the icon's center */
+    left: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
+    /* Size to prevent clipping - wider than mobile drawer */
+    width: clamp(500px, 70vw, 750px) !important;
+    /* Set height to span almost to bottom of screen */
+    height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Leave minimal room at bottom */
+    max-height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Same as height */
+    /* Scale to match mobile drawer */
+    transform: scale(0.85) !important;
+    transform-origin: top left !important;
+    /* Visual styles */
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
     padding: 15px !important;
     padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
-    background: white !important; /* White background */
-    border-radius: 0 12px 0 0 !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
-    min-height: calc(100vh - 100px) !important; /* Normal height instead of 130vh */
-    max-height: calc(100vh - 100px) !important; /* Set max height to prevent overflow */
-    /* Always show scrollbar for better UX */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* Custom scrollbar implementation */
     scrollbar-width: auto !important;
-    scrollbar-color: #64748b #e2e8f0 !important;
-    /* Remove CSS mask - it was interfering with scrolling */
-    /* Use normal padding instead of excessive top padding */
-    padding-top: 15px !important;
+    scrollbar-color: #475569 #e2e8f0 !important;
+    touch-action: pan-y !important;
+    /* Remove any conflicting styles */
+    min-height: unset !important;
+    margin: 0 !important;
+    flex: unset !important;
+    z-index: 5000 !important; /* Ensure content is visible */
   }
   
   /* Force visible scrollbars for settings drawer - iOS override */
@@ -1103,11 +1106,11 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
     /* Align left edge with the icon's center */
     left: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
-    /* Size to match mobile drawer */
-    width: clamp(450px, 60vw, 630px) !important;
-    /* Set height to fit content, not extend much beyond content */
-    height: auto !important;
-    max-height: calc(100vh - 20px - 48px - 30px - 40px) !important; /* Leave room at bottom */
+    /* Size to prevent clipping - wider than mobile drawer */
+    width: clamp(500px, 70vw, 750px) !important;
+    /* Set height to span almost to bottom of screen */
+    height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Leave minimal room at bottom */
+    max-height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Same as height */
     /* Scale to match mobile drawer */
     transform: scale(0.85) !important;
     transform-origin: top left !important;

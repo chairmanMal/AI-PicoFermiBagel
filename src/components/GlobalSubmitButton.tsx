@@ -1,10 +1,22 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
-import { useGameStore } from '@/stores/gameStore';
+import { useGameStore } from '../stores/gameStore';
 import './CircularSubmitButton.css';
 
-const CircularSubmitButton: React.FC = () => {
+/**
+ * GlobalSubmitButton - A completely self-contained submit button library component
+ * 
+ * This is the single source of truth for submit buttons across all layouts.
+ * Both portrait and landscape layouts simply place this component where needed.
+ * 
+ * Features:
+ * - Self-contained styling and behavior
+ * - Automatic game state handling
+ * - Consistent appearance across all layouts
+ * - No wrapper or special handling required
+ */
+const GlobalSubmitButton: React.FC = () => {
   const { 
     gameState, 
     canSubmitGuess,
@@ -47,19 +59,19 @@ const CircularSubmitButton: React.FC = () => {
         <div className="target-ring ring-inner"></div>
         <div className="target-center"></div>
         
-        {/* Curved text around the button - FIXED POSITIONING */}
+        {/* Curved text around the button */}
         <div className="curved-text">
           <svg viewBox="0 0 100 100" className="text-circle">
             <defs>
-              {/* Path for text to follow - centered between outer and inner rings */}
+              {/* Path for text to follow - better centered between outer and inner rings */}
               <path 
                 id="text-circle-path" 
-                d="M 50, 50 m -28, 0 a 28,28 0 1,1 56,0 a 28,28 0 1,1 -56,0" 
+                d="M 50, 50 m -31, 0 a 31,31 0 1,1 62,0 a 31,31 0 1,1 -62,0" 
                 fill="none"
               />
             </defs>
             
-            {/* Single text path with complete string - exactly like portrait mode */}
+            {/* Single text path with complete string */}
             <text className="curved-text-element">
               <textPath href="#text-circle-path" startOffset="0%">
                 {isGameEnded ? " • NEW GAME • NEW GAME • NEW GAME" : " • SUBMIT • SUBMIT • SUBMIT"}
@@ -90,4 +102,4 @@ const CircularSubmitButton: React.FC = () => {
   );
 };
 
-export default CircularSubmitButton; 
+export default GlobalSubmitButton; 
