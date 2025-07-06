@@ -169,12 +169,11 @@ const Scratchpad: React.FC = () => {
           <h3>Scratchpad</h3>
         </div>
         <p className="scratchpad-description">
-          Click numbers to track your deductions
+          Click numbers to track your thinking
         </p>
       </div>
 
       <div className="scratchpad-numbers">
-        <h4>Numbers (0-{settings.digitRange}):</h4>
         <div className="numbers-container">
           <div className="numbers-grid">
             {availableNumbers.map((number) => {

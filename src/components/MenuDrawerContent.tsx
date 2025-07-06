@@ -26,6 +26,24 @@ interface MenuDrawerContentProps {
 const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Add CSS to hide scrollbars when not needed
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .menu-drawer-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .menu-drawer-scroll {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <div style={{
       display: 'flex',
@@ -37,13 +55,17 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
     }}>
       <div 
         ref={scrollContainerRef}
+        className="menu-drawer-scroll"
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '15px',
+          gap: '5px', // Match Column 1 spacing
           flex: '1',
           overflow: 'auto',
-          paddingRight: '16px' // Make room for scroll indicator
+          paddingRight: '16px', // Make room for scroll indicator
+          paddingTop: '5px', // Move content down slightly to align with other columns
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none' // IE/Edge
         }}
       >
         {/* Scratchpad Section */}
@@ -56,7 +78,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           <Scratchpad />
         </div>
 
-        {/* Hint Purchasing Section */}
+        {/* Hint Purchasing Section - Can expand */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '8px',
@@ -66,7 +88,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           <HintPurchasing />
         </div>
 
-        {/* Score Area Section */}
+        {/* Score Area Section - Can expand */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '8px',

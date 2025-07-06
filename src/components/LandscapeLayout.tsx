@@ -515,9 +515,9 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
                     paddedEl.style.setProperty('margin', '2px 0', 'important');
                   });
                 }
-              } else {
+            } else {
                 console.log(`🎯 ${name.toUpperCase()}: No scaling needed`);
-              }
+            }
             });
           }, 100);
         }

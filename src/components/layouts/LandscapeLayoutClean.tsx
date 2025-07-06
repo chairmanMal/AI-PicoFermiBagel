@@ -70,7 +70,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           availableHeight: orangeBorder.height
         });
         
-        // SUBMIT BUTTON: Above column 1, centered horizontally, completely above orange border
+        // SUBMIT BUTTON: Above column 1, centered horizontally over column 1
         const submitButton = {
           top: orangeBorder.top - 96, // 96px above orange border (76px button height + 20px margin)
           left: redBorder.left + (columnWidth / 2) - 38, // Center above column 1 (button is 76px wide)
@@ -109,17 +109,8 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           console.log('✅ ORANGE BORDER: Applied to 3-column container');
         }
         
-                 // Position submit button completely above orange border
-         const submitButtonElement = document.querySelector('.landscape-submit-button') as HTMLElement;
-         if (submitButtonElement) {
-           submitButtonElement.style.setProperty('position', 'absolute', 'important');
-           submitButtonElement.style.setProperty('top', `${titleAreaHeight + 30 - 96}px`, 'important');
-           submitButtonElement.style.setProperty('left', `${(columnWidth / 2) - 38}px`, 'important');
-           submitButtonElement.style.setProperty('z-index', '100', 'important');
-           submitButtonElement.style.setProperty('border', '2px solid lime', 'important');
-           
-           console.log('✅ SUBMIT BUTTON: Positioned completely above orange border (96px clearance)');
-         }
+                 // SUBMIT BUTTON: Let CSS handle ALL positioning - no JavaScript interference
+         console.log('✅ SUBMIT BUTTON: Letting CSS handle all positioning');
         
         // Smart scaling: Only scale Number Selection buttons to fit remaining space
         setTimeout(() => {
@@ -160,21 +151,30 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             }
           }
           
-          // Apply minimal scaling to other columns if needed (unchanged)
+          // Apply improved scaling to other columns using actual available area
           const otherColumns = document.querySelectorAll('.landscape-column:not(:first-child)');
           otherColumns.forEach((column, index) => {
             const columnElement = column as HTMLElement;
-            const contentHeight = columnElement.scrollHeight;
-            const availableHeight = orangeBorder.height - 10;
+            const contentElement = columnElement.querySelector('div') as HTMLElement;
             
-            if (contentHeight > availableHeight) {
-              const scaleFactor = availableHeight / contentHeight;
-              columnElement.style.setProperty('transform', `scale(${scaleFactor})`, 'important');
-              columnElement.style.setProperty('transform-origin', 'top left', 'important');
-              console.log(`📏 COLUMN ${index + 2} SCALED: ${scaleFactor.toFixed(3)}x to fit ${availableHeight}px`);
-            } else {
-              columnElement.style.setProperty('transform', 'none', 'important');
-              console.log(`📏 COLUMN ${index + 2}: No scaling needed`);
+            if (contentElement) {
+              const contentHeight = contentElement.scrollHeight;
+              const containerHeight = columnElement.offsetHeight;
+              // Column 3 has no padding, others have 10px (5px top + 5px bottom)
+              const columnPadding = (index === 1) ? 0 : 10; // Column 3 (index 1) has no padding
+              const availableHeight = containerHeight - columnPadding;
+              
+              console.log(`📏 COLUMN ${index + 2}: Content=${contentHeight}px, Container=${containerHeight}px, Available=${availableHeight}px`);
+              
+              if (contentHeight > availableHeight) {
+                const scaleFactor = Math.max(0.6, availableHeight / contentHeight); // Minimum 60% scale
+                contentElement.style.setProperty('transform', `scale(${scaleFactor})`, 'important');
+                contentElement.style.setProperty('transform-origin', 'top center', 'important');
+                console.log(`📏 COLUMN ${index + 2} SCALED: ${scaleFactor.toFixed(3)}x to fit ${availableHeight}px`);
+              } else {
+                contentElement.style.setProperty('transform', 'none', 'important');
+                console.log(`📏 COLUMN ${index + 2}: No scaling needed`);
+              }
             }
           });
         }, 150);
@@ -225,12 +225,32 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
       </div>
       
       {/* Submit Button - Above Column 1, NOT constrained by orange border */}
-      <div className="landscape-submit-button">
+      <div 
+        className="landscape-submit-button"
+        style={{
+          position: 'absolute',
+          top: 'calc(10px + 1.8rem + 1.1rem + 5px + 30px - 76px)', // Bottom edge aligns with orange border top
+          left: 'calc(33.33% / 2 - 38px)', // Center above Column 1
+          width: '76px',
+          height: '76px', // Match button height
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid lime',
+          zIndex: 100
+        }}
+      >
         <GlobalSubmitButton />
       </div>
       
       {/* Orange Container - 3 Columns within red border */}
-      <div className="orange-container">
+      <div className="orange-container" style={{
+        display: 'flex',
+        justifyContent: 'center', // Center the columns horizontally
+        alignItems: 'stretch', // Stretch columns to full height
+        gap: '5px',
+        padding: '2.5px' // Reduced by 50% from 5px to 2.5px
+      }}>
         {/* Column 1: Your Guess + Number Selection stacked */}
         <div className="landscape-column column-1" style={{
           flex: '1',
@@ -238,7 +258,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           flexDirection: 'column',
           gap: '5px',
           height: '100%',
-          padding: '5px'
+          padding: '2.5px' // Reduced by 50% from 5px to 2.5px
         }}>
           {/* Your Guess Block - Natural expansion */}
           <div 
@@ -281,7 +301,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         <div className="landscape-column column-2" style={{
           flex: '1',
           height: '100%',
-          padding: '5px'
+          padding: '2.5px' // Reduced by 50% from 5px to 2.5px
         }}>
           <div style={{
             background: 'rgba(255, 255, 255, 0.95)',
@@ -302,14 +322,14 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         <div className="landscape-column column-3" style={{
           flex: '1',
           height: '100%',
-          padding: '5px'
+          padding: '0px' // Remove all padding to make content wider
         }}>
           <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: 'transparent',
             borderRadius: '12px',
-            padding: '15px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(10px)',
+            padding: '0px 5px 5px 5px', // Minimal padding, no top padding, reduced horizontal
+            boxShadow: 'none',
+            backdropFilter: 'none',
             height: '100%',
             overflow: 'auto',
             display: 'flex',

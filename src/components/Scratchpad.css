@@ -209,13 +209,13 @@
 
 .scratchpad .numbers-container .numbers-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)) !important;
+  grid-template-columns: repeat(5, 1fr) !important; /* Fixed 5 columns per row */
   gap: 4px !important; /* Reduced from 8px to 4px for tighter spacing */
   justify-content: center !important;
   align-items: center !important;
   justify-items: center !important;
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: 100% !important; /* Remove width restriction */
   margin: 0 auto !important; /* Center the grid */
   padding: 0 !important;
 }

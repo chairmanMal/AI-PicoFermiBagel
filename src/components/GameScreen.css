@@ -910,100 +910,44 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     gap: clamp(15px, 3vw, 25px);
   }
   
-  /* Settings drawer positioning for iPad landscape - USE PORTRAIT MODE POSITIONING */
-  .settings-drawer {
-    /* Let it work exactly like portrait mode - no overrides */
-    z-index: 5000 !important; /* Higher than settings button (1000) */
+  /* Hide scrollbars when content doesn't overflow */
+  .settings-drawer .drawer-content,
+  .mobile-drawer .drawer-content,
+  .menu-drawer-scroll {
+    overflow: auto !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
   }
   
-  .settings-drawer.open {
-    /* Let it work exactly like portrait mode - no overrides */
+  .settings-drawer .drawer-content::-webkit-scrollbar,
+  .mobile-drawer .drawer-content::-webkit-scrollbar,
+  .menu-drawer-scroll::-webkit-scrollbar {
+    display: none !important; /* Webkit browsers */
   }
-  
-  /* Settings drawer header - USE PORTRAIT MODE POSITIONING */
-  .settings-drawer .menu-drawer-container .drawer-header {
-    /* Let it work exactly like portrait mode - no overrides */
-    z-index: 5001 !important; /* Above drawer background */
-  }
-  
-  /* Settings drawer content - USE PORTRAIT MODE POSITIONING */
-  .settings-drawer .menu-drawer-container .drawer-content {
-    /* Position absolutely like portrait mode */
-    position: absolute !important;
-    /* Position at top of orange border - no gap */
-    top: 0 !important; /* Start at top of orange container */
-    /* Align left edge with orange container */
-    left: 0 !important; /* Start at left edge of orange container */
-    /* Size to full width of orange container */
-    width: 100% !important; /* Full width of orange container */
-    /* Set height to full height of orange container */
-    height: 100% !important; /* Full height of orange container */
-    max-height: 100% !important; /* Same as height */
-    /* No scaling needed */
+
+  /* Settings drawer positioning for iPad landscape - RESTORE CORRECT POSITION, NATURAL WIDTH */
+  .settings-drawer .drawer-content {
+    position: fixed !important;
+    /* Position 10px below the settings icon */
+    top: calc(20px + env(safe-area-inset-top) + 48px + 10px) !important;
+    /* Align left edge with midpoint of settings icon */
+    left: calc(20px + env(safe-area-inset-left) + 24px) !important;
+    /* Let width be determined by content - no constraints */
+    width: auto !important;
+    max-width: none !important;
+    min-width: auto !important;
+    /* Reasonable height */
+    height: auto !important;
+    max-height: calc(100vh - 20px - 48px - 10px - 20px) !important;
+    /* Restore normal styling */
+    background: #e9ecef !important; /* Darker grey background */
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    padding: 15px !important; /* Normal padding all around */
+    z-index: 5000 !important;
+    /* Reset any problematic overrides */
     transform: none !important;
-    transform-origin: unset !important;
-    /* Visual styles - transparent background */
-    background: transparent !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    padding: 0 !important; /* Remove padding to allow full width content */
-    padding-bottom: 5px !important; /* Minimal bottom padding */
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 15px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    /* Custom scrollbar implementation */
-    scrollbar-width: auto !important;
-    scrollbar-color: #475569 #e2e8f0 !important;
-    touch-action: pan-y !important;
-    /* Remove any conflicting styles */
-    min-height: unset !important;
     margin: 0 !important;
-    flex: unset !important;
-    z-index: 5000 !important; /* Ensure content is visible */
-  }
-  
-  /* Force visible scrollbars for settings drawer - iOS override */
-  .settings-drawer .menu-drawer-container .drawer-content {
-    overflow-y: scroll !important; /* Force scroll instead of auto */
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: thick !important; /* Force thick scrollbars on Firefox */
-    scrollbar-color: #475569 #e2e8f0 !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar {
-    width: 20px !important; /* Even wider for iOS */
-    -webkit-appearance: none !important;
-    background: #e2e8f0 !important;
-    border-left: 1px solid #cbd5e1 !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar-track {
-    background: #f8fafc !important;
-    border-radius: 0 !important;
-    border: none !important;
-    -webkit-box-shadow: inset 2px 0 4px rgba(0,0,0,0.1) !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar-thumb {
-    background: #475569 !important;
-    border-radius: 0 !important;
-    border: none !important;
-    min-height: 40px !important;
-    -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar-thumb:hover {
-    background: #475569 !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar-thumb:active {
-    background: #334155 !important;
-  }
-  
-  .settings-drawer .menu-drawer-container .drawer-content::-webkit-scrollbar-corner {
-    background: #e2e8f0 !important;
   }
 }
 

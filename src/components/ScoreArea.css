@@ -53,7 +53,7 @@
 
 .current-score {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px; /* Halved from 16px to 8px */
   padding: 12px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   border-radius: 8px;
@@ -74,14 +74,14 @@
 }
 
 .score-breakdown {
-  margin-bottom: 16px;
+  margin-bottom: 8px; /* Halved from 16px to 8px */
 }
 
 .score-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 3px 0; /* Halved from 6px to 3px */
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -130,6 +130,17 @@
   font-weight: 600;
   color: #1f2937;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Landscape mode adjustments for tighter spacing */
+@media (orientation: landscape) {
+  .score-breakdown {
+    margin-bottom: 4px; /* Reduce by 50% from 8px to 4px */
+  }
+  
+  .score-item {
+    padding: 1.6875px 0; /* Reduce by 25% from 2.25px to 1.6875px (total 50% reduction from original) */
+  }
 }
 
 /* Responsive adjustments */

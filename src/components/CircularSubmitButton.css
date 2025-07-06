@@ -131,6 +131,15 @@
   z-index: 2;
 }
 
+/* Landscape mode adjustments - remove gap to center button properly */
+@media (orientation: landscape) {
+  .circular-submit-container {
+    gap: 0 !important; /* Remove gap that pushes button up */
+    margin: 0 !important; /* Remove any margins */
+    padding: 0 !important; /* Remove any padding */
+  }
+}
+
 /* Responsive adjustments */
 
 @media (max-width: 768px) {

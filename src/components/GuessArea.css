@@ -49,6 +49,13 @@
   position: relative;
 }
 
+/* iPad Landscape Mode - Double padding under the last row of guess boxes */
+@media (min-height: 768px) and (max-height: 1024px) and (orientation: landscape) {
+  .guess-grid {
+    padding-bottom: clamp(16px, 4vw, 24px); /* Double the normal bottom padding */
+  }
+}
+
 .guess-row {
   display: flex;
   gap: clamp(8px, 2vw, 12px);

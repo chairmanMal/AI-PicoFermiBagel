@@ -116,7 +116,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           flex: '1',
           overflow: 'auto',
           position: 'relative',
-          paddingRight: '16px', // Make room for scroll indicator
+          paddingRight: '30px', // More space between content and scrollbar
           width: '100%', // Full width
           background: 'white', // Ensure content has white background
           borderRadius: '12px 12px 12px 12px', // All corners rounded
@@ -129,7 +129,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
       >
         {/* Direct menu content without drawer wrapper */}
         <div className="menu-section" style={{ 
-          padding: '0 0 16px 0', 
+          padding: '0 20px 16px 0', // Add 20px right padding to keep content away from scrollbar
           borderBottom: '1px solid #f3f4f6',
           /* DEBUG: Magenta border for menu sections - REMOVED */
           /* border: '2px solid magenta' */
@@ -159,7 +159,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </button>
         </div>
 
-        <div className="menu-section" style={{ padding: '16px 0', borderBottom: '1px solid #f3f4f6' }}>
+        <div className="menu-section" style={{ padding: '16px 20px 16px 0', borderBottom: '1px solid #f3f4f6' }}>
           <h4 style={{ 
             margin: '0 0 12px 0', 
             color: '#374151', 
@@ -196,7 +196,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </div>
         </div>
 
-        <div className="menu-section" style={{ padding: '16px 0', borderBottom: '1px solid #f3f4f6' }}>
+        <div className="menu-section" style={{ padding: '16px 20px 16px 0', borderBottom: '1px solid #f3f4f6' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h4 style={{ 
               margin: '0', 
@@ -293,7 +293,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </AnimatePresence>
         </div>
 
-        <div className="menu-section" style={{ padding: '16px 0', borderBottom: '1px solid #f3f4f6' }}>
+        <div className="menu-section" style={{ padding: '16px 20px 16px 0', borderBottom: '1px solid #f3f4f6' }}>
           <h4 style={{ 
             margin: '0 0 12px 0', 
             color: '#374151', 
@@ -442,7 +442,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </button>
         </div>
 
-        <div className="menu-section" style={{ padding: '16px 0', borderBottom: '1px solid #f3f4f6' }}>
+        <div className="menu-section" style={{ padding: '16px 20px 16px 0', borderBottom: '1px solid #f3f4f6' }}>
           <h4 style={{ 
             margin: '0 0 12px 0', 
             color: '#374151', 
@@ -475,7 +475,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </div>
         </div>
 
-        <div className="menu-section" style={{ padding: '16px 0 0 0', borderBottom: 'none' }}>
+        <div className="menu-section" style={{ padding: '16px 20px 0 0', borderBottom: 'none' }}>
           <div style={{ textAlign: 'center' }}>
             <span style={{ 
               fontSize: '0.8rem', 
