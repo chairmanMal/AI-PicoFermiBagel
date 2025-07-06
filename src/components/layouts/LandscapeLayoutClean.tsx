@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import GuessArea from '../GuessArea';
+import YourGuessBlock from '../blocks/YourGuessBlock';
 import SelectionArea from '../SelectionArea';
-import GlobalSubmitButton from '../GlobalSubmitButton';
 import MenuDrawerContent from '../MenuDrawerContent';
 import RecentGuessHistory from '../RecentGuessHistory';
 
@@ -109,8 +108,8 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           console.log('✅ ORANGE BORDER: Applied to 3-column container');
         }
         
-                 // SUBMIT BUTTON: Let CSS handle ALL positioning - no JavaScript interference
-         console.log('✅ SUBMIT BUTTON: Letting CSS handle all positioning');
+                 // SUBMIT BUTTON: Now in Column 2 - no positioning needed
+         console.log('✅ SUBMIT BUTTON: Moved to Column 2, no absolute positioning needed');
         
         // Smart scaling: Only scale Number Selection buttons to fit remaining space
         setTimeout(() => {
@@ -224,24 +223,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         </p>
       </div>
       
-      {/* Submit Button - Above Column 1, NOT constrained by orange border */}
-      <div 
-        className="landscape-submit-button"
-        style={{
-          position: 'absolute',
-          top: 'calc(10px + 1.8rem + 1.1rem + 5px + 30px - 76px)', // Bottom edge aligns with orange border top
-          left: 'calc(33.33% / 2 - 38px)', // Center above Column 1
-          width: '76px',
-          height: '76px', // Match button height
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '2px solid lime',
-          zIndex: 100
-        }}
-      >
-        <GlobalSubmitButton />
-      </div>
+      {/* Submit Button moved to Column 2 - no longer positioned here */}
       
       {/* Orange Container - 3 Columns within red border */}
       <div className="orange-container" style={{
@@ -260,23 +242,15 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           height: '100%',
           padding: '2.5px' // Reduced by 50% from 5px to 2.5px
         }}>
-          {/* Your Guess Block - Natural expansion */}
-          <div 
-            ref={guessElementRef}
-            style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '12px',
-              padding: '15px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-              backdropFilter: 'blur(10px)',
-              flex: '0 0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'center'
-            }}
-          >
-            <GuessArea />
+          {/* Your Guess Block - Natural expansion with embedded submit button */}
+          <div style={{
+            flex: '0 0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: 'center'
+          }}>
+            <YourGuessBlock guessElementRef={guessElementRef} />
           </div>
           
           {/* Number Selection Block - Takes remaining space */}
@@ -297,22 +271,28 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           </div>
         </div>
         
-        {/* Column 2: Recent Guesses */}
+        {/* Column 2: Recent Guesses (Full Height) */}
         <div className="landscape-column column-2" style={{
           flex: '1',
           height: '100%',
-          padding: '2.5px' // Reduced by 50% from 5px to 2.5px
+          padding: '2.5px', // Reduced by 50% from 5px to 2.5px
+          display: 'flex',
+          flexDirection: 'column'
         }}>
+          {/* Recent Guesses - Takes full available space */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '12px',
             padding: '15px',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             backdropFilter: 'blur(10px)',
-            height: '100%',
+            flex: '1', // Takes full available space
+            minHeight: 0, // Allow shrinking below content size
+            maxHeight: '100%', // Don't exceed container
+            overflow: 'hidden', // Let inner component handle scrolling
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center'
+            justifyContent: 'flex-start' // Align to top
           }}>
             <RecentGuessHistory />
           </div>

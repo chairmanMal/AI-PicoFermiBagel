@@ -140,4 +140,36 @@
     min-height: 250px !important; /* Larger minimum for iPad */
     max-height: none !important; /* Remove any height constraints */
   }
+}
+
+/* iPad Landscape Mode - Optimize for constrained height in Column 2 */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .recent-guess-history {
+    flex: 1 !important; /* Fill all available space */
+    height: 100% !important; /* Use full container height */
+    min-height: 0 !important; /* Allow shrinking */
+  }
+  
+  .guess-history-list {
+    flex: 1 !important; /* Fill remaining space after title */
+    overflow-y: auto !important; /* Always enable scrolling */
+    min-height: 0 !important; /* Allow shrinking to fit container */
+    max-height: none !important; /* Remove height constraints */
+    /* Enhanced scrollbar for better visibility */
+    scrollbar-width: auto !important;
+  }
+  
+  /* More visible scrollbars in landscape mode */
+  .guess-history-list::-webkit-scrollbar {
+    width: 8px !important;
+  }
+  
+  .guess-history-list::-webkit-scrollbar-thumb {
+    background: #94a3b8 !important;
+    border-radius: 4px !important;
+  }
+  
+  .guess-history-list::-webkit-scrollbar-thumb:hover {
+    background: #64748b !important;
+  }
 } 
