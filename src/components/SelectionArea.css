@@ -65,7 +65,7 @@
   flex-wrap: wrap !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: clamp(15px, 3vw, 20px) !important; /* 1/4 of box size: 60px/4=15px to 80px/4=20px */
+  gap: clamp(7px, 1.5vw, 10px) !important; /* Reduced by 50% for tighter spacing */
   width: 100% !important;
   /* Remove max-width constraint - let parent container determine width dynamically */
   margin: 0 auto !important;
@@ -103,17 +103,17 @@
 
 /* Number buttons - centered content and proper sizing */
 .selection-area .numbers-container .numbers-grid .number-button {
-  width: clamp(60px, 12vw, 80px) !important;
-  height: clamp(60px, 12vw, 80px) !important;
+  width: clamp(60px, 12vw, 60px) !important;
+  height: clamp(60px, 12vw, 60px) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border: 2px solid #d1d5db !important;
+  border: 1px solid #d1d5db !important;
   border-radius: 8px !important;
   background: white !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  font-size: clamp(1.2rem, 3vw, 2rem) !important;
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem) !important;
   font-weight: 700 !important;
   color: #1f2937 !important;
   text-align: center !important;
@@ -210,7 +210,7 @@
 .selection-area .numbers-container .numbers-grid .number-button.dragging-clone {
   background: #1f2937 !important;
   border-color: #3b82f6 !important;
-  border-width: 4px !important;
+  border-width: 2px !important;
   color: white !important;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 0 3px #3b82f6, 0 0 20px rgba(59, 130, 246, 0.6) !important;
   z-index: 1000 !important;
@@ -461,14 +461,14 @@
 /* Dynamic responsive design - no hardcoded breakpoints */
 @media (max-width: 1024px) {
   .selection-area .numbers-container .numbers-grid {
-    gap: clamp(12px, 2.5vw, 17px) !important; /* 1/4 of 50px-70px */
+    gap: clamp(6px, 1.25vw, 8px) !important; /* Reduced by 50% for tighter spacing */
     /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
     width: clamp(50px, 8vw, 65px) !important; /* Smaller buttons for more per row */
     height: clamp(50px, 8vw, 65px) !important;
-    font-size: clamp(1.1rem, 2.2vw, 1.5rem) !important;
+    font-size: clamp(1.3rem, 2.5vw, 1.7rem) !important;
     text-align: center !important;
     line-height: 1 !important;
   }
@@ -480,14 +480,14 @@
   }
   
   .selection-area .numbers-container .numbers-grid {
-    gap: clamp(11px, 2vw, 15px) !important; /* 1/4 of 45px-60px */
+    gap: clamp(5px, 1vw, 7px) !important; /* Reduced by 50% for tighter spacing */
     /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
     width: clamp(45px, 9vw, 60px) !important;
     height: clamp(45px, 9vw, 60px) !important;
-    font-size: clamp(1rem, 2.2vw, 1.4rem) !important;
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem) !important;
     text-align: center !important;
     line-height: 1 !important;
   }
@@ -504,14 +504,14 @@
 
 @media (max-width: 480px) {
   .selection-area .numbers-container .numbers-grid {
-    gap: clamp(9px, 1.5vw, 12px) !important; /* 1/4 of 35px-50px */
+    gap: clamp(4px, 0.75vw, 6px) !important; /* Reduced by 50% for tighter spacing */
     /* No max-width constraint - fully dynamic width */
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
     width: clamp(35px, 7vw, 50px) !important;
     height: clamp(35px, 7vw, 50px) !important;
-    font-size: clamp(0.8rem, 1.8vw, 1.1rem) !important;
+    font-size: clamp(1rem, 2vw, 1.3rem) !important;
     text-align: center !important;
     line-height: 1 !important;
   }
@@ -536,7 +536,7 @@
   }
   
   .selection-area .numbers-container .numbers-grid {
-    gap: clamp(7px, 1vw, 10px) !important;
+    gap: clamp(3px, 0.5vw, 5px) !important;
   }
   
   .selection-area .numbers-container .numbers-grid .number-button {
@@ -571,7 +571,7 @@
     max-width: none !important;
     padding: 0.3rem !important; /* Even less padding for maximum space */
     box-sizing: border-box !important;
-    gap: clamp(6px, 1vw, 8px) !important; /* Much smaller gap to fit 10 per row */
+    gap: clamp(3px, 0.5vw, 4px) !important; /* Much smaller gap to fit 10 per row - reduced by 50% */
   }
   
   /* Make buttons smaller in portrait mode to fit 10 per row */
@@ -592,11 +592,62 @@
   }
 }
 
-/* iPad Landscape Mode - Override any component-level scaling */
+/* iPad Landscape Mode - Override any component-level scaling and fix 20-number layout */
 @media (min-height: 768px) and (max-height: 1024px) and (orientation: landscape) {
   .selection-area {
     transform: none !important;
     transform-origin: top left !important;
+  }
+  
+  /* CRITICAL FIX: Remove wasted padding to make room for 5 boxes per row */
+  .selection-area .numbers-container .numbers-grid {
+    padding: 0.25rem !important; /* Reduce from 1rem to 0.25rem (4px instead of 16px) */
+  }
+  
+  /* Smaller boxes and gaps for landscape mode to fit 5 per row */
+  .selection-area .numbers-container .numbers-grid .number-button {
+    width: clamp(45px, 8vw, 55px) !important; /* Smaller boxes for landscape */
+    height: clamp(45px, 8vw, 55px) !important;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem) !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid {
+    gap: clamp(4px, 1vw, 6px) !important; /* Tighter gaps for landscape */
+  }
+  
+  /* Override line breaks for landscape mode to show 4 rows of 5 numbers (20 total) */
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(5n)::after {
+    content: '' !important;
+    flex-basis: 100% !important;
+    height: 0 !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(5n-1):nth-last-child(-n+2)::after {
+    content: '' !important;
+    flex-basis: 100% !important;
+    height: 0 !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(5n-2):nth-last-child(-n+3)::after {
+    content: '' !important;
+    flex-basis: 100% !important;
+    height: 0 !important;
+  }
+  
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(5n-3):nth-last-child(-n+4)::after {
+    content: '' !important;
+    flex-basis: 100% !important;
+    height: 0 !important;
+  }
+  
+  /* Disable the default 8n line breaks for landscape mode */
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-1):nth-last-child(-n+4)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-2):nth-last-child(-n+3)::after,
+  .selection-area .numbers-container .numbers-grid .number-button:nth-child(8n-3):nth-last-child(-n+2)::after {
+    content: none !important;
+    flex-basis: auto !important;
+    height: auto !important;
   }
 }
 

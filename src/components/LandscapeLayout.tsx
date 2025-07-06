@@ -397,44 +397,129 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
         console.log('🎯 SCRATCHPAD: Optimized with controlled white area, restored gaps, fixed expansion');
       }
       
-      // Step 10: IMPROVED SCALING for Column 1 to prevent clipping
+      // Step 10: PROPORTIONAL SPACE ALLOCATION for Column 1 - Keep box sizes consistent, allocate space by ratio
       setTimeout(() => {
         const column1 = document.querySelector('.landscape-column-1') as HTMLElement;
         if (column1) {
-          const availableHeight = orangeBorder.height - 6; // Account for padding
-          let totalContentHeight = 0;
-          const children = Array.from(column1.children) as HTMLElement[];
+          const availableHeight = orangeBorder.height - 90 - 6; // Account for submit button (90px) and padding (6px)
           
-          // Force layout calculation
-          children.forEach(child => {
-            child.style.transform = 'none';
-            child.style.marginBottom = '0';
-          });
+          // Detect grid mode
+          let gridRows = 1, gridColumns = 3;
+          const guessGrid = document.querySelector('.guess-grid') as HTMLElement;
+          if (guessGrid) {
+            gridRows = parseInt(guessGrid.style.getPropertyValue('--grid-rows') || '1');
+            gridColumns = parseInt(guessGrid.style.getPropertyValue('--grid-columns') || '3');
+          }
+          const gridMode = `${gridRows}x${gridColumns}`;
+          const totalGuessBoxes = gridRows * gridColumns;
           
-          // Wait for layout to settle
+          console.log(`🎯 DETECTED GRID MODE: ${gridMode} (${totalGuessBoxes} guess boxes)`);
+          
+          // Calculate proportional space allocation
+          // Target Display: Fixed small space (about 1 box equivalent)
+          // Your Guess: Based on number of guess boxes
+          // Number Selection: Based on digit range (assume 10-20 numbers, about 2 rows worth)
+          const targetDisplayRatio = 1; // Fixed small space
+          const yourGuessRatio = totalGuessBoxes; // Proportional to number of guess boxes
+          const numberSelectionRatio = Math.ceil((parseInt(document.querySelector('.selection-area')?.getAttribute('data-digit-range') || '10')) / 5); // Estimate based on digit range
+          
+          const totalRatio = targetDisplayRatio + yourGuessRatio + numberSelectionRatio;
+          
+          console.log(`🎯 SPACE ALLOCATION RATIOS: Target=${targetDisplayRatio}, Guess=${yourGuessRatio}, Selection=${numberSelectionRatio}, Total=${totalRatio}`);
+          
+          // Allocate heights proportionally
+          const targetHeight = Math.floor((targetDisplayRatio / totalRatio) * availableHeight);
+          const guessHeight = Math.floor((yourGuessRatio / totalRatio) * availableHeight);
+          const selectionHeight = Math.floor((numberSelectionRatio / totalRatio) * availableHeight);
+          
+          console.log(`🎯 ALLOCATED HEIGHTS: Target=${targetHeight}px, Guess=${guessHeight}px, Selection=${selectionHeight}px, Total=${targetHeight + guessHeight + selectionHeight}px`);
+          
+          // Apply height constraints to each section
+          const targetDisplay = column1.querySelector('.target-display') as HTMLElement;
+          const guessSection = column1.querySelector('.guess-section') as HTMLElement;
+          const selectionSection = column1.querySelector('.selection-section') as HTMLElement;
+          
+          if (targetDisplay) {
+            targetDisplay.style.setProperty('height', `${targetHeight}px`, 'important');
+            targetDisplay.style.setProperty('max-height', `${targetHeight}px`, 'important');
+            targetDisplay.style.setProperty('overflow', 'hidden', 'important');
+            targetDisplay.style.setProperty('display', 'flex', 'important');
+            targetDisplay.style.setProperty('flex-direction', 'column', 'important');
+            targetDisplay.style.setProperty('justify-content', 'center', 'important');
+            console.log(`🎯 TARGET DISPLAY: Constrained to ${targetHeight}px`);
+          }
+          
+          if (guessSection) {
+            guessSection.style.setProperty('height', `${guessHeight}px`, 'important');
+            guessSection.style.setProperty('max-height', `${guessHeight}px`, 'important');
+            guessSection.style.setProperty('overflow', 'hidden', 'important');
+            guessSection.style.setProperty('display', 'flex', 'important');
+            guessSection.style.setProperty('flex-direction', 'column', 'important');
+            guessSection.style.setProperty('justify-content', 'center', 'important');
+            console.log(`🎯 GUESS SECTION: Constrained to ${guessHeight}px`);
+          }
+          
+          if (selectionSection) {
+            selectionSection.style.setProperty('height', `${selectionHeight}px`, 'important');
+            selectionSection.style.setProperty('max-height', `${selectionHeight}px`, 'important');
+            selectionSection.style.setProperty('overflow', 'hidden', 'important');
+            selectionSection.style.setProperty('display', 'flex', 'important');
+            selectionSection.style.setProperty('flex-direction', 'column', 'important');
+            selectionSection.style.setProperty('justify-content', 'center', 'important');
+            console.log(`🎯 SELECTION SECTION: Constrained to ${selectionHeight}px`);
+          }
+          
+          // Wait for layout to settle, then check if content fits and scale if needed
           setTimeout(() => {
-            children.forEach(child => {
-              totalContentHeight += child.offsetHeight;
-            });
-            totalContentHeight += (children.length - 1) * 3; // Account for gaps
+            const sections = [
+              { element: targetDisplay, name: 'Target Display', allocatedHeight: targetHeight },
+              { element: guessSection, name: 'Guess Section', allocatedHeight: guessHeight },
+              { element: selectionSection, name: 'Selection Section', allocatedHeight: selectionHeight }
+            ];
             
-            if (totalContentHeight > availableHeight) {
-              const scale = Math.max(0.7, availableHeight / totalContentHeight); // Minimum 70% scale
-              console.log(`🎯 COLUMN 1 SCALING: ${scale.toFixed(3)} (content: ${totalContentHeight}px, available: ${availableHeight}px)`);
+            sections.forEach(({ element, name, allocatedHeight }) => {
+              if (!element) return;
               
-              children.forEach((child, index) => {
-                child.style.setProperty('transform', `scale(${scale})`, 'important');
-                child.style.setProperty('transform-origin', 'top center', 'important');
-                // Adjust margins to compensate for scaling
-                const marginAdjustment = (1 - scale) * -child.offsetHeight * 0.5;
-                if (index < children.length - 1) {
-                  child.style.setProperty('margin-bottom', `${marginAdjustment}px`, 'important');
+              // Check if content overflows allocated space
+              const contentHeight = element.scrollHeight;
+              const needsScaling = contentHeight > allocatedHeight;
+              
+              console.log(`🎯 ${name.toUpperCase()}: content=${contentHeight}px, allocated=${allocatedHeight}px, needs scaling=${needsScaling}`);
+              
+              if (needsScaling) {
+                // Scale content within the element to fit
+                const scale = allocatedHeight / contentHeight;
+                const clampedScale = Math.max(0.4, scale); // Minimum 40% scale
+                
+                console.log(`🎯 ${name.toUpperCase()}: Scaling content to ${clampedScale.toFixed(3)} (${(clampedScale * 100).toFixed(1)}%)`);
+                
+                // Apply scaling to the content within the element
+                const contentWrapper = element.querySelector('.guess-area, .selection-area, .target-display') as HTMLElement;
+                if (contentWrapper) {
+                  contentWrapper.style.setProperty('transform', `scale(${clampedScale})`, 'important');
+                  contentWrapper.style.setProperty('transform-origin', 'top center', 'important');
+                  contentWrapper.style.setProperty('width', `${100 / clampedScale}%`, 'important'); // Compensate for scaling
+                  contentWrapper.style.setProperty('height', `${100 / clampedScale}%`, 'important'); // Compensate for scaling
+                } else {
+                  // If no wrapper, scale the element itself
+                  element.style.setProperty('transform', `scale(${clampedScale})`, 'important');
+                  element.style.setProperty('transform-origin', 'top center', 'important');
                 }
-              });
-            } else {
-              console.log(`🎯 COLUMN 1: No scaling needed (content: ${totalContentHeight}px, available: ${availableHeight}px)`);
-            }
-          }, 50);
+                
+                // Reduce padding for heavily scaled content
+                if (clampedScale < 0.7) {
+                  const paddedElements = element.querySelectorAll('[style*="padding"], .guess-area, .selection-area, .target-display');
+                  paddedElements.forEach(el => {
+                    const paddedEl = el as HTMLElement;
+                    paddedEl.style.setProperty('padding', '4px', 'important');
+                    paddedEl.style.setProperty('margin', '2px 0', 'important');
+                  });
+                }
+              } else {
+                console.log(`🎯 ${name.toUpperCase()}: No scaling needed`);
+              }
+            });
+          }, 100);
         }
       }, 300);
     }, 100);

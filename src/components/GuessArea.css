@@ -71,7 +71,7 @@
   position: absolute;
   /* Position to the right of the centered row content */
   left: 50%;
-  margin-left: calc((var(--grid-columns, 3) * clamp(50px, 12vw, 80px) + (var(--grid-columns, 3) - 1) * clamp(8px, 2vw, 12px)) / 2 + 20px);
+  margin-left: calc((var(--grid-columns, 3) * clamp(50px, 12vw, 60px) + (var(--grid-columns, 3) - 1) * clamp(8px, 2vw, 12px)) / 2 + 20px);
   top: 50%;
   transform: translateY(-50%);
   z-index: 5;
@@ -79,8 +79,8 @@
 
 .guess-box {
   position: relative;
-  width: clamp(50px, 12vw, 80px);
-  height: clamp(50px, 12vw, 80px);
+  width: clamp(50px, 12vw, 60px);
+  height: clamp(50px, 12vw, 60px);
   border: 2px solid #d1d5db;
   border-radius: 8px;
   background: white;

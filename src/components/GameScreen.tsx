@@ -61,10 +61,10 @@ const GameScreen: React.FC = () => {
     const handleResize = () => {
       detectLayout();
     };
-
+    
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
-
+    
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
@@ -82,7 +82,7 @@ const GameScreen: React.FC = () => {
       setIsSettingsDrawerOpen,
       currentLayout
     });
-
+    
     return () => {
       drawerManager.cleanup();
     };
@@ -135,7 +135,7 @@ const GameScreen: React.FC = () => {
     };
 
     settingsDrawer.addEventListener('touchstart', handleSwipeLeft);
-
+    
     return () => {
       settingsDrawer.removeEventListener('touchstart', handleSwipeLeft);
     };
@@ -162,7 +162,7 @@ const GameScreen: React.FC = () => {
     const { orientation } = currentLayout;
 
     if (orientation === 'landscape') {
-      // LANDSCAPE: Use LandscapeLayoutClean component
+      // LANDSCAPE: Use LandscapeLayoutClean but settings drawer from GameScreen is available
       return <LandscapeLayoutClean guessElementRef={guessElementRef} />;
     } else {
       // PORTRAIT: Use PortraitLayout component
@@ -183,13 +183,13 @@ const GameScreen: React.FC = () => {
       data-layout={`${currentLayout.device}-${currentLayout.orientation}`}
     >
       {/* Settings Button - Always visible */}
-      <button
-        className="settings-button"
+        <button
+          className="settings-button"
         onClick={() => setIsSettingsDrawerOpen(true)}
         aria-label="Open Settings"
-      >
-        <Settings size={24} />
-      </button>
+        >
+          <Settings size={24} />
+        </button>
 
       {/* Menu Button - Only visible in portrait mode (not in landscape) */}
       {currentLayout.orientation === 'portrait' && (
@@ -206,15 +206,36 @@ const GameScreen: React.FC = () => {
       {renderLayout()}
 
       {/* Settings Drawer - Exact copy of portrait mode structure */}
-      <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
+            <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
         <div className="menu-drawer-container">
           <div className="drawer-header">
             <button
               className="drawer-close"
               onClick={() => setIsSettingsDrawerOpen(false)}
               aria-label="Close Settings"
+              style={{
+                position: 'fixed',
+                top: 'calc(20px + env(safe-area-inset-top))',
+                left: 'calc(20px + env(safe-area-inset-left))',
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease',
+                touchAction: 'manipulation',
+                zIndex: 6000,
+                fontSize: '24px',
+                color: '#374151'
+              }}
             >
-              <Settings size={24} />
+              ‹
             </button>
           </div>
           <div className="drawer-content">
@@ -225,22 +246,22 @@ const GameScreen: React.FC = () => {
 
       {/* Menu Drawer - Only in portrait mode */}
       {currentLayout.orientation === 'portrait' && (
-        <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
+              <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
           <div className="menu-drawer-container">
-            <div className="drawer-header">
-              <button
-                className="drawer-close"
-                onClick={() => setIsMenuDrawerOpen(false)}
+                <div className="drawer-header">
+                  <button
+                    className="drawer-close"
+                    onClick={() => setIsMenuDrawerOpen(false)}
                 aria-label="Close Menu"
-              >
+                  >
                 ✕
-              </button>
-            </div>
+                  </button>
+                </div>
                       <div className="drawer-content">
             <MenuArea onClose={() => setIsMenuDrawerOpen(false)} />
-          </div>
-          </div>
-        </div>
+                  </div>
+                  </div>
+                  </div>
       )}
 
       {/* Drawer Overlays */}

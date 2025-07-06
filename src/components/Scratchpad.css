@@ -1,5 +1,5 @@
 .scratchpad {
-  padding: 20px;
+  padding: 5px; /* Reduced from 20px to 5px */
   background: linear-gradient(135deg, #f3e5f5, #e1bee7);
   border-radius: 12px;
   position: relative;
@@ -7,7 +7,7 @@
 
 .scratchpad-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 8px; /* Reduced from 20px to 8px */
 }
 
 .header-content {
@@ -184,7 +184,7 @@
 }
 
 .scratchpad-numbers {
-  margin-bottom: 20px;
+  margin-bottom: 5px; /* Reduced from 20px to 5px */
 }
 
 .scratchpad-numbers h4 {
@@ -203,20 +203,20 @@
   text-align: center !important;
   background: rgba(255, 255, 255, 0.9) !important;
   border-radius: 8px !important;
-  padding: 15px !important;
+  padding: 5px !important; /* Reduced from 15px to 5px to show just 5px of colored background */
   margin: 0 !important;
 }
 
 .scratchpad .numbers-container .numbers-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)) !important;
-  gap: 8px !important;
+  gap: 4px !important; /* Reduced from 8px to 4px for tighter spacing */
   justify-content: center !important;
   align-items: center !important;
   justify-items: center !important;
   width: 100% !important;
   max-width: 100% !important;
-  margin: 0 !important;
+  margin: 0 auto !important; /* Center the grid */
   padding: 0 !important;
 }
 

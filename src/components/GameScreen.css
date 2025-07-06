@@ -132,7 +132,9 @@
   left: 0;
   height: 100vh;
   height: calc(100vh - env(safe-area-inset-bottom)); /* Account for bottom safe area */
-  width: clamp(300px, 85vw, 420px);
+  width: calc(100vw / 3); /* Constrain to 1/3 of screen width */
+  max-width: 450px; /* Maximum width cap */
+  min-width: 300px; /* Minimum width for usability */
   background: transparent;
   z-index: 4000;
   transform: translateX(-100%);
@@ -142,6 +144,8 @@
   overflow: hidden; /* Restore overflow hidden for drawer */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
+  /* DEBUG: Red border for settings drawer container - REMOVED */
+  /* border: 3px solid red !important; */
 }
 
 .settings-drawer.open {
@@ -173,6 +177,8 @@
   display: flex;
   flex-direction: column;
   background: transparent;
+  /* DEBUG: Blue border for menu drawer container - REMOVED */
+  /* border: 3px solid blue !important; */
 }
 
 .menu-drawer .drawer-header,
@@ -182,6 +188,8 @@
   background: transparent !important;
   display: flex;
   justify-content: flex-start; /* Left align for menu close button */
+  /* DEBUG: Purple border for drawer header - REMOVED */
+  /* border: 3px solid purple !important; */
 }
 
 /* Extra specificity for menu drawer transparency */
@@ -207,6 +215,8 @@
   border-radius: 0 12px 0 0; /* Rounded top-right corner for left drawer */
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   min-height: calc(100vh - 80px);
+  /* DEBUG: Green border for drawer content - REMOVED */
+  /* border: 3px solid green !important; */
 }
 
 /* Main Container */
@@ -361,7 +371,9 @@
   right: 0;
   height: 100vh;
   height: calc(100vh - env(safe-area-inset-bottom)); /* Account for bottom safe area - same as settings drawer */
-  width: clamp(300px, 85vw, 420px); /* Slightly wider */
+  width: calc(100vw / 3); /* Constrain to 1/3 of screen width */
+  max-width: 450px; /* Maximum width cap */
+  min-width: 300px; /* Minimum width for usability */
   background: transparent;
   z-index: 200;
   transform: translateX(100%);
@@ -371,6 +383,8 @@
   overflow: hidden; /* Restore overflow hidden for drawer */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
+  /* DEBUG: Orange border for mobile drawer container - REMOVED */
+  /* border: 3px solid orange !important; */
 }
 
 .mobile-drawer.open {
@@ -916,24 +930,24 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   .settings-drawer .menu-drawer-container .drawer-content {
     /* Position absolutely like portrait mode */
     position: absolute !important;
-    /* Position 20px below the settings button bottom edge */
-    top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
-    /* Align left edge with the icon's center */
-    left: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
-    /* Size to prevent clipping - wider than mobile drawer */
-    width: clamp(500px, 70vw, 750px) !important;
-    /* Set height to span almost to bottom of screen */
-    height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Leave minimal room at bottom */
-    max-height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Same as height */
-    /* Scale to match mobile drawer */
-    transform: scale(0.85) !important;
-    transform-origin: top left !important;
-    /* Visual styles */
-    background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
-    padding: 15px !important;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    /* Position at top of orange border - no gap */
+    top: 0 !important; /* Start at top of orange container */
+    /* Align left edge with orange container */
+    left: 0 !important; /* Start at left edge of orange container */
+    /* Size to full width of orange container */
+    width: 100% !important; /* Full width of orange container */
+    /* Set height to full height of orange container */
+    height: 100% !important; /* Full height of orange container */
+    max-height: 100% !important; /* Same as height */
+    /* No scaling needed */
+    transform: none !important;
+    transform-origin: unset !important;
+    /* Visual styles - transparent background */
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important; /* Remove padding to allow full width content */
+    padding-bottom: 5px !important; /* Minimal bottom padding */
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
@@ -993,6 +1007,36 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   }
 }
 
+/* Settings Drawer Menu Overrides - Remove unwanted spacing */
+.settings-drawer-menu-override .menu-section:first-child {
+  padding-top: 0 !important;
+}
+
+.settings-drawer-menu-override .menu-section {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Additional overrides for settings drawer content */
+.settings-drawer-menu-override .menu-drawer-container {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.settings-drawer-menu-override .drawer-header {
+  display: none !important; /* Hide the header since close button is handled by parent */
+}
+
+.settings-drawer-menu-override .drawer-content {
+  padding: 15px !important; /* Add back proper padding for content */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+  background: transparent !important; /* Remove background since parent handles it */
+  border-radius: 0 !important; /* Remove border radius since parent handles it */
+  box-shadow: none !important; /* Remove shadow since parent handles it */
+  margin: 0 !important;
+}
+
 /* High z-index for toasts, popups, and modals to ensure they appear above all content */
 .toast,
 .popup,
@@ -1034,8 +1078,10 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
     /* Align right edge with the icon's center */
     right: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
-    /* Size to match settings drawer */
-    width: clamp(450px, 60vw, 630px) !important;
+    /* Size to 1/3 of screen width - constrained */
+    width: calc(100vw / 3) !important; /* 1/3 of screen width */
+    max-width: 450px !important; /* Maximum width cap */
+    min-width: 300px !important; /* Minimum width for usability */
     /* Set height to fit content, not extend much beyond score element */
     height: auto !important;
     max-height: calc(100vh - 20px - 48px - 30px - 40px) !important; /* Leave room at bottom */
@@ -1106,19 +1152,21 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
     /* Align left edge with the icon's center */
     left: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
-    /* Size to prevent clipping - wider than mobile drawer */
-    width: clamp(500px, 70vw, 750px) !important;
+    /* Size to 1/3 of screen width - constrained */
+    width: calc(100vw / 3) !important; /* 1/3 of screen width */
+    max-width: 450px !important; /* Maximum width cap */
+    min-width: 300px !important; /* Minimum width for usability */
     /* Set height to span almost to bottom of screen */
     height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Leave minimal room at bottom */
     max-height: calc(100vh - 20px - 48px - 30px - 20px) !important; /* Same as height */
     /* Scale to match mobile drawer */
     transform: scale(0.85) !important;
     transform-origin: top left !important;
-    /* Visual styles */
-    background: white !important;
-    border-radius: 0 12px 0 0 !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
-    padding: 15px !important;
+    /* Visual styles - transparent background */
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important; /* Remove padding to allow full width content */
     padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
     display: flex !important;
     flex-direction: column !important;

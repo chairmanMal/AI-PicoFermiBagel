@@ -13,7 +13,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
   const landscapeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 704 - COMPLETE REBUILD ========= 🎯');
+    console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 808 - NATURAL EXPANSION + REMAINING SPACE ========= 🎯');
     
     const viewport = {
       width: window.innerWidth,
@@ -121,23 +121,63 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
            console.log('✅ SUBMIT BUTTON: Positioned completely above orange border (96px clearance)');
          }
         
-        // Apply JavaScript scaling to columns if needed
-        const columns = document.querySelectorAll('.landscape-column');
-        columns.forEach((column, index) => {
-          const columnElement = column as HTMLElement;
-          const contentHeight = columnElement.scrollHeight;
-          const availableHeight = orangeBorder.height - 10; // 5px padding top and bottom
-          
-          if (contentHeight > availableHeight) {
-            const scaleFactor = availableHeight / contentHeight;
-            columnElement.style.setProperty('transform', `scale(${scaleFactor})`, 'important');
-            columnElement.style.setProperty('transform-origin', 'top left', 'important');
-            console.log(`📏 COLUMN ${index + 1} SCALED: ${scaleFactor.toFixed(3)}x to fit ${availableHeight}px`);
-          } else {
-            columnElement.style.setProperty('transform', 'none', 'important');
-            console.log(`📏 COLUMN ${index + 1}: No scaling needed`);
+        // Smart scaling: Only scale Number Selection buttons to fit remaining space
+        setTimeout(() => {
+          const column1 = document.querySelector('.landscape-column:first-child') as HTMLElement;
+          if (column1) {
+            const selectionBlock = column1.querySelector('div:last-child') as HTMLElement;
+            if (selectionBlock) {
+              const numberButtons = selectionBlock.querySelectorAll('.number-button');
+              
+              console.log(`🎯 SMART SCALING: Found ${numberButtons.length} number buttons to scale`);
+              
+              if (numberButtons.length > 0) {
+                // Check if Number Selection content overflows its allocated space
+                const selectionContentHeight = selectionBlock.scrollHeight;
+                const selectionAllocatedHeight = selectionBlock.offsetHeight;
+                const selectionOverhead = 100; // Title, subtitle, padding
+                const availableSelectionHeight = selectionAllocatedHeight - selectionOverhead;
+                
+                console.log(`   📐 Selection Content: ${selectionContentHeight}px`);
+                console.log(`   📐 Selection Allocated: ${selectionAllocatedHeight}px`);
+                console.log(`   📐 Selection Available: ${availableSelectionHeight}px`);
+                
+                if (selectionContentHeight > availableSelectionHeight) {
+                  const selectionScale = Math.max(0.5, availableSelectionHeight / selectionContentHeight);
+                  
+                  console.log(`   🎯 SCALING NUMBER BUTTONS: ${selectionScale.toFixed(3)}x (${(selectionScale * 100).toFixed(1)}%)`);
+                  
+                  numberButtons.forEach(button => {
+                    (button as HTMLElement).style.setProperty('transform', `scale(${selectionScale})`, 'important');
+                    (button as HTMLElement).style.setProperty('transform-origin', 'center', 'important');
+                  });
+                  
+                  console.log(`   ✅ APPLIED SCALING: ${selectionScale.toFixed(3)}x to prevent clipping`);
+                } else {
+                  console.log(`   ✅ NO SCALING NEEDED: Number Selection fits naturally`);
+                }
+              }
+            }
           }
-        });
+          
+          // Apply minimal scaling to other columns if needed (unchanged)
+          const otherColumns = document.querySelectorAll('.landscape-column:not(:first-child)');
+          otherColumns.forEach((column, index) => {
+            const columnElement = column as HTMLElement;
+            const contentHeight = columnElement.scrollHeight;
+            const availableHeight = orangeBorder.height - 10;
+            
+            if (contentHeight > availableHeight) {
+              const scaleFactor = availableHeight / contentHeight;
+              columnElement.style.setProperty('transform', `scale(${scaleFactor})`, 'important');
+              columnElement.style.setProperty('transform-origin', 'top left', 'important');
+              console.log(`📏 COLUMN ${index + 2} SCALED: ${scaleFactor.toFixed(3)}x to fit ${availableHeight}px`);
+            } else {
+              columnElement.style.setProperty('transform', 'none', 'important');
+              console.log(`📏 COLUMN ${index + 2}: No scaling needed`);
+            }
+          });
+        }, 150);
       }
     }, 100);
     
@@ -200,7 +240,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           height: '100%',
           padding: '5px'
         }}>
-          {/* Your Guess Block */}
+          {/* Your Guess Block - Natural expansion */}
           <div 
             ref={guessElementRef}
             style={{
@@ -209,16 +249,17 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
               padding: '15px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               backdropFilter: 'blur(10px)',
-              flex: '1',
+              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center'
+              justifyContent: 'flex-start',
+              alignItems: 'center'
             }}
           >
             <GuessArea />
           </div>
           
-          {/* Number Selection Block */}
+          {/* Number Selection Block - Takes remaining space */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '12px',
@@ -228,7 +269,9 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             flex: '1',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center'
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            overflow: 'hidden'
           }}>
             <SelectionArea />
           </div>
