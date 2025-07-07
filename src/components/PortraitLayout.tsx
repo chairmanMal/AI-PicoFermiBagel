@@ -1,24 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import TargetDisplay from './TargetDisplay';
-import GuessArea from './GuessArea';
+import YourGuessBlock from './blocks/YourGuessBlock';
 import SelectionArea from './SelectionArea';
 import RecentGuessHistory from './RecentGuessHistory';
-import GlobalSubmitButton from './GlobalSubmitButton';
-import Scratchpad from './Scratchpad';
-import HintPurchasing from './HintPurchasing';
-import ScoreArea from './ScoreArea';
 
 interface PortraitLayoutProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
-  isMenuDrawerOpen: boolean;
-  setIsMenuDrawerOpen: (open: boolean) => void;
 }
 
-const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenuDrawerOpen, setIsMenuDrawerOpen }) => {
+const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
   const portraitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log('🎯 ========= PORTRAIT LAYOUT BUILD 665 - INDEPENDENT LAYOUT ========= 🎯');
+    console.log('🎯 ========= PORTRAIT LAYOUT WITH COLORED BORDERS ========= 🎯');
     console.log('🎯 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
     
     // Step 1: COMPLETELY RESET any landscape layout interference
@@ -68,34 +62,53 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenu
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // PORTRAIT BORDER: Full screen with small margins
-    const portraitBorder = {
+    // RED BORDER: Total displayable screen area (5px left/right, 10px top/bottom)
+    const redBorder = {
       top: 10,
-      left: 10,
-      width: viewportWidth - 20, // 10px from both sides = 20px total
-      height: viewportHeight - 30, // 10px top + 20px bottom = 30px total
-      right: viewportWidth - 10,
-      bottom: viewportHeight - 20
+      left: 5,
+      width: viewportWidth - 10, // 5px from both sides = 10px total
+      height: viewportHeight - 20, // 10px top + 10px bottom = 20px total
+      right: viewportWidth - 5,
+      bottom: viewportHeight - 10
     };
     
-    console.log('🎯 PORTRAIT BORDER:', portraitBorder);
+    console.log('🔴 RED BORDER (Total Displayable):', redBorder);
     console.log('🎯 SCREEN VERIFICATION: Width=' + viewportWidth + ', Height=' + viewportHeight);
     
-    // Step 3: Position title section for portrait
+    // Apply red border to portrait container
+    const portraitContainer = portraitRef.current;
+    if (portraitContainer) {
+      portraitContainer.style.setProperty('border', '2px solid red', 'important');
+      portraitContainer.style.setProperty('position', 'fixed', 'important');
+      portraitContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
+      portraitContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
+      portraitContainer.style.setProperty('width', `${redBorder.width}px`, 'important');
+      portraitContainer.style.setProperty('height', `${redBorder.height}px`, 'important');
+      portraitContainer.style.setProperty('z-index', '1', 'important');
+      
+      console.log('✅ RED BORDER: Applied to portrait container');
+    }
+    
+    // Step 3: Position title section for portrait (centered horizontally, reasonable margin below red border)
     const titleSection = document.querySelector('.title-section') as HTMLElement;
     if (titleSection) {
+      const titleMarginTop = 20; // Reasonable margin below red border
+      
       titleSection.style.setProperty('position', 'fixed', 'important');
-      titleSection.style.setProperty('top', `${portraitBorder.top + 10}px`, 'important');
-      titleSection.style.setProperty('left', `${portraitBorder.left}px`, 'important');
-      titleSection.style.setProperty('width', `${portraitBorder.width}px`, 'important');
+      titleSection.style.setProperty('top', `${redBorder.top + titleMarginTop}px`, 'important');
+      titleSection.style.setProperty('left', `${redBorder.left}px`, 'important');
+      titleSection.style.setProperty('width', `${redBorder.width}px`, 'important');
       titleSection.style.setProperty('text-align', 'center', 'important');
       titleSection.style.setProperty('z-index', '100', 'important');
       titleSection.style.setProperty('padding', '0', 'important');
       titleSection.style.setProperty('margin', '0', 'important');
       titleSection.style.setProperty('display', 'flex', 'important');
       titleSection.style.setProperty('flex-direction', 'column', 'important');
-      titleSection.style.setProperty('justify-content', 'flex-start', 'important');
+      titleSection.style.setProperty('justify-content', 'center', 'important');
       titleSection.style.setProperty('align-items', 'center', 'important');
+      titleSection.style.setProperty('background', 'transparent', 'important');
+      titleSection.style.setProperty('backdrop-filter', 'none', 'important');
+      titleSection.style.setProperty('border-radius', 'none', 'important');
       
       const title = titleSection.querySelector('.game-title') as HTMLElement;
       const subtitle = titleSection.querySelector('.game-subtitle') as HTMLElement;
@@ -104,14 +117,18 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenu
         title.style.margin = '10px 0 5px 0';
         title.style.fontSize = '1.8rem';
         title.style.fontWeight = '600';
+        title.style.color = 'white';
+        title.style.textShadow = '0 2px 4px rgba(0,0,0,0.5)';
       }
       
       if (subtitle) {
         subtitle.style.margin = '0 0 10px 0';
         subtitle.style.fontSize = '1.1rem';
+        subtitle.style.color = 'rgba(255, 255, 255, 0.9)';
+        subtitle.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
       }
       
-      console.log('🎯 PORTRAIT TITLE SECTION: Positioned');
+      console.log('🎯 PORTRAIT TITLE SECTION: Positioned with proper margins');
     }
     
     // Step 4: Calculate content area positioning
@@ -124,61 +141,45 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenu
       const subtitleRect = subtitle.getBoundingClientRect();
       const subtitleBottom = subtitleRect.bottom;
       
-      // PORTRAIT CONTENT AREA: Single column layout
-      const contentGap = 20; // Gap between title and content
-      const portraitContent = {
+      // ORANGE BORDER: Main content container (starts below title/subtitle with reasonable margin)
+      const contentGap = 30; // Reasonable gap between title and content
+      const orangeBorder = {
         top: subtitleBottom + contentGap,
-        left: portraitBorder.left,
-        width: portraitBorder.width,
-        height: portraitBorder.bottom - (subtitleBottom + contentGap),
-        right: portraitBorder.right,
-        bottom: portraitBorder.bottom
+        left: redBorder.left, // No margin from red border - extend to edges
+        width: redBorder.width, // Full width to red borders
+        height: redBorder.bottom - (subtitleBottom + contentGap) - 10, // 10px margin from bottom only
+        right: redBorder.right,
+        bottom: redBorder.bottom - 10
       };
       
-      console.log('🎯 PORTRAIT CONTENT AREA:', portraitContent);
+      console.log('🟠 ORANGE BORDER (Main Content):', orangeBorder);
       
-      // Step 5: Position portrait content container
+      // Step 5: Position portrait content container and apply orange border
       const portraitContentEl = document.querySelector('.portrait-content') as HTMLElement;
       if (portraitContentEl) {
+        portraitContentEl.style.setProperty('border', '2px solid orange', 'important');
         portraitContentEl.style.setProperty('position', 'fixed', 'important');
-        portraitContentEl.style.setProperty('top', `${portraitContent.top}px`, 'important');
-        portraitContentEl.style.setProperty('left', `${portraitContent.left}px`, 'important');
-        portraitContentEl.style.setProperty('width', `${portraitContent.width}px`, 'important');
-        portraitContentEl.style.setProperty('height', `${portraitContent.height}px`, 'important');
+        portraitContentEl.style.setProperty('top', `${orangeBorder.top}px`, 'important');
+        portraitContentEl.style.setProperty('left', `${orangeBorder.left}px`, 'important');
+        portraitContentEl.style.setProperty('width', `${orangeBorder.width}px`, 'important');
+        portraitContentEl.style.setProperty('height', `${orangeBorder.height}px`, 'important');
         portraitContentEl.style.setProperty('display', 'flex', 'important');
         portraitContentEl.style.setProperty('flex-direction', 'column', 'important');
-        portraitContentEl.style.setProperty('gap', '15px', 'important');
+        portraitContentEl.style.setProperty('gap', '5px', 'important');
         portraitContentEl.style.setProperty('align-items', 'center', 'important');
         portraitContentEl.style.setProperty('justify-content', 'flex-start', 'important');
         portraitContentEl.style.setProperty('box-sizing', 'border-box', 'important');
         portraitContentEl.style.setProperty('z-index', '20', 'important');
         portraitContentEl.style.setProperty('background', 'transparent', 'important');
         portraitContentEl.style.setProperty('overflow-y', 'auto', 'important');
-        portraitContentEl.style.setProperty('padding', '10px', 'important');
+        portraitContentEl.style.setProperty('padding', '0px', 'important');
         portraitContentEl.style.setProperty('margin', '0', 'important');
         
-        console.log('🎯 PORTRAIT CONTENT: Positioned');
+        console.log('🟠 ORANGE BORDER: Applied to portrait content container');
       }
       
-      // Step 6: Position submit button for portrait mode
-      const submitButton = document.querySelector('.portrait-submit-button') as HTMLElement;
-      if (submitButton) {
-        // Position submit button between guess area and selection area
-        const submitTop = portraitContent.top + 200; // Approximate position
-        const submitLeft = portraitContent.left + (portraitContent.width / 2) - 38; // Center horizontally
-        
-        submitButton.style.setProperty('position', 'fixed', 'important');
-        submitButton.style.setProperty('top', `${submitTop}px`, 'important');
-        submitButton.style.setProperty('left', `${submitLeft}px`, 'important');
-        submitButton.style.setProperty('width', '76px', 'important');
-        submitButton.style.setProperty('height', '76px', 'important');
-        submitButton.style.setProperty('z-index', '200', 'important');
-        submitButton.style.setProperty('pointer-events', 'auto', 'important');
-        submitButton.style.setProperty('margin', '0', 'important');
-        submitButton.style.setProperty('padding', '0', 'important');
-        
-        console.log(`🎯 PORTRAIT SUBMIT BUTTON: Positioned at (${submitLeft}, ${submitTop})`);
-      }
+      // Submit button is now embedded in YourGuessBlock - no separate positioning needed
+      console.log('🎯 PORTRAIT SUBMIT BUTTON: Embedded in YourGuessBlock');
     }, 100);
     
     // Hide old container
@@ -235,22 +236,65 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenu
         boxSizing: 'border-box'
       }}
     >
+      {/* Title and Subtitle - Positioned between red and orange borders */}
+      <div className="title-section" style={{
+        position: 'fixed',
+        zIndex: 100,
+        pointerEvents: 'none',
+        padding: '10px 20px',
+        margin: '0',
+        boxSizing: 'border-box',
+        background: 'transparent', // Remove gradient background
+        backdropFilter: 'none', // Remove blur effect
+        boxShadow: 'none' // Remove any shadows
+      }}>
+        <h1 className="game-title" style={{
+          margin: '10px 0 5px 0',
+          fontSize: '1.8rem',
+          fontWeight: '600',
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+          textAlign: 'center'
+        }}>
+          PicoFermiBagel
+        </h1>
+        <p className="game-subtitle" style={{
+          margin: '0 0 10px 0',
+          fontSize: '1.1rem',
+          color: 'rgba(255, 255, 255, 0.9)',
+          textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+          textAlign: 'center'
+        }}>
+          A Number-based Logical Guessing Game
+        </p>
+      </div>
       <div className="portrait-content" style={{
         pointerEvents: 'auto',
-        padding: '0',
+        padding: '0', // Remove all padding so Your Guess block abuts orange border
         margin: '0',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px', // Minimum 5px gap between stacked elements
+        overflow: 'hidden' // Ensure content stays within orange border
       }}>
         {/* Target Display */}
-        <TargetDisplay />
+        <div style={{ flexShrink: 0, width: '100%' }}>
+          <TargetDisplay />
+        </div>
         
-        {/* Guess Area */}
-        <div className="guess-section" ref={guessElementRef} style={{ position: 'relative' }}>
-          <GuessArea />
+        {/* Guess Area - Should abut top orange border */}
+        <div className="guess-section" style={{ 
+          position: 'relative',
+          flexShrink: 0,
+          width: '100%',
+          marginTop: '0px' // Ensure no margin preventing abutting
+        }}>
+          <YourGuessBlock guessElementRef={guessElementRef} />
         </div>
         
         {/* Number Selection */}
-        <div className="selection-section">
+        <div className="selection-section" style={{ flexShrink: 0, width: '100%' }}>
           <SelectionArea />
         </div>
         
@@ -258,82 +302,16 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef, isMenu
         <div className="recent-guess-section" style={{ 
           flex: '1',
           minHeight: '200px',
-          overflow: 'visible'
+          overflow: 'auto',
+          width: '100%',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch'
         }}>
           <RecentGuessHistory />
         </div>
       </div>
       
-      {/* Submit Button - Completely independent, floating */}
-      <div className="portrait-submit-button" style={{
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        pointerEvents: 'auto',
-        zIndex: 200,
-        padding: '0',
-        margin: '0',
-        boxSizing: 'border-box'
-      }}>
-        <GlobalSubmitButton />
-      </div>
-      
-      {/* Mobile Drawer for Portrait Mode */}
-      <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
-        position: 'fixed',
-        top: '0',
-        right: isMenuDrawerOpen ? '0' : '-100%',
-        width: '80%',
-        height: '100vh',
-        background: 'white',
-        boxShadow: '-2px 0 10px rgba(0,0,0,0.1)',
-        transition: 'right 0.3s ease',
-        zIndex: 1000,
-        overflowY: 'auto',
-        padding: '20px'
-      }}>
-        <div className="drawer-header" style={{ marginBottom: '20px' }}>
-          <button
-            onClick={() => setIsMenuDrawerOpen(false)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              float: 'right'
-            }}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="drawer-content">
-          <div className="side-panel-section" style={{ marginBottom: '20px' }}>
-            <Scratchpad />
-          </div>
-          <div className="side-panel-section" style={{ marginBottom: '20px' }}>
-            <HintPurchasing />
-          </div>
-          <div className="side-panel-section">
-            <ScoreArea />
-          </div>
-        </div>
-      </div>
-      
-      {/* Drawer Overlay */}
-      {isMenuDrawerOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0,0,0,0.5)',
-            zIndex: 999
-          }}
-          onClick={() => setIsMenuDrawerOpen(false)}
-        />
-      )}
+      {/* Mobile Drawer implementation removed - handled by GameScreen */}
     </div>
   );
 };

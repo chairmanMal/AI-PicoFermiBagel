@@ -69,13 +69,13 @@
 
 /* Removed complex auto-scaling - using simple conditional wrapper approach instead */
 
-/* Settings Button */
+/* Settings Button - Enhanced for portrait mode */
 .settings-button {
   position: fixed;
   top: calc(20px + env(safe-area-inset-top));
   left: calc(20px + env(safe-area-inset-left));
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.9) !important; /* White background */
   border: none;
   border-radius: 8px;
   padding: 12px;
@@ -89,10 +89,11 @@
   transition: all 0.2s ease;
   /* Allow button interaction */
   touch-action: manipulation;
+  color: #374151 !important; /* Dark icon color for contrast on white */
 }
 
 .settings-button:hover {
-  background: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 1) !important; /* Solid white on hover */
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
@@ -125,27 +126,25 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Settings Drawer */
+/* Settings Drawer - Enhanced for portrait mode */
 .settings-drawer {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;
-  height: calc(100vh - env(safe-area-inset-bottom)); /* Account for bottom safe area */
-  width: calc(100vw / 3); /* Constrain to 1/3 of screen width */
-  max-width: 450px; /* Maximum width cap */
-  min-width: 300px; /* Minimum width for usability */
+  height: auto; /* CHANGED: Only as tall as content */
+  max-height: 100vh; /* Don't exceed screen height */
+  width: calc(100vw / 3 * 1.25); /* 25% wider than original 1/3 width */
+  max-width: 562px; /* 25% wider than original 450px */
+  min-width: 375px; /* 25% wider than original 300px */
   background: transparent;
   z-index: 4000;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Restore overflow hidden for drawer */
+  overflow: visible; /* CHANGED: Allow content to determine size */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
-  /* DEBUG: Red border for settings drawer container - REMOVED */
-  /* border: 3px solid red !important; */
 }
 
 .settings-drawer.open {
@@ -158,27 +157,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparent; /* No dimming */
+  background: rgba(0,0,0,0.5); /* Dark overlay like menu drawer */
   z-index: 3999;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
-  pointer-events: none; /* Don't interfere with interactions */
+  pointer-events: auto; /* Allow interactions to close drawer */
 }
 
 .settings-drawer-overlay.open {
-  opacity: 0; /* Keep transparent even when open */
-  visibility: hidden; /* Keep hidden even when open */
+  opacity: 1; /* Show overlay when open */
+  visibility: visible; /* Make visible when open */
 }
 
-/* Menu drawer should match mobile drawer styling */
+/* Menu drawer enhanced styling for portrait mode */
 .menu-drawer-container {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: transparent;
-  /* DEBUG: Blue border for menu drawer container - REMOVED */
-  /* border: 3px solid blue !important; */
+  background: transparent !important;
 }
 
 .menu-drawer .drawer-header,
@@ -188,8 +185,6 @@
   background: transparent !important;
   display: flex;
   justify-content: flex-start; /* Left align for menu close button */
-  /* DEBUG: Purple border for drawer header - REMOVED */
-  /* border: 3px solid purple !important; */
 }
 
 /* Extra specificity for menu drawer transparency */
@@ -369,18 +364,18 @@
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
-  height: calc(100vh - env(safe-area-inset-bottom)); /* Account for bottom safe area - same as settings drawer */
-  width: calc(100vw / 3); /* Constrain to 1/3 of screen width */
-  max-width: 450px; /* Maximum width cap */
-  min-width: 300px; /* Minimum width for usability */
+  height: auto; /* CHANGED: Only as tall as content */
+  max-height: 100vh; /* Don't exceed screen height */
+  width: calc(100vw / 1.8); /* Even wider drawer - about 55% of screen width */
+  max-width: 700px; /* Increased maximum width */
+  min-width: 420px; /* Increased minimum width */
   background: transparent;
-  z-index: 200;
+  z-index: 1002; /* Higher than overlay */
   transform: translateX(100%);
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Restore overflow hidden for drawer */
+  overflow: visible; /* CHANGED: Allow content to determine size */
   /* Prevent iOS swipe gestures on drawer background */
   touch-action: none;
   /* DEBUG: Orange border for mobile drawer container - REMOVED */
@@ -1022,10 +1017,10 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     top: calc(20px + 48px + 30px) !important; /* 20px safe area + 48px icon height + 30px gap */
     /* Align right edge with the icon's center */
     right: calc(20px + 24px) !important; /* 20px safe area + 24px (half of 48px icon width) */
-    /* Size to 1/3 of screen width - constrained */
-    width: calc(100vw / 3) !important; /* 1/3 of screen width */
-    max-width: 450px !important; /* Maximum width cap */
-    min-width: 300px !important; /* Minimum width for usability */
+    /* Size to wider drawer width */
+    width: calc(100vw / 1.8) !important; /* Match new drawer width - 55% */
+    max-width: 700px !important; /* Increased maximum width */
+    min-width: 420px !important; /* Increased minimum width */
     /* Set height to fit content, not extend much beyond score element */
     height: auto !important;
     max-height: calc(100vh - 20px - 48px - 30px - 40px) !important; /* Leave room at bottom */
@@ -1051,6 +1046,8 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     min-height: unset !important;
     margin: 0 !important;
     flex: unset !important;
+    /* Ensure proper z-index */
+    z-index: 1002 !important;
   }
   
   /* Custom scrollbar styles for mobile drawer in iPad portrait */
@@ -1160,5 +1157,31 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
   
   .settings-drawer .drawer-content::-webkit-scrollbar-corner {
     background: #e2e8f0 !important;
+  }
+}
+
+/* Force critical style overrides for portrait mode */
+@media (orientation: portrait) {
+  /* Force settings button white background */
+  .settings-button {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #374151 !important;
+  }
+  
+  .settings-button:hover {
+    background: rgba(255, 255, 255, 1) !important;
+  }
+  
+  /* Force mobile drawer transparency */
+  .mobile-drawer {
+    background: transparent !important;
+  }
+  
+  .mobile-drawer .menu-drawer-container {
+    background: transparent !important;
+  }
+  
+  .menu-drawer-container {
+    background: transparent !important;
   }
 }

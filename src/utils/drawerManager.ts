@@ -38,7 +38,7 @@ export class DrawerManager {
       setIsMenuDrawerOpen(true);
       console.log('📱 Drawer Manager: Forced menu drawer open for iPad landscape');
     }
-
+    
     // In portrait mode, allow drawer to be controlled normally
     if (currentLayout.orientation === 'portrait') {
       console.log('📱 Drawer Manager: Portrait mode - normal drawer behavior');

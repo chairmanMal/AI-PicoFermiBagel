@@ -6,13 +6,12 @@ import { useGameStore } from '../stores/gameStore';
 // Layout Components
 import LandscapeLayoutClean from './layouts/LandscapeLayoutClean';
 import PortraitLayout from './PortraitLayout';
-import MenuArea from './MenuArea';
 import SettingsDrawerContent from './SettingsDrawerContent';
+import MenuDrawerContent from './MenuDrawerContent';
 
 // Utility Functions
 import { DeviceDetection } from '../utils/deviceDetection';
 import { DrawerManager } from '../utils/drawerManager';
-import { TouchHandler } from '../utils/touchHandler';
 
 import './GameScreen.css';
 
@@ -34,6 +33,7 @@ const GameScreen: React.FC = () => {
   // Refs for layout components
   const guessElementRef = useRef<HTMLDivElement>(null);
   const gameScreenRef = useRef<HTMLDivElement>(null);
+  const previousLayoutRef = useRef(currentLayout);
 
   // ==========================================
   // CORE RESPONSIBILITY 3: AUDIO SYSTEM
@@ -49,9 +49,21 @@ const GameScreen: React.FC = () => {
   // ==========================================
   useEffect(() => {
     const detectLayout = () => {
+      const previousLayout = previousLayoutRef.current;
       const detection = DeviceDetection.getCurrentLayout();
-      setCurrentLayout(detection);
+      
       console.log('📱 Layout detected:', detection);
+      console.log('📱 Previous layout:', previousLayout);
+      
+      // Close menu drawer when switching from landscape to portrait
+      if (previousLayout.orientation === 'landscape' && detection.orientation === 'portrait') {
+        console.log('📱 Orientation changed from landscape to portrait - closing menu drawer');
+        setIsMenuDrawerOpen(false);
+      }
+      
+      // Update refs and state
+      previousLayoutRef.current = currentLayout;
+      setCurrentLayout(detection);
     };
 
     // Initial detection
@@ -69,7 +81,7 @@ const GameScreen: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
     };
-  }, []);
+  }, []); // Remove currentLayout dependency to avoid circular updates
 
   // ==========================================
   // DRAWER MANAGEMENT (delegated to utility)
@@ -83,28 +95,18 @@ const GameScreen: React.FC = () => {
       currentLayout
     });
     
+    // Prevent background scrolling when menu drawer is open
+    if (isMenuDrawerOpen && currentLayout.orientation === 'portrait') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
     return () => {
       drawerManager.cleanup();
+      document.body.style.overflow = ''; // Cleanup on unmount
     };
   }, [isMenuDrawerOpen, isSettingsDrawerOpen, currentLayout]);
-
-  // ==========================================
-  // TOUCH/SWIPE HANDLING (delegated to utility)
-  // ==========================================
-  useEffect(() => {
-    if (!gameScreenRef.current) return;
-
-    const touchHandler = new TouchHandler({
-      element: gameScreenRef.current,
-      onSwipeLeft: () => setIsMenuDrawerOpen(true),
-      onSwipeRight: () => setIsSettingsDrawerOpen(true),
-      currentLayout
-    });
-
-    return () => {
-      touchHandler.cleanup();
-    };
-  }, [currentLayout]);
 
   // ==========================================
   // SETTINGS DRAWER SWIPE-TO-CLOSE
@@ -116,22 +118,58 @@ const GameScreen: React.FC = () => {
     if (!settingsDrawer) return;
 
     const handleSwipeLeft = (e: TouchEvent) => {
-      const startX = e.touches[0]?.clientX;
-      if (!startX) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const startX = touch.clientX;
+      const drawerRect = settingsDrawer.getBoundingClientRect();
+      
+      // Only handle swipes that start within the drawer area
+      if (startX < drawerRect.left || startX > drawerRect.right) {
+        return;
+      }
+
+      const drawerContent = settingsDrawer.querySelector('.drawer-content') as HTMLElement;
+      if (!drawerContent) return;
+
+      const handleTouchMove = (moveEvent: TouchEvent) => {
+        const moveTouch = moveEvent.changedTouches[0];
+        if (!moveTouch) return;
+
+        const currentX = moveTouch.clientX;
+        const deltaX = currentX - startX;
+        
+        // Only apply visual feedback for leftward swipes
+        if (deltaX < 0) {
+          drawerContent.style.transform = `translateX(${deltaX}px)`;
+          drawerContent.style.transition = 'none'; // Disable transition during drag
+        }
+      };
 
       const handleTouchEnd = (endEvent: TouchEvent) => {
-        const endX = endEvent.changedTouches[0]?.clientX;
-        if (!endX) return;
+        const endTouch = endEvent.changedTouches[0];
+        if (!endTouch) return;
 
+        const endX = endTouch.clientX;
         const deltaX = endX - startX;
-        if (deltaX < -50) { // Swipe left to close
+        const swipeDistance = Math.abs(deltaX);
+        const drawerWidth = drawerRect.width;
+        
+        // Reset visual feedback
+        drawerContent.style.transform = '';
+        drawerContent.style.transition = '';
+        
+        // Require swipe to traverse at least 50% of drawer width AND be leftward
+        if (deltaX < 0 && swipeDistance >= (drawerWidth * 0.5)) {
           setIsSettingsDrawerOpen(false);
         }
 
         settingsDrawer.removeEventListener('touchend', handleTouchEnd);
+        settingsDrawer.removeEventListener('touchmove', handleTouchMove);
       };
 
       settingsDrawer.addEventListener('touchend', handleTouchEnd);
+      settingsDrawer.addEventListener('touchmove', handleTouchMove);
     };
 
     settingsDrawer.addEventListener('touchstart', handleSwipeLeft);
@@ -140,6 +178,83 @@ const GameScreen: React.FC = () => {
       settingsDrawer.removeEventListener('touchstart', handleSwipeLeft);
     };
   }, [isSettingsDrawerOpen]);
+
+  // ==========================================
+  // MENU DRAWER SWIPE-TO-CLOSE
+  // ==========================================
+  useEffect(() => {
+    if (!isMenuDrawerOpen) return;
+
+    const menuDrawer = document.querySelector('.mobile-drawer') as HTMLElement;
+    if (!menuDrawer) return;
+
+    const handleSwipeRight = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const startX = touch.clientX;
+      const drawerRect = menuDrawer.getBoundingClientRect();
+      
+      // Only handle swipes that start within the drawer area
+      if (startX < drawerRect.left || startX > drawerRect.right) {
+        return;
+      }
+
+      const drawerContent = menuDrawer.querySelector('.drawer-content') as HTMLElement;
+      if (!drawerContent) return;
+
+      const handleTouchMove = (moveEvent: TouchEvent) => {
+        const moveTouch = moveEvent.changedTouches[0];
+        if (!moveTouch) return;
+
+        const currentX = moveTouch.clientX;
+        const deltaX = currentX - startX;
+        
+        // Only apply visual feedback for rightward swipes
+        if (deltaX > 0) {
+          drawerContent.style.transform = `translateX(${deltaX}px)`;
+          drawerContent.style.transition = 'none'; // Disable transition during drag
+        }
+      };
+
+      const handleTouchEnd = (endEvent: TouchEvent) => {
+        const endTouch = endEvent.changedTouches[0];
+        if (!endTouch) return;
+
+        const endX = endTouch.clientX;
+        const deltaX = endX - startX;
+        const swipeDistance = Math.abs(deltaX);
+        const drawerWidth = drawerRect.width;
+        
+        // Reset visual feedback
+        drawerContent.style.transform = '';
+        drawerContent.style.transition = '';
+        
+        // Require swipe to traverse at least 50% of drawer width AND be rightward
+        if (deltaX > 0 && swipeDistance >= (drawerWidth * 0.5)) {
+          setIsMenuDrawerOpen(false);
+        }
+
+        menuDrawer.removeEventListener('touchend', handleTouchEnd);
+        menuDrawer.removeEventListener('touchmove', handleTouchMove);
+      };
+
+      menuDrawer.addEventListener('touchend', handleTouchEnd);
+      menuDrawer.addEventListener('touchmove', handleTouchMove);
+    };
+
+    menuDrawer.addEventListener('touchstart', handleSwipeRight);
+    
+    return () => {
+      menuDrawer.removeEventListener('touchstart', handleSwipeRight);
+    };
+  }, [isMenuDrawerOpen]);
+
+  // ==========================================
+  // TOUCH OUTSIDE TO CLOSE DRAWERS - SIMPLE DARK AREA DETECTION
+  // ==========================================
+  // Note: The overlay elements handle this automatically via their onClick/onTouchStart handlers
+  // This is much simpler than complex coordinate detection!
 
   // ==========================================
   // GAME STATE EFFECTS
@@ -169,8 +284,6 @@ const GameScreen: React.FC = () => {
       return (
         <PortraitLayout
           guessElementRef={guessElementRef}
-          isMenuDrawerOpen={isMenuDrawerOpen}
-          setIsMenuDrawerOpen={setIsMenuDrawerOpen}
         />
       );
     }
@@ -205,8 +318,8 @@ const GameScreen: React.FC = () => {
       {/* Render appropriate layout */}
       {renderLayout()}
 
-      {/* Settings Drawer - Exact copy of portrait mode structure */}
-            <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
+      {/* Settings Drawer - Enhanced styling for better portrait mode experience */}
+      <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
         <div className="menu-drawer-container">
           <div className="drawer-header">
             <button
@@ -238,47 +351,164 @@ const GameScreen: React.FC = () => {
               ‹
             </button>
           </div>
-          <div className="drawer-content">
+          <div className="drawer-content" style={{
+            background: '#e9ecef', // Light grey background
+            borderRadius: '0 12px 0 0',
+            padding: '15px',
+            paddingTop: '35px', // 20px gap below close icon + 15px padding = 35px total
+            paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px'
+          }}>
             <SettingsDrawerContent />
           </div>
         </div>
       </div>
 
-      {/* Menu Drawer - Only in portrait mode */}
+      {/* Menu Drawer - Enhanced for portrait mode with MenuDrawerContent */}
       {currentLayout.orientation === 'portrait' && (
-              <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`}>
-          <div className="menu-drawer-container">
-                <div className="drawer-header">
-                  <button
-                    className="drawer-close"
-                    onClick={() => setIsMenuDrawerOpen(false)}
+        <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
+          background: 'transparent !important', // Make entire drawer background transparent
+          width: 'calc(100vw / 1.8)', // Even wider - about 55% of screen width
+          maxWidth: '700px', // Increased from 600px
+          minWidth: '420px' // Increased from 380px
+        }}>
+          <div className="menu-drawer-container" style={{
+            background: 'transparent !important', // Make container background transparent
+            zIndex: 1002 // Higher than overlay to ensure it's not affected
+          }}>
+            <div className="drawer-header" style={{
+              background: 'transparent',
+              padding: '0',
+              margin: '0'
+            }}>
+              <button
+                className="drawer-close"
+                onClick={() => setIsMenuDrawerOpen(false)}
                 aria-label="Close Menu"
-                  >
-                ✕
-                  </button>
-                </div>
-                      <div className="drawer-content">
-            <MenuArea onClose={() => setIsMenuDrawerOpen(false)} />
-                  </div>
-                  </div>
-                  </div>
+                style={{
+                  position: 'fixed',
+                  top: 'calc(20px + env(safe-area-inset-top))',
+                  right: 'calc(20px + env(safe-area-inset-right))',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  transition: 'all 0.2s ease',
+                  touchAction: 'manipulation',
+                  zIndex: 6000,
+                  fontSize: '24px',
+                  color: '#374151'
+                }}
+              >
+                ›
+              </button>
+            </div>
+            <div className="drawer-content" style={{
+              marginTop: '88px', // 20px (top) + 48px (button height) + 20px (gap) = 88px
+              marginRight: '24px', // Align right edge with center of close icon (48px/2 = 24px)
+              background: 'transparent', // Make background transparent
+              borderRadius: '12px 0 0 0',
+              boxShadow: 'none', // Remove shadow for transparency
+              padding: '0px 5px 5px 5px', // Match landscape Column 3 padding
+              paddingBottom: 'calc(5px + env(safe-area-inset-bottom))',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'auto',
+              maxHeight: 'calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom))', // Adjusted for reduced margin
+              zIndex: 1002, // Higher than overlay to ensure it's not affected
+              touchAction: 'pan-y', // Allow vertical scrolling
+              WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
+            }}>
+              <MenuDrawerContent />
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Drawer Overlays */}
+      {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}
       {isSettingsDrawerOpen && (
         <div
           className="settings-drawer-overlay open"
-          onClick={() => setIsSettingsDrawerOpen(false)}
+          onClick={(e) => {
+            console.log('🎯 Settings overlay clicked - closing drawer');
+            e.preventDefault();
+            e.stopPropagation();
+            setIsSettingsDrawerOpen(false);
+          }}
+          onTouchStart={(e) => {
+            console.log('🎯 Settings overlay touched - closing drawer');
+            e.preventDefault();
+            e.stopPropagation();
+            setIsSettingsDrawerOpen(false);
+          }}
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            width: '100vw',
+            height: '100vh',
+            minWidth: '100vw',
+            minHeight: '100vh',
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 3999,
+            pointerEvents: 'auto',
+            touchAction: 'none',
+            cursor: 'pointer',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
         />
       )}
       {isMenuDrawerOpen && currentLayout.orientation === 'portrait' && (
         <div
           className="mobile-drawer-overlay open"
-          onClick={() => setIsMenuDrawerOpen(false)}
+          onClick={(e) => {
+            console.log('🎯 Menu overlay clicked - closing drawer');
+            e.preventDefault();
+            e.stopPropagation();
+            setIsMenuDrawerOpen(false);
+          }}
+          onTouchStart={(e) => {
+            console.log('🎯 Menu overlay touched - closing drawer');
+            e.preventDefault();
+            e.stopPropagation();
+            setIsMenuDrawerOpen(false);
+          }}
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            width: '100vw',
+            height: '100vh',
+            minWidth: '100vw',
+            minHeight: '100vh',
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 999,
+            pointerEvents: 'auto',
+            touchAction: 'none',
+            cursor: 'pointer',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
         />
       )}
     </div>
   );
 };
 
-export default GameScreen; 
+export default GameScreen;

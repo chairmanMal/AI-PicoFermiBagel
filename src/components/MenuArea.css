@@ -201,11 +201,74 @@
   overflow: hidden;
 }
 
+/* Hint Purchasing Wrapper - Conditional styling */
+.hint-purchasing-wrapper {
+  /* Default: no background when content is hidden */
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+/* When hint content is visible, show the white background */
+.hint-purchasing-wrapper:has(.hint-content) {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Fallback for browsers that don't support :has() */
+.hint-purchasing-wrapper.content-visible {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .hint-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+/* Horizontal layout for hint header */
+.hint-header-horizontal {
+  display: flex !important; /* Force flex display */
+  flex-direction: row !important; /* Force horizontal layout */
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center; /* Center all elements */
+  align-items: center !important; /* Vertically center */
+  gap: 12px; /* Space between elements */
+  width: 100% !important; /* Ensure full width */
+  min-width: 250px !important; /* Minimum width for horizontal layout */
+  box-sizing: border-box !important;
+}
+
+.hint-header-horizontal .hint-icon {
+  color: #f59e0b;
+  flex-shrink: 0; /* Don't shrink the icon */
+  display: block; /* Ensure it's visible */
+}
+
+.hint-header-horizontal h3 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block; /* Ensure it's visible */
+}
+
+.hint-header-horizontal .toggle-btn {
+  flex-shrink: 0; /* Don't shrink the button */
+  display: block; /* Ensure it's visible */
 }
 
 .hint-header .hint-icon {
@@ -223,7 +286,7 @@
 }
 
 .hint-content {
-  overflow: hidden;
+  /* Removed - component now handles its own styling */
 }
 
 .hint-section {
@@ -232,6 +295,13 @@
 
 .hint-section:last-child {
   margin-bottom: 0;
+}
+
+.hint-section h4 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .number-hints {
@@ -259,13 +329,17 @@
 }
 
 .hint-btn {
-  padding: 4px 8px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   transition: all 0.2s ease;
+  margin-bottom: 8px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .hint-btn:disabled {
@@ -323,17 +397,19 @@
 
 .hint-desc {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #4b5563;
   margin: 4px 0 0 0;
 }
 
 .hint-cost {
   padding: 12px;
-  background: #fef3c7;
+  background: #fef3c7; /* Light yellow background */
   border-radius: 6px;
   border: 1px solid #f59e0b;
   text-align: center;
-  color: #92400e;
+  color: #92400e; /* Dark brown text for good contrast */
+  font-weight: 600; /* Make it more prominent */
+  margin-top: 8px; /* Space from content above */
 }
 
 /* Custom Settings */

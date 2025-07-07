@@ -481,8 +481,19 @@ export const useGameStore = create<GameStore>()(
             if (settingsChanged) {
               // Apply difficulty presets if difficulty changed
               if (action.settings.difficulty && action.settings.difficulty !== state.settings.difficulty) {
+                console.log('🔧 DIFFICULTY CHANGE:', {
+                  from: state.settings.difficulty,
+                  to: action.settings.difficulty,
+                  oldDigitRange: state.settings.digitRange,
+                });
                 const difficultySettings = getDifficultySettings(action.settings.difficulty);
+                console.log('🔧 APPLYING DIFFICULTY SETTINGS:', difficultySettings);
                 Object.assign(newSettings, difficultySettings);
+                console.log('🔧 NEW SETTINGS AFTER DIFFICULTY CHANGE:', {
+                  difficulty: newSettings.difficulty,
+                  digitRange: newSettings.digitRange,
+                  targetLength: newSettings.targetLength
+                });
               }
 
               // Calculate targetLength based on grid dimensions
@@ -510,9 +521,22 @@ export const useGameStore = create<GameStore>()(
               );
 
               if (gameAffectingChanged) {
+                console.log('🔧 GAME-AFFECTING SETTINGS CHANGED - STARTING NEW GAME');
+                console.log('🔧 Creating new game state with settings:', {
+                  difficulty: newSettings.difficulty,
+                  digitRange: newSettings.digitRange,
+                  targetLength: newSettings.targetLength
+                });
+                
+                // Ensure showTarget is always disabled when starting a new game due to settings change
+                newSettings.showTarget = false;
+                console.log('🔧 Disabled showTarget for new game');
+                
                 const newGameState = createInitialGameState(newSettings);
                 const newHintState = createInitialHintState();
                 const newScratchpadState = createInitialScratchpadState(newSettings.digitRange);
+                
+                console.log('🔧 NEW GAME STATE TARGET:', newGameState.target);
                 
                 set({
                   settings: newSettings,
@@ -535,10 +559,17 @@ export const useGameStore = create<GameStore>()(
           }
 
           case 'CLEAR_GAME_STATE': {
+            // Ensure showTarget is disabled when clearing game state
+            const resetSettings = {
+              ...state.settings,
+              showTarget: false
+            };
+            
             set({
-              gameState: createInitialGameState(state.settings),
+              settings: resetSettings,
+              gameState: createInitialGameState(resetSettings),
               hintState: createInitialHintState(),
-              scratchpadState: createInitialScratchpadState(state.settings.digitRange),
+              scratchpadState: createInitialScratchpadState(resetSettings.digitRange),
             });
             break;
           }
@@ -625,10 +656,19 @@ export const useGameStore = create<GameStore>()(
           if (!str) return null;
           
           const parsed = JSON.parse(str);
+          
+          // CRITICAL: Always override showTarget to false on app startup
+          // This ensures the target is never displayed when the app loads
+          const settings = parsed.state?.settings || {};
+          settings.showTarget = false;
+          
+          console.log('💾 Loading from localStorage - forcing showTarget=false');
+          
           return {
             ...parsed,
             state: {
               ...parsed.state,
+              settings,
               stats: new Map(Object.entries(parsed.state.stats || {})),
               // leaderboard: new Map(Object.entries(parsed.state.leaderboard || {})), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
             }

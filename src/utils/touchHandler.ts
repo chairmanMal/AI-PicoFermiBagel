@@ -7,6 +7,8 @@ export interface TouchHandlerConfig {
   onSwipeUp?: () => void;
   onSwipeDown?: () => void;
   currentLayout: LayoutInfo;
+  isMenuDrawerOpen?: boolean;
+  isSettingsDrawerOpen?: boolean;
 }
 
 export class TouchHandler {
@@ -80,22 +82,34 @@ export class TouchHandler {
   }
 
   private handleSwipeLeft() {
-    const { currentLayout, onSwipeLeft } = this.config;
+    const { currentLayout, onSwipeLeft, isMenuDrawerOpen, isSettingsDrawerOpen } = this.config;
     
     // Only handle swipes in portrait mode
     if (currentLayout.orientation !== 'portrait') return;
     
-    console.log('👆 Touch Handler: Swipe left detected');
+    // Don't handle swipes to open drawers when any drawer is already open
+    if (isMenuDrawerOpen || isSettingsDrawerOpen) {
+      console.log('👆 Touch Handler: Ignoring swipe left - drawer already open');
+      return;
+    }
+    
+    console.log('👆 Touch Handler: Swipe left detected - opening menu drawer');
     onSwipeLeft?.();
   }
 
   private handleSwipeRight() {
-    const { currentLayout, onSwipeRight } = this.config;
+    const { currentLayout, onSwipeRight, isMenuDrawerOpen, isSettingsDrawerOpen } = this.config;
     
     // Only handle swipes in portrait mode
     if (currentLayout.orientation !== 'portrait') return;
     
-    console.log('👆 Touch Handler: Swipe right detected');
+    // Don't handle swipes to open drawers when any drawer is already open
+    if (isMenuDrawerOpen || isSettingsDrawerOpen) {
+      console.log('👆 Touch Handler: Ignoring swipe right - drawer already open');
+      return;
+    }
+    
+    console.log('👆 Touch Handler: Swipe right detected - opening settings drawer');
     onSwipeRight?.();
   }
 
@@ -105,6 +119,14 @@ export class TouchHandler {
   updateLayout(newLayout: LayoutInfo) {
     this.config.currentLayout = newLayout;
     console.log('👆 Touch Handler: Layout updated to', newLayout);
+  }
+
+  /**
+   * Update drawer states
+   */
+  updateDrawerStates(isMenuDrawerOpen: boolean, isSettingsDrawerOpen: boolean) {
+    this.config.isMenuDrawerOpen = isMenuDrawerOpen;
+    this.config.isSettingsDrawerOpen = isSettingsDrawerOpen;
   }
 
   /**

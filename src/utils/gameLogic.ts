@@ -5,6 +5,10 @@ import { GameSettings, GuessResult, ScoreData } from '@/types/game';
  */
 export function generateTarget(settings: GameSettings): number[] {
   const { targetLength, digitRange } = settings;
+  
+  // Debug logging
+  console.log('🎯 GENERATING TARGET:', { targetLength, digitRange, difficulty: settings.difficulty });
+  
   const target: number[] = [];
   const usedDigits = new Set<number>();
 
@@ -16,6 +20,20 @@ export function generateTarget(settings: GameSettings): number[] {
     }
   }
 
+  // Validation: Ensure all digits are within the allowed range
+  const invalidDigits = target.filter(digit => digit < 0 || digit > digitRange);
+  if (invalidDigits.length > 0) {
+    console.error('🚨 CRITICAL BUG: Generated target contains invalid digits!', {
+      target,
+      digitRange,
+      invalidDigits,
+      settings
+    });
+    // Force regeneration with corrected digits
+    return target.map(digit => digit > digitRange ? Math.floor(Math.random() * (digitRange + 1)) : digit);
+  }
+
+  console.log('🎯 GENERATED TARGET:', target, 'for digit range 0-' + digitRange);
   return target;
 }
 

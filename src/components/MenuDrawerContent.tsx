@@ -62,10 +62,12 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           gap: '5px', // Match Column 1 spacing
           flex: '1',
           overflow: 'auto',
-          paddingRight: '16px', // Make room for scroll indicator
+          paddingRight: '8px', // Reduced from 16px to give more space
           paddingTop: '5px', // Move content down slightly to align with other columns
           scrollbarWidth: 'none', // Firefox
-          msOverflowStyle: 'none' // IE/Edge
+          msOverflowStyle: 'none', // IE/Edge
+          minWidth: '420px', // Increased to match new drawer minimum width
+          width: '100%' // Use full available width
         }}
       >
         {/* Scratchpad Section */}
@@ -78,12 +80,12 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           <Scratchpad />
         </div>
 
-        {/* Hint Purchasing Section - Can expand */}
+        {/* Hint Purchasing Section - Now self-contained */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '8px',
-          padding: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+          width: '100%',
+          minWidth: '420px', // Increased to match new drawer minimum width
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}>
           <HintPurchasing />
         </div>

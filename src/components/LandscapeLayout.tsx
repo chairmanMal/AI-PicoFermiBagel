@@ -282,41 +282,59 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             numbersContainer.style.setProperty('overflow', 'auto', 'important');
           }
           
-          // FORCE the numbers grid to be perfectly centered with CSS Grid
+          // FORCE the numbers grid to be perfectly centered with SMART COLUMNS - CONSISTENT WITH PORTRAIT
           const numbersGrid = scratchpadComponent.querySelector('.numbers-grid') as HTMLElement;
           if (numbersGrid) {
+            // Get optimal column count from CSS custom property (set by React component)
+            const scratchpadEl = scratchpadComponent.querySelector('.scratchpad') as HTMLElement;
+            const gridColumns = scratchpadEl?.style.getPropertyValue('--grid-columns') || '4';
+            const maxWidth = parseInt(gridColumns) * 45 + (parseInt(gridColumns) - 1) * 8; // Consistent sizing with portrait
+            
             numbersGrid.style.setProperty('display', 'grid', 'important');
-            numbersGrid.style.setProperty('grid-template-columns', 'repeat(auto-fit, minmax(40px, 1fr))', 'important');
-            numbersGrid.style.setProperty('gap', '6px', 'important');
+            numbersGrid.style.setProperty('grid-template-columns', `repeat(${gridColumns}, 1fr)`, 'important'); // Use smart columns
+            numbersGrid.style.setProperty('grid-auto-columns', '1fr', 'important'); // FORCE equal columns
+            numbersGrid.style.setProperty('grid-auto-rows', 'auto', 'important'); // FORCE auto rows
+            numbersGrid.style.setProperty('gap', '8px', 'important'); // Consistent gap with portrait
             numbersGrid.style.setProperty('justify-content', 'center', 'important');
             numbersGrid.style.setProperty('align-items', 'center', 'important');
             numbersGrid.style.setProperty('justify-items', 'center', 'important');
             numbersGrid.style.setProperty('align-content', 'center', 'important');
+            numbersGrid.style.setProperty('place-content', 'center', 'important'); // FORCE centering
+            numbersGrid.style.setProperty('place-items', 'center', 'important'); // FORCE centering
             numbersGrid.style.setProperty('width', '100%', 'important');
+            numbersGrid.style.setProperty('max-width', `${maxWidth}px`, 'important'); // Dynamic width based on columns
             numbersGrid.style.setProperty('height', 'auto', 'important');
-            numbersGrid.style.setProperty('margin', '0 auto', 'important');
+            numbersGrid.style.setProperty('margin', '0 auto', 'important'); // FORCE center
             numbersGrid.style.setProperty('padding', '0', 'important');
+            numbersGrid.style.setProperty('text-align', 'center', 'important'); // ADDITIONAL CENTERING
+            numbersGrid.style.setProperty('align-self', 'center', 'important'); // ADDITIONAL CENTERING
+            numbersGrid.style.setProperty('justify-self', 'center', 'important'); // ADDITIONAL CENTERING
+            
+            console.log(`🎯 SCRATCHPAD GRID: Using ${gridColumns} columns, max-width: ${maxWidth}px (landscape)`);
           }
           
-          // FORCE all number boxes to be perfectly centered and sized
+          // FORCE all number boxes to be SQUARE and RESPONSIVE (let CSS grid handle centering)
           const numberBoxes = scratchpadComponent.querySelectorAll('.scratchpad-number');
           numberBoxes.forEach(box => {
             const boxEl = box as HTMLElement;
-            boxEl.style.setProperty('width', '40px', 'important');
-            boxEl.style.setProperty('height', '40px', 'important');
-            boxEl.style.setProperty('margin', '0 auto', 'important');
-            boxEl.style.setProperty('padding', '0', 'important');
+            // STOP overriding width/height - let CSS grid and aspect-ratio handle it
+            boxEl.style.setProperty('width', '100%', 'important'); // Fill grid cell
+            boxEl.style.setProperty('aspect-ratio', '1 / 1', 'important'); // FORCE perfect square
+            boxEl.style.setProperty('min-width', '35px', 'important');
+            boxEl.style.setProperty('max-width', '55px', 'important'); // Landscape max
+            boxEl.style.setProperty('margin', '0', 'important');
             boxEl.style.setProperty('display', 'flex', 'important');
             boxEl.style.setProperty('align-items', 'center', 'important');
             boxEl.style.setProperty('justify-content', 'center', 'important');
             boxEl.style.setProperty('text-align', 'center', 'important');
-            boxEl.style.setProperty('font-size', '1rem', 'important');
+            boxEl.style.setProperty('font-size', 'clamp(0.9rem, 2.2vw, 1.2rem)', 'important');
             boxEl.style.setProperty('font-weight', 'bold', 'important');
             boxEl.style.setProperty('line-height', '1', 'important');
             boxEl.style.setProperty('border-radius', '6px', 'important');
             boxEl.style.setProperty('border', '2px solid #d1d5db', 'important');
             boxEl.style.setProperty('background', 'white', 'important');
             boxEl.style.setProperty('box-sizing', 'border-box', 'important');
+            boxEl.style.setProperty('place-self', 'center', 'important'); // FORCE centering in grid
           });
         }
         
