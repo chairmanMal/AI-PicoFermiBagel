@@ -26,23 +26,8 @@ interface MenuDrawerContentProps {
 const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Add CSS to hide scrollbars when not needed
-  React.useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .menu-drawer-scroll::-webkit-scrollbar {
-        display: none;
-      }
-      .menu-drawer-scroll {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  // Simple scrolling implementation like iPhone menu drawer - no custom scrollbar hiding
+  // Let the system handle scrollbars naturally
 
   return (
     <div style={{
@@ -61,11 +46,10 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           flexDirection: 'column',
           gap: '5px', // Match Column 1 spacing
           flex: '1',
-          overflow: 'auto',
+          overflow: 'auto', // Simple scrolling like iPhone menu drawer
+          WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
           paddingRight: '8px', // Reduced from 16px to give more space
           paddingTop: '5px', // Move content down slightly to align with other columns
-          scrollbarWidth: 'none', // Firefox
-          msOverflowStyle: 'none', // IE/Edge
           minWidth: '420px', // Increased to match new drawer minimum width
           width: '100%' // Use full available width
         }}
@@ -80,14 +64,12 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           <Scratchpad />
         </div>
 
-        {/* Hint Purchasing Section - Now self-contained with constrained margins */}
+        {/* Hint Purchasing Section - Full width background like other elements */}
         <div style={{
-          width: '100%',
-          minWidth: '420px', // Increased to match new drawer minimum width
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          paddingLeft: '12px', // Additional left margin to align with colored elements
-          paddingRight: '12px' // Additional right margin to align with colored elements
+          background: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <HintPurchasing />
         </div>

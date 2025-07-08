@@ -305,7 +305,7 @@ const GameScreen: React.FC = () => {
         aria-label="Open Settings"
         style={{
           position: 'fixed',
-          top: 'calc(0px + env(safe-area-inset-top))', // Move up 25px from CSS default
+          top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
           left: 'calc(10px + env(safe-area-inset-left))', // Move in 10px from CSS default
           background: 'rgba(255, 255, 255, 0.9)',
           border: 'none',
@@ -350,7 +350,7 @@ const GameScreen: React.FC = () => {
           aria-label="Open Menu"
           style={{ 
             position: 'fixed',
-            top: 'calc(0px + env(safe-area-inset-top))', // Move up 25px from CSS default
+            top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
             right: 'calc(10px + env(safe-area-inset-right))', // Move in 10px from CSS default
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -401,7 +401,7 @@ const GameScreen: React.FC = () => {
               aria-label="Close Settings"
           style={{ 
                 position: 'fixed',
-                top: 'calc(0px + env(safe-area-inset-top))', // Moved up 25px from 10px (can't go negative)
+                top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
                 left: 'calc(10px + env(safe-area-inset-left))', // Keep same horizontal position
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -437,14 +437,20 @@ const GameScreen: React.FC = () => {
         </button>
         </div>
           <div className="drawer-content" style={{
-            background: 'transparent', // TRANSPARENT background
-            borderRadius: '0 12px 0 0',
+            position: 'fixed',
+            top: 'calc(10px + env(safe-area-inset-top) + 40px + 20px)', // 20px below settings icon
+            left: 'calc(10px + env(safe-area-inset-left) + 20px)', // Align with center of settings icon
+            width: '350px',
+            maxHeight: 'calc(100vh - 10px - 40px - 20px - 20px)', // Fit on screen with 20px gap
+            background: 'white',
+            borderRadius: '12px',
             padding: '15px',
-            paddingTop: '25px', // 10px gap below close icon + 15px padding = 25px total
-            paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-            paddingLeft: 'calc(10px + env(safe-area-inset-left) + 20px)', // Align left edge with CENTER of close icon (10px + 20px = center of 40px button)
-                    display: 'flex',
-                    flexDirection: 'column',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            overflow: 'auto', // Enable scrolling
+            WebkitOverflowScrolling: 'touch',
+            zIndex: 5000,
+            display: 'flex',
+            flexDirection: 'column',
             gap: '15px'
           }}
           ref={(el) => {
@@ -471,17 +477,9 @@ const GameScreen: React.FC = () => {
       {currentLayout.orientation === 'portrait' && (
         <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
           background: 'transparent !important',
-          width: (() => {
-            // EXTEND TO ORANGE BORDER - Match content width calculation
-            const viewportWidth = window.innerWidth;
-            const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
-            const orangeBorderLeft = 5;
-            const drawerRightEdge = 5 + safeAreaRight;
-            const availableWidth = viewportWidth - orangeBorderLeft - drawerRightEdge;
-            return `${availableWidth + 20}px`; // Add 20px for container padding
-          })(),
-          maxWidth: 'none',
-          minWidth: '280px'
+          width: 'auto', // Let content determine width
+          maxWidth: '500px', // Maximum width constraint
+          minWidth: '280px' // Minimum width constraint
         }}>
           <div className="menu-drawer-container" style={{
             background: 'transparent !important',
@@ -501,7 +499,7 @@ const GameScreen: React.FC = () => {
                 aria-label="Close Menu"
                 style={{
                   position: 'fixed',
-                  top: 'calc(0px + env(safe-area-inset-top))',
+                  top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
                   right: 'calc(10px + env(safe-area-inset-right))',
                   background: 'rgba(255, 255, 255, 0.9)',
                   border: 'none',
@@ -526,14 +524,17 @@ const GameScreen: React.FC = () => {
                     </div>
             <div className="drawer-content" style={{
               position: 'fixed',
-              top: '111px', // 51px (icon top) + 40px (icon height) + 20px (gap) = 111px
-              left: '15px',
-              right: '15px', // FIXED: Match left margin for symmetry
+              top: 'calc(10px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + gap
+              right: 'calc(10px + env(safe-area-inset-right) + 20px)', // Align right edge with hamburger icon center (10px + 20px = center of 40px button)
+              left: 'auto', // Remove left positioning to let right positioning work
+              width: '450px', // Fixed width for consistent sizing
               height: '500px', // Increased height to cover entire Score element including game details
               background: 'transparent', // FIXED: Make container background transparent
               borderRadius: '12px',
               border: '3px solid #ff0000', // RED BORDER
               padding: '0',
+              margin: '0', // Remove any margin
+              boxSizing: 'border-box', // Include border in width calculation
               overflow: 'hidden',
               zIndex: 1002,
               boxShadow: 'none', // FIXED: Remove shadow since background is transparent
@@ -563,7 +564,9 @@ const GameScreen: React.FC = () => {
                 position: 'absolute', // Use absolute positioning to match red border exactly
                 top: '0',
                 left: '0',
-                right: '0', // FIXED: Match red container's right edge exactly
+                right: '-3px', // FIXED: Extend past red border (3px red border width)
+                margin: '0', // Remove any margin
+                boxSizing: 'border-box', // Include border in width calculation
                 height: 'fit-content', // FIXED: Only extend to content height, not full container
                 maxHeight: '100%', // FIXED: Don't exceed container height
                 background: 'white',

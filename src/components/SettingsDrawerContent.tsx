@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 import { getFullVersionString } from '../config/version';
-import CustomScrollIndicator from './CustomScrollIndicator';
+// Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach
 
 /**
  * SettingsDrawerContent - A self-contained library component for settings drawer content
@@ -114,7 +114,8 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
         ref={scrollContainerRef}
         style={{
           flex: '1',
-          overflow: 'auto',
+          overflow: 'auto', // Simple scrolling like iPhone menu drawer
+          WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
           position: 'relative',
           paddingRight: '30px', // More space between content and scrollbar
           width: '100%', // Full width
@@ -487,8 +488,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
         </div>
       </div>
       
-      {/* Custom Scroll Indicator */}
-      <CustomScrollIndicator containerRef={scrollContainerRef} />
+      {/* Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach */}
 
       {/* Manual Modal */}
       <AnimatePresence>
