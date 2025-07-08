@@ -528,15 +528,15 @@ const GameScreen: React.FC = () => {
               position: 'fixed',
               top: '111px', // 51px (icon top) + 40px (icon height) + 20px (gap) = 111px
               left: '15px',
-              right: '30px', // Right edge aligns with hamburger icon centerline (375-345=30)
+              right: '15px', // FIXED: Match left margin for symmetry
               height: '500px', // Increased height to cover entire Score element including game details
-              background: 'white',
+              background: 'transparent', // FIXED: Make container background transparent
               borderRadius: '12px',
               border: '3px solid #ff0000', // RED BORDER
               padding: '0',
               overflow: 'hidden',
               zIndex: 1002,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              boxShadow: 'none', // FIXED: Remove shadow since background is transparent
                         display: 'flex',
                         flexDirection: 'column'
             }}
@@ -560,14 +560,16 @@ const GameScreen: React.FC = () => {
               <div style={{
                 border: '2px solid #00ff00', // GREEN BORDER
                 borderRadius: '8px',
-                margin: '0', // No margin - expand to red border
-                padding: '10px',
-                paddingRight: '25px', // Extra padding for scrollbar space
+                position: 'absolute', // Use absolute positioning to match red border exactly
+                top: '0',
+                left: '0',
+                right: '0', // FIXED: Match red container's right edge exactly
+                height: 'fit-content', // FIXED: Only extend to content height, not full container
+                maxHeight: '100%', // FIXED: Don't exceed container height
                 background: 'white',
-                height: '100%', // Full height to cover entire Score element
-                overflow: 'auto',
+                padding: '5px 10px 10px 5px', // FIXED: Reduce left padding by 50% (10px -> 5px)
+                overflow: 'auto', // FIXED: Enable scrolling when content exceeds container
                 WebkitOverflowScrolling: 'touch',
-                position: 'relative',
                 transform: (() => {
                   // Calculate scaling based on available width (no margins now)
                   const availableWidth = window.innerWidth - 15 - 30; // left margin + right margin only
@@ -585,8 +587,9 @@ const GameScreen: React.FC = () => {
                 width: '420px' // Set to natural content width, then scale
               }}>
                 <div style={{
-                  width: '395px', // Slightly less than 420px to accommodate scrollbar
-                  minHeight: '100%'
+                  width: '415px', // Increase width since no right padding
+                  minHeight: '100%',
+                  paddingRight: '20px' // Move scrollbar space to content container
                 }}>
                   <MenuDrawerContent />
               </div>

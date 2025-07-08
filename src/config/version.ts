@@ -4,7 +4,7 @@ export const VERSION_CONFIG = {
   MAJOR: 1,
   MINOR: 0,
   PATCH: 0,
-      BUILD_REVISION: 987,
+      BUILD_REVISION: 995,
   BUILD_DATE: '2025-07-08', // YYYY-MM-DD format
 };
 

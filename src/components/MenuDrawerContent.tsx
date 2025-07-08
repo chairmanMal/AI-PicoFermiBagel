@@ -80,12 +80,14 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           <Scratchpad />
         </div>
 
-        {/* Hint Purchasing Section - Now self-contained */}
+        {/* Hint Purchasing Section - Now self-contained with constrained margins */}
         <div style={{
           width: '100%',
           minWidth: '420px', // Increased to match new drawer minimum width
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          paddingLeft: '12px', // Additional left margin to align with colored elements
+          paddingRight: '12px' // Additional right margin to align with colored elements
         }}>
           <HintPurchasing />
         </div>
