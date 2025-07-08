@@ -488,7 +488,7 @@ const GameScreen: React.FC = () => {
             zIndex: 1002
           }}>
             <div className="drawer-header" style={{
-              background: 'transparent',
+                  background: 'transparent',
               padding: '0',
               margin: '0'
             }}>
@@ -523,84 +523,77 @@ const GameScreen: React.FC = () => {
               >
                 ›
               </button>
-            </div>
+                    </div>
             <div className="drawer-content" style={{
-              position: 'absolute',
-              top: 'calc(0px + env(safe-area-inset-top) + 40px + 5px)',
-              left: (() => {
-                // MOVE LEFT EDGE 10PX TO THE RIGHT from original orange border calculation
-                const originalOrangeBorderLeft = 5;
-                const adjustedLeftEdge = originalOrangeBorderLeft + 10; // Move 10px to the right
-                
-                return `${adjustedLeftEdge}px`;
-              })(),
-              right: (() => {
-                // CONTENT RIGHT EDGE ALIGNS WITH HAMBURGER ICON CENTERLINE
-                const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
-                const iconPosition = 10 + safeAreaRight; // Icon right edge position
-                const iconWidth = 40; // Icon width
-                const iconCenterFromRight = iconPosition + (iconWidth / 2); // Center of icon from right edge
-                
-                // Add space for scrollbar (20px) to the right of the icon centerline
-                const scrollbarSpace = 20;
-                const contentRightEdge = iconCenterFromRight + scrollbarSpace;
-                
-                return `${contentRightEdge}px`;
-              })(),
-              bottom: (() => {
-                // RAISE BOTTOM TO 15PX ABOVE SCREEN BOTTOM
-                const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
-                return `${15 + safeAreaBottom}px`;
-              })(),
+              position: 'fixed',
+              top: '111px', // 51px (icon top) + 40px (icon height) + 20px (gap) = 111px
+              left: '15px',
+              right: '30px', // Right edge aligns with hamburger icon centerline (375-345=30)
+              height: '500px', // Increased height to cover entire Score element including game details
               background: 'white',
-              borderRadius: '12px 0 0 0',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              border: '3px solid #ff6b6b', // RED BORDER for debugging - shows exact displayable area
-              padding: '15px',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'auto', // Enable scrolling within the constrained area
-              // SCALE CONTENT TO FIT WITHIN THE RED BORDER CONTAINER
-              transform: (() => {
-                // Calculate available space within red border
-                const viewportHeight = window.innerHeight;
-                const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0');
-                const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
-                
-                // Calculate actual available height
-                const topPosition = safeAreaTop + 45; // top position
-                const bottomMargin = 15 + safeAreaBottom; // bottom margin
-                const borderPadding = 30; // 15px padding top + bottom
-                const availableHeight = viewportHeight - topPosition - bottomMargin - borderPadding;
-                
-                // Estimate natural content height and scale to fit
-                const estimatedContentHeight = 600;
-                const scale = Math.min(1, availableHeight / estimatedContentHeight);
-                const minScale = 0.6; // Minimum scale for readability
-                
-                return `scale(${Math.max(minScale, scale)})`;
-              })(),
-              transformOrigin: 'top left',
+              borderRadius: '12px',
+              border: '3px solid #ff0000', // RED BORDER
+              padding: '0',
+              overflow: 'hidden',
               zIndex: 1002,
-              touchAction: 'pan-y',
-              WebkitOverflowScrolling: 'touch',
-              // POSITION SCROLLBAR TO THE RIGHT OF ICON CENTERLINE
-              paddingRight: '5px', // Minimal right padding since scrollbar is outside
-              marginRight: (() => {
-                // Position scrollbar to the right of icon centerline
-                const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
-                const iconPosition = 10 + safeAreaRight;
-                const iconWidth = 40;
-                const iconCenterFromRight = iconPosition + (iconWidth / 2);
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        display: 'flex',
+                        flexDirection: 'column'
+            }}
+            ref={(el) => {
+              if (el) {
+                const rect = el.getBoundingClientRect();
+                const drawerWidth = rect.width; // This is 'x' - actual drawer width
+                const contentWidth = 420; // From MenuDrawerContent minWidth - this is natural content width
+                const greenBorderWidth = rect.width; // Full width now (no margins) = 'y'
+                const requiredScale = Math.max(0.5, Math.min(1.0, greenBorderWidth / contentWidth));
                 
-                // Scrollbar should appear at icon centerline
-                return `-${iconCenterFromRight}px`;
-              })()
+                console.log('📏 DRAWER SIZING ANALYSIS:', {
+                  drawerWidth: `${drawerWidth}px (x)`,
+                  greenBorderWidth: `${greenBorderWidth}px (y)`,
+                  contentWidth: `${contentWidth}px (natural content width)`,
+                  requiredScale: `${requiredScale} (y/x ratio)`,
+                  calculation: `${greenBorderWidth} / ${contentWidth} = ${requiredScale}`
+                });
+              }
             }}>
-              <MenuDrawerContent />
+              <div style={{
+                border: '2px solid #00ff00', // GREEN BORDER
+                borderRadius: '8px',
+                margin: '0', // No margin - expand to red border
+                padding: '10px',
+                paddingRight: '25px', // Extra padding for scrollbar space
+                background: 'white',
+                height: '100%', // Full height to cover entire Score element
+                overflow: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                position: 'relative',
+                transform: (() => {
+                  // Calculate scaling based on available width (no margins now)
+                  const availableWidth = window.innerWidth - 15 - 30; // left margin + right margin only
+                  const naturalContentWidth = 420; // From MenuDrawerContent
+                  const scale = Math.max(0.5, Math.min(1.0, availableWidth / naturalContentWidth));
+                  console.log('🔍 SCALING CALCULATION:', {
+                    availableWidth: `${availableWidth}px`,
+                    naturalContentWidth: `${naturalContentWidth}px`,
+                    scale: `${scale}`,
+                    transform: `scale(${scale})`
+                  });
+                  return `scale(${scale})`;
+                })(),
+                transformOrigin: 'top left',
+                width: '420px' // Set to natural content width, then scale
+              }}>
+                <div style={{
+                  width: '395px', // Slightly less than 420px to accommodate scrollbar
+                  minHeight: '100%'
+                }}>
+                  <MenuDrawerContent />
+              </div>
+              </div>
+              </div>
+              </div>
             </div>
-          </div>
-        </div>
       )}
 
       {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}

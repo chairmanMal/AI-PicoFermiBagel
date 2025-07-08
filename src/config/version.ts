@@ -4,7 +4,7 @@ export const VERSION_CONFIG = {
   MAJOR: 1,
   MINOR: 0,
   PATCH: 0,
-      BUILD_REVISION: 966,
+      BUILD_REVISION: 987,
   BUILD_DATE: '2025-07-08', // YYYY-MM-DD format
 };
 
@@ -25,13 +25,13 @@ export const getFullVersionString = () => {
 };
 
 export const version = {
-  buildNumber: 965,
+  buildNumber: 985,
   buildDate: '2025-07-08',
   changes: [
-    'FIXED: Bottom edge now properly raised 15px above screen bottom (with safe area)',
-    'REPOSITIONED: Scrollbar now appears to the right of icon centerline when visible',
-    'ALIGNED: Content right edge now aligns with hamburger icon centerline',
-    'ADDED: Content scaling to fit within the red border container',
-    'IMPROVED: Scrollbar positioning outside red border for better UX'
+    'FIXED: Red box upper right corner now properly positioned below icon (top: 111px)',
+    'EXPANDED: Green border now extends to red border horizontally (margin: 0)',
+    'INCREASED: Height to 500px to cover entire Score element including game details',
+    'IMPROVED: Scrollbar positioning with 25px right padding to abut content',
+    'OPTIMIZED: Content width to 395px to accommodate scrollbar space properly'
   ]
 }; 
