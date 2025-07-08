@@ -118,7 +118,7 @@ const GameScreen: React.FC = () => {
     if (!settingsDrawer) return;
 
     const handleSwipeLeft = (e: TouchEvent) => {
-      const touch = e.touches[0];
+    const touch = e.touches[0];
       if (!touch) return;
 
       const startX = touch.clientX;
@@ -126,9 +126,9 @@ const GameScreen: React.FC = () => {
       
       // Only handle swipes that start within the drawer area
       if (startX < drawerRect.left || startX > drawerRect.right) {
-        return;
-      }
-
+      return;
+    }
+    
       const drawerContent = settingsDrawer.querySelector('.drawer-content') as HTMLElement;
       if (!drawerContent) return;
 
@@ -173,7 +173,7 @@ const GameScreen: React.FC = () => {
     };
 
     settingsDrawer.addEventListener('touchstart', handleSwipeLeft);
-    
+
     return () => {
       settingsDrawer.removeEventListener('touchstart', handleSwipeLeft);
     };
@@ -199,7 +199,7 @@ const GameScreen: React.FC = () => {
       if (startX < drawerRect.left || startX > drawerRect.right) {
         return;
       }
-
+      
       const drawerContent = menuDrawer.querySelector('.drawer-content') as HTMLElement;
       if (!drawerContent) return;
 
@@ -298,8 +298,43 @@ const GameScreen: React.FC = () => {
       {/* Settings Button - Always visible */}
         <button
           className="settings-button"
-        onClick={() => setIsSettingsDrawerOpen(true)}
+          onClick={() => {
+          console.log('🔧 Settings button clicked - opening drawer');
+            setIsSettingsDrawerOpen(true);
+          }}
         aria-label="Open Settings"
+        style={{
+          position: 'fixed',
+          top: 'calc(0px + env(safe-area-inset-top))', // Move up 25px from CSS default
+          left: 'calc(10px + env(safe-area-inset-left))', // Move in 10px from CSS default
+          background: 'rgba(255, 255, 255, 0.9)',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          transition: 'all 0.2s ease',
+          touchAction: 'manipulation',
+          zIndex: 1000,
+          color: '#374151'
+        }}
+        ref={(el) => {
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            console.log('🔧 Settings OPEN button position:', {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+              center: { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }
+            });
+          }
+        }}
         >
           <Settings size={24} />
         </button>
@@ -308,8 +343,43 @@ const GameScreen: React.FC = () => {
       {currentLayout.orientation === 'portrait' && (
         <button
           className="drawer-toggle-top-right"
-          onClick={() => setIsMenuDrawerOpen(true)}
+          onClick={() => {
+            console.log('🍔 Hamburger button clicked - opening menu drawer');
+            setIsMenuDrawerOpen(true);
+          }}
           aria-label="Open Menu"
+          style={{ 
+            position: 'fixed',
+            top: 'calc(0px + env(safe-area-inset-top))', // Move up 25px from CSS default
+            right: 'calc(10px + env(safe-area-inset-right))', // Move in 10px from CSS default
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            transition: 'all 0.2s ease',
+            touchAction: 'manipulation',
+            zIndex: 100,
+            color: '#374151'
+          }}
+          ref={(el) => {
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              console.log('🍔 Hamburger OPEN button position:', {
+                top: rect.top,
+                right: window.innerWidth - rect.right,
+                width: rect.width,
+                height: rect.height,
+                center: { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }
+              });
+            }
+          }}
         >
           <Menu size={24} />
         </button>
@@ -322,61 +392,100 @@ const GameScreen: React.FC = () => {
       <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
         <div className="menu-drawer-container">
           <div className="drawer-header">
-            <button
+        <button
               className="drawer-close"
-              onClick={() => setIsSettingsDrawerOpen(false)}
+              onClick={() => {
+                console.log('❌ Settings close button clicked - closing drawer');
+                setIsSettingsDrawerOpen(false);
+              }}
               aria-label="Close Settings"
-              style={{
+          style={{ 
                 position: 'fixed',
-                top: 'calc(20px + env(safe-area-inset-top))',
-                left: 'calc(20px + env(safe-area-inset-left))',
-                background: 'rgba(255, 255, 255, 0.9)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                top: 'calc(0px + env(safe-area-inset-top))', // Moved up 25px from 10px (can't go negative)
+                left: 'calc(10px + env(safe-area-inset-left))', // Keep same horizontal position
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: 'none',
+            borderRadius: '8px',
+                padding: '10px', // MATCH settings button: 10px not 12px
+                width: '40px', // MATCH settings button: 40px not 48px
+                height: '40px', // MATCH settings button: 40px not 48px
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 transition: 'all 0.2s ease',
                 touchAction: 'manipulation',
                 zIndex: 6000,
-                fontSize: '24px',
+                fontSize: '24px', // SAME size as settings icon
                 color: '#374151'
+              }}
+              ref={(el) => {
+                if (el && isSettingsDrawerOpen) {
+                  const rect = el.getBoundingClientRect();
+                  console.log('🔧 Settings close button position:', {
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height,
+                    center: { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }
+                  });
+                }
               }}
             >
               ‹
-            </button>
-          </div>
+        </button>
+        </div>
           <div className="drawer-content" style={{
-            background: '#e9ecef', // Light grey background
+            background: 'transparent', // TRANSPARENT background
             borderRadius: '0 12px 0 0',
             padding: '15px',
-            paddingTop: '35px', // 20px gap below close icon + 15px padding = 35px total
+            paddingTop: '25px', // 10px gap below close icon + 15px padding = 25px total
             paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-            display: 'flex',
-            flexDirection: 'column',
+            paddingLeft: 'calc(10px + env(safe-area-inset-left) + 20px)', // Align left edge with CENTER of close icon (10px + 20px = center of 40px button)
+                    display: 'flex',
+                    flexDirection: 'column',
             gap: '15px'
+          }}
+          ref={(el) => {
+            if (el && isSettingsDrawerOpen) {
+              const rect = el.getBoundingClientRect();
+              const computedStyle = window.getComputedStyle(el);
+              console.log('🔧 Settings drawer content position:', {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                paddingLeft: computedStyle.paddingLeft,
+                calculatedPaddingLeft: `calc(10px + env(safe-area-inset-left) + 20px)`,
+                safeAreaInsetLeft: getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)')
+              });
+            }
           }}>
             <SettingsDrawerContent />
-          </div>
-        </div>
-      </div>
+                    </div>
+                  </div>
+                  </div>
 
       {/* Menu Drawer - Enhanced for portrait mode with MenuDrawerContent */}
       {currentLayout.orientation === 'portrait' && (
         <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
-          background: 'transparent !important', // Make entire drawer background transparent
-          width: 'calc(100vw / 1.8)', // Even wider - about 55% of screen width
-          maxWidth: '700px', // Increased from 600px
-          minWidth: '420px' // Increased from 380px
+          background: 'transparent !important',
+          width: (() => {
+            // EXTEND TO ORANGE BORDER - Match content width calculation
+            const viewportWidth = window.innerWidth;
+            const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
+            const orangeBorderLeft = 5;
+            const drawerRightEdge = 5 + safeAreaRight;
+            const availableWidth = viewportWidth - orangeBorderLeft - drawerRightEdge;
+            return `${availableWidth + 20}px`; // Add 20px for container padding
+          })(),
+          maxWidth: 'none',
+          minWidth: '280px'
         }}>
           <div className="menu-drawer-container" style={{
-            background: 'transparent !important', // Make container background transparent
-            zIndex: 1002 // Higher than overlay to ensure it's not affected
+            background: 'transparent !important',
+            zIndex: 1002
           }}>
             <div className="drawer-header" style={{
               background: 'transparent',
@@ -385,18 +494,21 @@ const GameScreen: React.FC = () => {
             }}>
               <button
                 className="drawer-close"
-                onClick={() => setIsMenuDrawerOpen(false)}
+                onClick={() => {
+                  console.log('❌ Menu close button clicked - closing drawer');
+                  setIsMenuDrawerOpen(false);
+                }}
                 aria-label="Close Menu"
                 style={{
                   position: 'fixed',
-                  top: 'calc(20px + env(safe-area-inset-top))',
-                  right: 'calc(20px + env(safe-area-inset-right))',
+                  top: 'calc(0px + env(safe-area-inset-top))',
+                  right: 'calc(10px + env(safe-area-inset-right))',
                   background: 'rgba(255, 255, 255, 0.9)',
                   border: 'none',
                   borderRadius: '8px',
-                  padding: '12px',
-                  width: '48px',
-                  height: '48px',
+                  padding: '10px',
+                  width: '40px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -413,20 +525,77 @@ const GameScreen: React.FC = () => {
               </button>
             </div>
             <div className="drawer-content" style={{
-              marginTop: '88px', // 20px (top) + 48px (button height) + 20px (gap) = 88px
-              marginRight: '24px', // Align right edge with center of close icon (48px/2 = 24px)
-              background: 'transparent', // Make background transparent
+              position: 'absolute',
+              top: 'calc(0px + env(safe-area-inset-top) + 40px + 5px)',
+              left: (() => {
+                // MOVE LEFT EDGE 10PX TO THE RIGHT from original orange border calculation
+                const originalOrangeBorderLeft = 5;
+                const adjustedLeftEdge = originalOrangeBorderLeft + 10; // Move 10px to the right
+                
+                return `${adjustedLeftEdge}px`;
+              })(),
+              right: (() => {
+                // CONTENT RIGHT EDGE ALIGNS WITH HAMBURGER ICON CENTERLINE
+                const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
+                const iconPosition = 10 + safeAreaRight; // Icon right edge position
+                const iconWidth = 40; // Icon width
+                const iconCenterFromRight = iconPosition + (iconWidth / 2); // Center of icon from right edge
+                
+                // Add space for scrollbar (20px) to the right of the icon centerline
+                const scrollbarSpace = 20;
+                const contentRightEdge = iconCenterFromRight + scrollbarSpace;
+                
+                return `${contentRightEdge}px`;
+              })(),
+              bottom: (() => {
+                // RAISE BOTTOM TO 15PX ABOVE SCREEN BOTTOM
+                const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
+                return `${15 + safeAreaBottom}px`;
+              })(),
+              background: 'white',
               borderRadius: '12px 0 0 0',
-              boxShadow: 'none', // Remove shadow for transparency
-              padding: '0px 5px 5px 5px', // Match landscape Column 3 padding
-              paddingBottom: 'calc(5px + env(safe-area-inset-bottom))',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              border: '3px solid #ff6b6b', // RED BORDER for debugging - shows exact displayable area
+              padding: '15px',
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'auto',
-              maxHeight: 'calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom))', // Adjusted for reduced margin
-              zIndex: 1002, // Higher than overlay to ensure it's not affected
-              touchAction: 'pan-y', // Allow vertical scrolling
-              WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
+              overflow: 'auto', // Enable scrolling within the constrained area
+              // SCALE CONTENT TO FIT WITHIN THE RED BORDER CONTAINER
+              transform: (() => {
+                // Calculate available space within red border
+                const viewportHeight = window.innerHeight;
+                const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0');
+                const safeAreaBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
+                
+                // Calculate actual available height
+                const topPosition = safeAreaTop + 45; // top position
+                const bottomMargin = 15 + safeAreaBottom; // bottom margin
+                const borderPadding = 30; // 15px padding top + bottom
+                const availableHeight = viewportHeight - topPosition - bottomMargin - borderPadding;
+                
+                // Estimate natural content height and scale to fit
+                const estimatedContentHeight = 600;
+                const scale = Math.min(1, availableHeight / estimatedContentHeight);
+                const minScale = 0.6; // Minimum scale for readability
+                
+                return `scale(${Math.max(minScale, scale)})`;
+              })(),
+              transformOrigin: 'top left',
+              zIndex: 1002,
+              touchAction: 'pan-y',
+              WebkitOverflowScrolling: 'touch',
+              // POSITION SCROLLBAR TO THE RIGHT OF ICON CENTERLINE
+              paddingRight: '5px', // Minimal right padding since scrollbar is outside
+              marginRight: (() => {
+                // Position scrollbar to the right of icon centerline
+                const safeAreaRight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0');
+                const iconPosition = 10 + safeAreaRight;
+                const iconWidth = 40;
+                const iconCenterFromRight = iconPosition + (iconWidth / 2);
+                
+                // Scrollbar should appear at icon centerline
+                return `-${iconCenterFromRight}px`;
+              })()
             }}>
               <MenuDrawerContent />
             </div>
@@ -511,4 +680,4 @@ const GameScreen: React.FC = () => {
   );
 };
 
-export default GameScreen;
+export default GameScreen; 

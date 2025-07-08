@@ -209,46 +209,32 @@
 }
 
 .scratchpad .numbers-container .numbers-grid {
-  display: grid !important;
-  /* Smart grid: uses CSS custom property for optimal column count */
-  grid-template-columns: repeat(var(--grid-columns, 4), 1fr) !important;
-  gap: 8px !important; /* Consistent gap with direct targeting */
-  justify-content: center !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important; /* FORCE centering of all content including partial rows */
   align-items: center !important;
-  justify-items: center !important;
   align-content: center !important;
-  place-content: center !important; /* FORCE centering */
-  place-items: center !important; /* FORCE centering */
+  gap: 8px !important; /* Consistent gap with direct targeting */
   width: 100% !important;
-  max-width: calc(var(--grid-columns, 4) * 55px + (var(--grid-columns, 4) - 1) * 8px) !important;
+  max-width: 400px !important; /* Fixed max width for consistent centering */
   margin: 0 auto !important; /* FORCE center the entire grid */
   padding: 0 !important;
   box-sizing: border-box !important;
-  /* OVERRIDE any JavaScript interference */
-  grid-auto-columns: 1fr !important;
-  grid-auto-rows: auto !important;
-  /* ADDITIONAL CENTERING FORCE */
   text-align: center !important;
-  align-self: center !important;
-  justify-self: center !important;
 }
 
 /* CSS Grid automatically handles optimal layout and centering */
 
-/* DIRECT GRID TARGETING - SMART CENTERING based on number of items */
+/* DIRECT GRID TARGETING - FLEXBOX WRAP for TRUE CENTERING of partial rows */
 .numbers-grid {
-  display: grid !important;
-  /* Smart grid: 4 columns for 7 items (4+3), 3 columns for 4-6 items, 4 columns for 8-12 items, 5 columns for 13+ items */
-  grid-template-columns: repeat(var(--grid-columns, 4), 1fr) !important;
-  gap: 8px !important; /* Slightly larger gap for better spacing */
-  justify-content: center !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important; /* Centers the entire content */
   align-items: center !important;
-  justify-items: center !important;
   align-content: center !important;
-  place-content: center !important;
-  place-items: center !important;
+  gap: 8px !important;
   width: 100% !important;
-  max-width: calc(var(--grid-columns, 4) * 55px + (var(--grid-columns, 4) - 1) * 8px) !important;
+  max-width: 400px !important; /* Fixed max width for consistent centering */
   margin: 0 auto !important;
   padding: 0 !important;
   box-sizing: border-box !important;
@@ -257,11 +243,11 @@
 
 .scratchpad-number {
   position: relative;
-  /* FORCE square boxes that grow to fit 5 per row */
-  width: 100% !important; /* Take full grid cell width */
-  aspect-ratio: 1 / 1 !important; /* FORCE 1:1 aspect ratio (perfect squares) */
-  min-width: 35px !important; /* Minimum size for readability */
-  max-width: 60px !important; /* Maximum size to prevent oversizing */
+  /* FIXED SIZE SQUARES for flexbox layout */
+  width: 50px !important; /* Fixed width for consistent layout */
+  height: 50px !important; /* Fixed height for perfect squares */
+  min-width: 50px !important; /* Prevent shrinking */
+  max-width: 50px !important; /* Prevent growing */
   border: 2px solid #d1d5db;
   border-radius: 6px;
   background: white;
@@ -269,7 +255,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: clamp(0.9rem, 2.5vw, 1.3rem) !important; /* Responsive font size */
+  font-size: 1rem !important; /* Fixed font size for consistency */
   font-weight: bold;
   transition: all 0.2s ease;
   user-select: none;
@@ -277,7 +263,7 @@
   line-height: 1 !important;
   margin: 0 !important; /* Remove any margin */
   box-sizing: border-box !important;
-  place-self: center !important; /* Center within grid cell */
+  flex-shrink: 0 !important; /* Don't shrink in flexbox */
 }
 
 /* DIRECT NUMBER TARGETING - Maximum specificity */

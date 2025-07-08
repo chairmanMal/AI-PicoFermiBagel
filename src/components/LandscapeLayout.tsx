@@ -282,59 +282,46 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             numbersContainer.style.setProperty('overflow', 'auto', 'important');
           }
           
-          // FORCE the numbers grid to be perfectly centered with SMART COLUMNS - CONSISTENT WITH PORTRAIT
+          // FORCE the numbers grid to be perfectly centered with FLEXBOX - TRUE CENTERING OF PARTIAL ROWS
           const numbersGrid = scratchpadComponent.querySelector('.numbers-grid') as HTMLElement;
           if (numbersGrid) {
-            // Get optimal column count from CSS custom property (set by React component)
-            const scratchpadEl = scratchpadComponent.querySelector('.scratchpad') as HTMLElement;
-            const gridColumns = scratchpadEl?.style.getPropertyValue('--grid-columns') || '4';
-            const maxWidth = parseInt(gridColumns) * 45 + (parseInt(gridColumns) - 1) * 8; // Consistent sizing with portrait
-            
-            numbersGrid.style.setProperty('display', 'grid', 'important');
-            numbersGrid.style.setProperty('grid-template-columns', `repeat(${gridColumns}, 1fr)`, 'important'); // Use smart columns
-            numbersGrid.style.setProperty('grid-auto-columns', '1fr', 'important'); // FORCE equal columns
-            numbersGrid.style.setProperty('grid-auto-rows', 'auto', 'important'); // FORCE auto rows
-            numbersGrid.style.setProperty('gap', '8px', 'important'); // Consistent gap with portrait
-            numbersGrid.style.setProperty('justify-content', 'center', 'important');
+            numbersGrid.style.setProperty('display', 'flex', 'important');
+            numbersGrid.style.setProperty('flex-wrap', 'wrap', 'important');
+            numbersGrid.style.setProperty('justify-content', 'center', 'important'); // TRUE centering including partial rows
             numbersGrid.style.setProperty('align-items', 'center', 'important');
-            numbersGrid.style.setProperty('justify-items', 'center', 'important');
             numbersGrid.style.setProperty('align-content', 'center', 'important');
-            numbersGrid.style.setProperty('place-content', 'center', 'important'); // FORCE centering
-            numbersGrid.style.setProperty('place-items', 'center', 'important'); // FORCE centering
+            numbersGrid.style.setProperty('gap', '6px', 'important'); // Slightly smaller gap for landscape
             numbersGrid.style.setProperty('width', '100%', 'important');
-            numbersGrid.style.setProperty('max-width', `${maxWidth}px`, 'important'); // Dynamic width based on columns
-            numbersGrid.style.setProperty('height', 'auto', 'important');
+            numbersGrid.style.setProperty('max-width', '300px', 'important'); // Smaller max width for landscape
             numbersGrid.style.setProperty('margin', '0 auto', 'important'); // FORCE center
             numbersGrid.style.setProperty('padding', '0', 'important');
-            numbersGrid.style.setProperty('text-align', 'center', 'important'); // ADDITIONAL CENTERING
-            numbersGrid.style.setProperty('align-self', 'center', 'important'); // ADDITIONAL CENTERING
-            numbersGrid.style.setProperty('justify-self', 'center', 'important'); // ADDITIONAL CENTERING
+            numbersGrid.style.setProperty('text-align', 'center', 'important');
             
-            console.log(`🎯 SCRATCHPAD GRID: Using ${gridColumns} columns, max-width: ${maxWidth}px (landscape)`);
+            console.log('🎯 SCRATCHPAD GRID: Using flexbox wrap with TRUE centering of partial rows (landscape)');
           }
           
-          // FORCE all number boxes to be SQUARE and RESPONSIVE (let CSS grid handle centering)
+          // FORCE all number boxes to be FIXED SIZE SQUARES for flexbox layout
           const numberBoxes = scratchpadComponent.querySelectorAll('.scratchpad-number');
           numberBoxes.forEach(box => {
             const boxEl = box as HTMLElement;
-            // STOP overriding width/height - let CSS grid and aspect-ratio handle it
-            boxEl.style.setProperty('width', '100%', 'important'); // Fill grid cell
-            boxEl.style.setProperty('aspect-ratio', '1 / 1', 'important'); // FORCE perfect square
-            boxEl.style.setProperty('min-width', '35px', 'important');
-            boxEl.style.setProperty('max-width', '55px', 'important'); // Landscape max
+            // Fixed size squares for landscape (smaller than portrait)
+            boxEl.style.setProperty('width', '40px', 'important'); // Smaller for landscape
+            boxEl.style.setProperty('height', '40px', 'important'); // Perfect square
+            boxEl.style.setProperty('min-width', '40px', 'important');
+            boxEl.style.setProperty('max-width', '40px', 'important');
             boxEl.style.setProperty('margin', '0', 'important');
             boxEl.style.setProperty('display', 'flex', 'important');
             boxEl.style.setProperty('align-items', 'center', 'important');
             boxEl.style.setProperty('justify-content', 'center', 'important');
             boxEl.style.setProperty('text-align', 'center', 'important');
-            boxEl.style.setProperty('font-size', 'clamp(0.9rem, 2.2vw, 1.2rem)', 'important');
+            boxEl.style.setProperty('font-size', '0.9rem', 'important'); // Fixed font size
             boxEl.style.setProperty('font-weight', 'bold', 'important');
             boxEl.style.setProperty('line-height', '1', 'important');
             boxEl.style.setProperty('border-radius', '6px', 'important');
             boxEl.style.setProperty('border', '2px solid #d1d5db', 'important');
             boxEl.style.setProperty('background', 'white', 'important');
             boxEl.style.setProperty('box-sizing', 'border-box', 'important');
-            boxEl.style.setProperty('place-self', 'center', 'important'); // FORCE centering in grid
+            boxEl.style.setProperty('flex-shrink', '0', 'important'); // Don't shrink in flexbox
           });
         }
         
@@ -433,13 +420,13 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
           
           console.log(`🎯 DETECTED GRID MODE: ${gridMode} (${totalGuessBoxes} guess boxes)`);
           
-          // Calculate proportional space allocation
+          // Calculate proportional space allocation - GIVE MORE SPACE TO NUMBER SELECTION
           // Target Display: Fixed small space (about 1 box equivalent)
           // Your Guess: Based on number of guess boxes
-          // Number Selection: Based on digit range (assume 10-20 numbers, about 2 rows worth)
+          // Number Selection: INCREASED allocation to prevent bottom boundary issues
           const targetDisplayRatio = 1; // Fixed small space
           const yourGuessRatio = totalGuessBoxes; // Proportional to number of guess boxes
-          const numberSelectionRatio = Math.ceil((parseInt(document.querySelector('.selection-area')?.getAttribute('data-digit-range') || '10')) / 5); // Estimate based on digit range
+          const numberSelectionRatio = Math.max(4, Math.ceil((parseInt(document.querySelector('.selection-area')?.getAttribute('data-digit-range') || '17')) / 4)); // Minimum 4 units, estimate 4 per row
           
           const totalRatio = targetDisplayRatio + yourGuessRatio + numberSelectionRatio;
           
@@ -484,7 +471,9 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             selectionSection.style.setProperty('display', 'flex', 'important');
             selectionSection.style.setProperty('flex-direction', 'column', 'important');
             selectionSection.style.setProperty('justify-content', 'center', 'important');
-            console.log(`🎯 SELECTION SECTION: Constrained to ${selectionHeight}px`);
+            selectionSection.style.setProperty('padding-bottom', '10px', 'important'); // FORCE bottom margin
+            selectionSection.style.setProperty('box-sizing', 'border-box', 'important');
+            console.log(`🎯 SELECTION SECTION: Constrained to ${selectionHeight}px with bottom padding`);
           }
           
           // Wait for layout to settle, then check if content fits and scale if needed
@@ -505,23 +494,28 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
               console.log(`🎯 ${name.toUpperCase()}: content=${contentHeight}px, allocated=${allocatedHeight}px, needs scaling=${needsScaling}`);
               
               if (needsScaling) {
-                // Scale content within the element to fit
+                // Scale content within the element to fit - MORE FLEXIBLE SCALING
                 const scale = allocatedHeight / contentHeight;
-                const clampedScale = Math.max(0.4, scale); // Minimum 40% scale
+                const clampedScale = Math.max(0.55, scale); // Minimum 55% scale - more flexible
                 
                 console.log(`🎯 ${name.toUpperCase()}: Scaling content to ${clampedScale.toFixed(3)} (${(clampedScale * 100).toFixed(1)}%)`);
                 
-                // Apply scaling to the content within the element
+                // Apply scaling to the content within the element with CENTERED transform origin
                 const contentWrapper = element.querySelector('.guess-area, .selection-area, .target-display') as HTMLElement;
                 if (contentWrapper) {
                   contentWrapper.style.setProperty('transform', `scale(${clampedScale})`, 'important');
-                  contentWrapper.style.setProperty('transform-origin', 'top center', 'important');
+                  contentWrapper.style.setProperty('transform-origin', 'center center', 'important'); // CENTER the scaling
                   contentWrapper.style.setProperty('width', `${100 / clampedScale}%`, 'important'); // Compensate for scaling
                   contentWrapper.style.setProperty('height', `${100 / clampedScale}%`, 'important'); // Compensate for scaling
+                  
+                  // Add margin compensation for centered scaling
+                  const marginOffset = (allocatedHeight * (1 - clampedScale)) / 2;
+                  contentWrapper.style.setProperty('margin-top', `${marginOffset}px`, 'important');
+                  contentWrapper.style.setProperty('margin-bottom', `${marginOffset}px`, 'important');
                 } else {
                   // If no wrapper, scale the element itself
                   element.style.setProperty('transform', `scale(${clampedScale})`, 'important');
-                  element.style.setProperty('transform-origin', 'top center', 'important');
+                  element.style.setProperty('transform-origin', 'center center', 'important'); // CENTER the scaling
                 }
                 
                 // Reduce padding for heavily scaled content

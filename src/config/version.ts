@@ -4,8 +4,8 @@ export const VERSION_CONFIG = {
   MAJOR: 1,
   MINOR: 0,
   PATCH: 0,
-      BUILD_REVISION: 924,
-  BUILD_DATE: '2025-07-07', // YYYY-MM-DD format
+      BUILD_REVISION: 966,
+  BUILD_DATE: '2025-07-08', // YYYY-MM-DD format
 };
 
 export const getVersionString = () => {
@@ -25,14 +25,13 @@ export const getFullVersionString = () => {
 };
 
 export const version = {
-  buildNumber: 918,
-  buildDate: '2025-07-07',
+  buildNumber: 965,
+  buildDate: '2025-07-08',
   changes: [
-    'CRITICAL FIX: Touch-outside-to-close now works EVERYWHERE including below drawers',
-    'Enhanced overlay click/touch handlers with better event prevention',
-    'Added comprehensive debugging for drawer touch detection',
-    'Improved event handling to prevent conflicts between overlays and touch detection',
-    'Better visual feedback and logging for touch interactions',
-    'Fixed drawer closing behavior for all screen areas outside drawer content'
+    'FIXED: Bottom edge now properly raised 15px above screen bottom (with safe area)',
+    'REPOSITIONED: Scrollbar now appears to the right of icon centerline when visible',
+    'ALIGNED: Content right edge now aligns with hamburger icon centerline',
+    'ADDED: Content scaling to fit within the red border container',
+    'IMPROVED: Scrollbar positioning outside red border for better UX'
   ]
 }; 

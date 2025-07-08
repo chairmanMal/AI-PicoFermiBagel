@@ -155,24 +155,8 @@ const Scratchpad: React.FC = () => {
            hintState.purchasedHints.notBagelNumbers.has(number);
   };
 
-  // Smart grid column calculation - pick optimal columns for centering
-  const getOptimalColumns = (itemCount: number): number => {
-    // For 7 items (0-6), use 4 columns: 4+3 = more balanced than 3+3+1
-    if (itemCount === 7) return 4; // 4 columns for 7 items (4+3 = better balance)
-    if (itemCount <= 6) return 3;  // 3 columns for 4-6 items (2 rows max)
-    if (itemCount <= 12) return 4; // 4 columns for 8-12 items
-    return 5; // 5 columns for 13+ items
-  };
-
-  const optimalColumns = getOptimalColumns(availableNumbers.length);
-
-  // Set CSS custom property for grid columns
-  React.useEffect(() => {
-    const scratchpadElement = document.querySelector('.scratchpad') as HTMLElement;
-    if (scratchpadElement) {
-      scratchpadElement.style.setProperty('--grid-columns', optimalColumns.toString());
-    }
-  }, [optimalColumns]);
+  // Using flexbox wrap - no need for column calculations
+  // Flexbox will automatically wrap and center partial rows
 
   return (
     <div className="scratchpad">

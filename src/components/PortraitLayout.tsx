@@ -89,10 +89,10 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       console.log('✅ RED BORDER: Applied to portrait container');
     }
     
-    // Step 3: Position title section for portrait (centered horizontally, reasonable margin below red border)
+    // Step 3: Position title section for portrait (centered horizontally, BELOW DRAWER ICONS)
     const titleSection = document.querySelector('.title-section') as HTMLElement;
     if (titleSection) {
-      const titleMarginTop = 20; // Reasonable margin below red border
+      const titleMarginTop = 25; // Moved up 25px to match icon positioning (was 50px)
       
       titleSection.style.setProperty('position', 'fixed', 'important');
       titleSection.style.setProperty('top', `${redBorder.top + titleMarginTop}px`, 'important');
@@ -141,8 +141,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       const subtitleRect = subtitle.getBoundingClientRect();
       const subtitleBottom = subtitleRect.bottom;
       
-      // ORANGE BORDER: Main content container (starts below title/subtitle with reasonable margin)
-      const contentGap = 30; // Reasonable gap between title and content
+      // ORANGE BORDER: Main content container (starts below title/subtitle with reduced margin)
+      const contentGap = 15; // Reduced gap by 50% between title and content
       const orangeBorder = {
         top: subtitleBottom + contentGap,
         left: redBorder.left, // No margin from red border - extend to edges

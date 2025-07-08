@@ -47,12 +47,12 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         
         // ORANGE BORDER: 3-column container within red border, below subtitle
         const orangeBorder = {
-          top: redBorder.top + titleAreaHeight + 30, // 30px below subtitle
+          top: redBorder.top + titleAreaHeight + 15, // 15px below subtitle (reduced from 30px by 50%)
           left: redBorder.left,
           right: redBorder.right,
           bottom: redBorder.bottom,
           width: redBorder.width,
-          height: redBorder.height - titleAreaHeight - 30
+          height: redBorder.height - titleAreaHeight - 15
         };
         
         console.log('🟠 ORANGE BORDER (3-Column Container):', orangeBorder);
@@ -98,7 +98,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         if (orangeContainer) {
           orangeContainer.style.setProperty('border', '2px solid orange', 'important');
           orangeContainer.style.setProperty('position', 'absolute', 'important');
-          orangeContainer.style.setProperty('top', `${titleAreaHeight + 30}px`, 'important');
+          orangeContainer.style.setProperty('top', `${titleAreaHeight + 15}px`, 'important');
           orangeContainer.style.setProperty('left', '0px', 'important');
           orangeContainer.style.setProperty('width', `${orangeBorder.width}px`, 'important');
           orangeContainer.style.setProperty('height', `${orangeBorder.height}px`, 'important');
