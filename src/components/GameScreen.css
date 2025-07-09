@@ -658,10 +658,11 @@
     padding: clamp(8px, 1.5vw, 12px) !important; /* Reverted back - this was fine */
   }
   
-  /* Override drawer-content max-height for iPad portrait mode - let JavaScript control height */
+  /* Let JavaScript fully control settings drawer height - no CSS interference */
   .settings-drawer .drawer-content {
     max-height: none !important; /* Remove CSS height constraints */
-    /* Don't override height - let JavaScript set it */
+    min-height: auto !important; /* Remove min-height constraints */
+    /* Don't set height: auto - let inline styles work */
   }
 }
 

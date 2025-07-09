@@ -300,12 +300,17 @@ const GameScreen: React.FC = () => {
           className="settings-button"
           onClick={() => {
           console.log('🔧 Settings button clicked - opening drawer');
+            // Close menu drawer if open, then open settings drawer
+            if (isMenuDrawerOpen) {
+              console.log('🔧 Closing menu drawer first');
+              setIsMenuDrawerOpen(false);
+            }
             setIsSettingsDrawerOpen(true);
           }}
         aria-label="Open Settings"
         style={{
           position: 'fixed',
-          top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
+          top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
           left: 'calc(10px + env(safe-area-inset-left))', // Move in 10px from CSS default
           background: 'rgba(255, 255, 255, 0.9)',
           border: 'none',
@@ -345,12 +350,17 @@ const GameScreen: React.FC = () => {
           className="drawer-toggle-top-right"
           onClick={() => {
             console.log('🍔 Hamburger button clicked - opening menu drawer');
+            // Close settings drawer if open, then open menu drawer
+            if (isSettingsDrawerOpen) {
+              console.log('🍔 Closing settings drawer first');
+              setIsSettingsDrawerOpen(false);
+            }
             setIsMenuDrawerOpen(true);
           }}
           aria-label="Open Menu"
           style={{ 
             position: 'fixed',
-            top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
+            top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
             right: 'calc(10px + env(safe-area-inset-right))', // Move in 10px from CSS default
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -401,7 +411,7 @@ const GameScreen: React.FC = () => {
               aria-label="Close Settings"
           style={{ 
                 position: 'fixed',
-                top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
+                top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
                 left: 'calc(10px + env(safe-area-inset-left))', // Keep same horizontal position
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -436,19 +446,22 @@ const GameScreen: React.FC = () => {
               ‹
         </button>
         </div>
+
+                    
                     <div className="drawer-content" style={{
             position: 'fixed',
-            top: `${34 + 40 + 20}px`, // Settings button top (34px) + button height (40px) + 20px gap
-            left: `30px`, // Align with settings button center
-            width: '375px',
-            height: `${Math.min((window.innerHeight - 100) - (34 + 40 + 20), window.innerHeight * 0.75)}px`, // Max 75% of screen height
-            background: 'white',
-            borderRadius: '12px',
-            padding: '0',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            overflow: 'hidden',
+            top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + 10px gap
+            left: `20px`, // Align with settings button left edge
+            width: '280px', // Reduced width for iPhone
+            height: '650px', // Set to 650px height
+                            background: 'white',
+                borderRadius: '12px',
+                border: '3px solid #ff0000', // RED BORDER for visual debugging
+                padding: '0 5px 0 0', // Reduced right padding for iPhone
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              overflow: 'auto',
             zIndex: 5000,
-            display: 'flex',
+                    display: 'flex',
             flexDirection: 'column'
           }}
           ref={(el) => {
@@ -456,21 +469,28 @@ const GameScreen: React.FC = () => {
               const rect = el.getBoundingClientRect();
               const screenHeight = window.innerHeight;
               const drawerBottom = rect.top + rect.height;
-              const calculation1 = (screenHeight - 100) - (34 + 40 + 20);
-              const calculation2 = screenHeight * 0.75;
-              const chosenHeight = Math.min(calculation1, calculation2);
+              
+              // Get the actual closing icon position
+              const closeButton = document.querySelector('.settings-drawer .drawer-close') as HTMLElement;
+              const closeButtonRect = closeButton?.getBoundingClientRect();
+              const iconBottom = closeButtonRect ? closeButtonRect.bottom : 50; // fallback
+              const gap = 10;
+              const bottomMargin = 50; // 30px original + 20px reduction = 50px total
+              const expectedDrawerTop = iconBottom + gap;
+              const chosenHeight = screenHeight - expectedDrawerTop - bottomMargin;
               
               console.log('🔧 Settings drawer DEBUG:', {
                 screenHeight: screenHeight,
-                drawerTop: rect.top,
+                iconBottom: iconBottom,
+                expectedDrawerTop: expectedDrawerTop,
+                actualDrawerTop: rect.top,
                 drawerHeight: rect.height,
                 drawerBottom: drawerBottom,
                 distanceFromBottom: screenHeight - drawerBottom,
-                calculation1: calculation1,
-                calculation2: calculation2,
                 chosenHeight: chosenHeight,
                 actualHeight: rect.height,
-                PROBLEM: drawerBottom > screenHeight ? 'DRAWER EXTENDS OFF SCREEN!' : 'OK'
+                PROBLEM: drawerBottom > screenHeight ? 'DRAWER EXTENDS OFF SCREEN!' : 'OK',
+                POSITIONING: Math.abs(rect.top - expectedDrawerTop) > 2 ? 'DRAWER NOT POSITIONED 10PX BELOW ICON!' : 'OK'
               });
             }
           }}>
@@ -484,7 +504,7 @@ const GameScreen: React.FC = () => {
         <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
           background: 'transparent !important',
           width: 'auto', // Let content determine width
-          maxWidth: '500px', // Maximum width constraint
+          maxWidth: '320px', // Reduced for iPhone - was 500px
           minWidth: '280px' // Minimum width constraint
         }}>
           <div className="menu-drawer-container" style={{
@@ -505,7 +525,7 @@ const GameScreen: React.FC = () => {
                 aria-label="Close Menu"
                 style={{
                   position: 'fixed',
-                  top: 'calc(10px + env(safe-area-inset-top))', // Move down 10px for iPad layouts
+                  top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
                   right: 'calc(10px + env(safe-area-inset-right))',
                   background: 'rgba(255, 255, 255, 0.9)',
                   border: 'none',
@@ -530,22 +550,24 @@ const GameScreen: React.FC = () => {
                     </div>
             <div className="drawer-content" style={{
               position: 'fixed',
-              top: 'calc(10px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + gap
-              right: 'calc(10px + env(safe-area-inset-right) + 20px)', // Align right edge with hamburger icon center
+              top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + gap
+              right: 'calc(10px + env(safe-area-inset-right) + 5px)', // Reduced margin by 50% for iPhone
               left: 'auto',
-              width: '450px',
+              width: '320px', // Slightly increased to reduce gap from left edge
               height: `${window.innerHeight - 60 - 15}px`, // Extend to 15px above bottom of screen
               background: 'transparent',
               borderRadius: '12px',
-              border: '3px solid #ff0000', // RED BORDER
+              border: 'none', // Removed outer green border
               padding: '0',
               margin: '0',
               boxSizing: 'border-box',
               overflow: 'hidden',
               zIndex: 1002,
               boxShadow: 'none',
-              display: 'flex',
-              flexDirection: 'column'
+                    display: 'flex',
+                    flexDirection: 'column',
+              // Add gradient background: content area with green border, then transparent below
+              backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.95) 70%, transparent 100%)'
             }}
             ref={(el) => {
               if (el) {
@@ -571,20 +593,84 @@ const GameScreen: React.FC = () => {
                 top: '0',
                 left: '0',
                 right: '-3px', // Extend exactly to red border edge (3px red border width)
-                height: '705px', // Set specific height to encompass menu content
+                height: '655px', // Reduced by 35px to hug content bottom
                 maxHeight: '100%', // Don't exceed red container height
                 margin: '0',
                 boxSizing: 'border-box',
                 background: 'white',
-                padding: '10px',
+                padding: '0',
                 overflow: 'auto', // Standard browser scrolling
-                width: '100%' // Use full width of container
+                width: '100%', // Use full width of container
+                zIndex: 1500 // ABOVE overlay (1000) to ensure it appears on top
               }}>
                 <MenuDrawerContent />
               </div>
+              
+
+
               </div>
               </div>
               </div>
+      )}
+
+
+      
+      {/* Settings drawer overlay - covers entire screen except settings area, but respects orange boundary */}
+      {isSettingsDrawerOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Start at drawer top, not screen top
+          left: '0',
+          right: '0',
+          bottom: '0',
+          width: '100vw',
+          height: 'calc(100vh - env(safe-area-inset-top) - 40px - 10px)', // Adjust height to match top offset
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 1000, // Above main content but below settings drawer content (5000)
+          pointerEvents: 'none', // Don't interfere with interactions
+          // Create cutout for settings drawer area
+          clipPath: `polygon(
+            0% 0%, 
+            0% 100%, 
+            20px 100%, 
+            20px 0%, 
+            300px 0%, 
+            300px 650px, 
+            20px 650px, 
+            20px 100%, 
+            100% 100%, 
+            100% 0%
+          )`
+        }} />
+      )}
+
+      {/* Menu drawer overlay - covers entire screen except green rectangle area */}
+      {isMenuDrawerOpen && currentLayout.orientation === 'portrait' && (
+        <div style={{
+          position: 'fixed',
+          top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Start at drawer top, not screen top
+          left: '0',
+          right: '0',
+          bottom: '0',
+          width: '100vw',
+          height: 'calc(100vh - env(safe-area-inset-top) - 40px - 10px)', // Adjust height to match top offset
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 1400, // Above main content but below green rectangle (1500)
+          pointerEvents: 'none', // Don't interfere with interactions
+          // Create cutout for green rectangle area
+          clipPath: `polygon(
+            0% 0%, 
+            0% 100%, 
+            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 100%, 
+            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 0%, 
+            calc(100vw - 10px - env(safe-area-inset-right) - 5px + 3px) 0%, 
+            calc(100vw - 10px - env(safe-area-inset-right) - 5px + 3px) 655px, 
+            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 655px, 
+            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 100%, 
+            100% 100%, 
+            100% 0%
+          )`
+        }} />
       )}
 
       {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}
@@ -613,7 +699,7 @@ const GameScreen: React.FC = () => {
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'rgba(0,0,0,0.5)',
+            background: 'transparent', // TEMPORARILY DISABLED: 'rgba(0,0,0,0.5)',
             zIndex: 3999,
             pointerEvents: 'auto',
             touchAction: 'none',
@@ -649,7 +735,7 @@ const GameScreen: React.FC = () => {
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'rgba(0,0,0,0.5)',
+            background: 'transparent', // TEMPORARILY DISABLED: 'rgba(0,0,0,0.5)',
             zIndex: 999,
             pointerEvents: 'auto',
             touchAction: 'none',

@@ -46,9 +46,10 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           gap: '5px',
           flex: '1',
           overflow: 'auto', // Standard browser scrolling
-          paddingRight: '8px',
-          paddingTop: '5px',
-          minWidth: '420px',
+          paddingRight: '0',
+          paddingTop: '0',
+          paddingLeft: '0',
+          minWidth: '280px', // Reduced from 420px to allow expansion
           width: '100%',
           // Minimal scrollbar styling
           scrollbarWidth: 'thin',
@@ -59,7 +60,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '8px',
-          padding: '12px',
+          padding: '0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <Scratchpad />
@@ -69,7 +70,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '8px',
-          padding: '12px',
+          padding: '0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <HintPurchasing />
@@ -79,7 +80,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '8px',
-          padding: '12px',
+          padding: '0',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <ScoreArea />
