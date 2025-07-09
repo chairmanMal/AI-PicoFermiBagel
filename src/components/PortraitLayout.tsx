@@ -78,7 +78,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
     // Apply red border to portrait container
     const portraitContainer = portraitRef.current;
     if (portraitContainer) {
-      portraitContainer.style.setProperty('border', '2px solid red', 'important');
+      // portraitContainer.style.setProperty('border', '2px solid red', 'important'); // DISABLED for production
       portraitContainer.style.setProperty('position', 'fixed', 'important');
       portraitContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
       portraitContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
@@ -157,7 +157,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       // Step 5: Position portrait content container and apply orange border
       const portraitContentEl = document.querySelector('.portrait-content') as HTMLElement;
       if (portraitContentEl) {
-        portraitContentEl.style.setProperty('border', '2px solid orange', 'important');
+        // portraitContentEl.style.setProperty('border', '2px solid orange', 'important'); // DISABLED for production
         portraitContentEl.style.setProperty('position', 'fixed', 'important');
         portraitContentEl.style.setProperty('top', `${orangeBorder.top}px`, 'important');
         portraitContentEl.style.setProperty('left', `${orangeBorder.left}px`, 'important');

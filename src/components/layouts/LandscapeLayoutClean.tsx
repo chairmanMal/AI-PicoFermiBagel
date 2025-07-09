@@ -82,7 +82,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         // Apply red border to landscape container
         const landscapeContainer = landscapeRef.current;
         if (landscapeContainer) {
-          landscapeContainer.style.setProperty('border', '2px solid red', 'important');
+          // landscapeContainer.style.setProperty('border', '2px solid red', 'important'); // DISABLED for production
           landscapeContainer.style.setProperty('position', 'fixed', 'important');
           landscapeContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
           landscapeContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
@@ -96,7 +96,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         // Apply orange border to 3-column container
         const orangeContainer = document.querySelector('.orange-container') as HTMLElement;
         if (orangeContainer) {
-          orangeContainer.style.setProperty('border', '2px solid orange', 'important');
+          // orangeContainer.style.setProperty('border', '2px solid orange', 'important'); // DISABLED for production
           orangeContainer.style.setProperty('position', 'absolute', 'important');
           orangeContainer.style.setProperty('top', `${titleAreaHeight + 15}px`, 'important');
           orangeContainer.style.setProperty('left', '0px', 'important');

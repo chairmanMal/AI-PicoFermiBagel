@@ -456,7 +456,7 @@ const GameScreen: React.FC = () => {
             height: '650px', // Set to 650px height
                             background: 'white',
                 borderRadius: '12px',
-                border: '3px solid #ff0000', // RED BORDER for visual debugging
+                // border: '3px solid #ff0000', // RED BORDER for visual debugging - DISABLED
                 padding: '0 5px 0 0', // Reduced right padding for iPhone
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               overflow: 'auto',
@@ -587,7 +587,7 @@ const GameScreen: React.FC = () => {
               }
             }}>
               <div style={{
-                border: '2px solid #00ff00', // GREEN BORDER
+                // border: '2px solid #00ff00', // GREEN BORDER - DISABLED
                 borderRadius: '8px',
                 position: 'absolute',
                 top: '0',
