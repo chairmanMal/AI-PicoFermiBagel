@@ -841,47 +841,7 @@
   background: #e2e8f0 !important;
 } 
 
-/* iPad Portrait mode: Remove positioning/sizing constraints but keep content visible */
+/* iPad Portrait mode: Let JavaScript handle all drawer positioning and scrolling */
 @media (orientation: portrait) and (min-width: 768px) and (max-width: 1024px) {
-  .menu-drawer-container .drawer-content {
-    /* Keep content visible but remove layout constraints */
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    /* Remove ALL height, width, position, and layout constraints */
-    height: unset !important;
-    width: unset !important;
-    min-width: unset !important;
-    max-width: unset !important;
-    min-height: unset !important;
-    max-height: unset !important;
-    position: unset !important;
-    left: unset !important;
-    right: unset !important;
-    top: unset !important;
-    bottom: unset !important;
-    margin: unset !important;
-    margin-top: unset !important;
-    margin-left: unset !important;
-    margin-right: unset !important;
-    margin-bottom: unset !important;
-    flex: unset !important;
-    flex-grow: unset !important;
-    flex-shrink: unset !important;
-    flex-basis: unset !important;
-    /* Keep visual styles */
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 15px !important;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
-    flex-direction: column !important;
-    gap: 15px !important;
-    background: white !important;
-    border-radius: 0 12px 0 0 !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
-    scrollbar-width: auto !important;
-    scrollbar-color: #64748b #e2e8f0 !important;
-    touch-action: pan-y !important;
-    /* Let JS handle all layout/positioning */
-  }
+  /* No CSS overrides - let JavaScript handle everything */
 } 

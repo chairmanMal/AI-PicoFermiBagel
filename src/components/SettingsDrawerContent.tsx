@@ -114,19 +114,18 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
         ref={scrollContainerRef}
         style={{
           flex: '1',
-          overflow: 'auto', // Simple scrolling like iPhone menu drawer
-          WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+          overflow: 'auto', // Standard browser scrolling
           position: 'relative',
-          paddingRight: '30px', // More space between content and scrollbar
-          width: '100%', // Full width
-          background: 'white', // Ensure content has white background
-          borderRadius: '12px 12px 12px 12px', // All corners rounded
-          boxShadow: '4px 0 20px rgba(0, 0, 0, 0.15)', // Add back shadow for content
-          padding: '15px', // Add proper padding for content
-          margin: '0', // Remove any margin
-          /* DEBUG: Cyan border for settings scrollable content - REMOVED */
-          /* border: '3px solid cyan' */
+          width: '100%',
+          background: 'white',
+          borderRadius: '12px',
+          padding: '15px',
+          margin: '0',
+          // Minimal scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 #f1f5f9'
         }}
+        className="settings-drawer-scrollable"
       >
         {/* Direct menu content without drawer wrapper */}
         <div className="menu-section" style={{ 

@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import Scratchpad from './Scratchpad';
 import HintPurchasing from './HintPurchasing';
 import ScoreArea from './ScoreArea';
-import CustomScrollIndicator from './CustomScrollIndicator';
+// Removed CustomScrollIndicator - using standard browser scrolling
 
 /**
  * MenuDrawerContent - A self-contained library component for menu drawer content
@@ -24,7 +24,7 @@ interface MenuDrawerContentProps {
 }
 
 const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Removed scrollContainerRef - using standard browser scrolling
 
   // Simple scrolling implementation like iPhone menu drawer - no custom scrollbar hiding
   // Let the system handle scrollbars naturally
@@ -39,19 +39,20 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
       position: 'relative'
     }}>
       <div 
-        ref={scrollContainerRef}
         className="menu-drawer-scroll"
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '5px', // Match Column 1 spacing
+          gap: '5px',
           flex: '1',
-          overflow: 'auto', // Simple scrolling like iPhone menu drawer
-          WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-          paddingRight: '8px', // Reduced from 16px to give more space
-          paddingTop: '5px', // Move content down slightly to align with other columns
-          minWidth: '420px', // Increased to match new drawer minimum width
-          width: '100%' // Use full available width
+          overflow: 'auto', // Standard browser scrolling
+          paddingRight: '8px',
+          paddingTop: '5px',
+          minWidth: '420px',
+          width: '100%',
+          // Minimal scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 #f1f5f9'
         }}
       >
         {/* Scratchpad Section */}
@@ -85,8 +86,7 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
         </div>
       </div>
       
-      {/* Custom Scroll Indicator */}
-      <CustomScrollIndicator containerRef={scrollContainerRef} />
+      {/* Using standard browser scrolling - no custom indicator needed */}
     </div>
   );
 };

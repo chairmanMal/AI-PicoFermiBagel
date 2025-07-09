@@ -657,6 +657,12 @@
   .selection-section {
     padding: clamp(8px, 1.5vw, 12px) !important; /* Reverted back - this was fine */
   }
+  
+  /* Override drawer-content max-height for iPad portrait mode - let JavaScript control height */
+  .settings-drawer .drawer-content {
+    max-height: none !important; /* Remove CSS height constraints */
+    /* Don't override height - let JavaScript set it */
+  }
 }
 
 /* iPad Landscape Mode - Disable ALL CSS scaling, let JavaScript handle it exclusively */
@@ -931,9 +937,7 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     width: auto !important;
     max-width: none !important;
     min-width: auto !important;
-    /* Reasonable height */
-    height: auto !important;
-    max-height: calc(100vh - 20px - 48px - 10px - 20px) !important;
+    /* Reasonable height - REMOVED height and max-height overrides to let JavaScript control */
     /* Restore normal styling */
     background: #e9ecef !important; /* Darker grey background */
     border-radius: 12px !important;
@@ -1009,43 +1013,45 @@ button, input[type="button"], input[type="submit"], input[type="range"], .btn {
     margin-bottom: 10px !important;
   }
   
-  /* Let JavaScript handle mobile drawer positioning - no CSS overrides */
-  .mobile-drawer .drawer-content {
-    /* Remove all positioning overrides - let JavaScript handle it */
-  }
-  
-  /* Removed custom scrollbar styles - using simple iPhone menu drawer approach */
-  
-  /* Settings drawer positioning for iPad portrait - use simple approach like iPhone menu drawer */
-  .settings-drawer .drawer-content {
-    /* Use simple scrolling like iPhone menu drawer */
-    overflow: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    /* Remove absolute positioning - let parent handle it */
-    position: relative !important;
-    /* Remove forced dimensions - let content determine size */
-    width: auto !important;
-    height: auto !important;
-    max-width: none !important;
-    min-width: none !important;
-    max-height: none !important;
-    min-height: none !important;
-    /* Remove transform scaling */
-    transform: none !important;
-    /* Keep basic visual styles */
-    background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    padding: 15px !important;
-    margin: 0 !important;
-    /* Remove custom scrollbar - use system default */
-    scrollbar-width: auto !important;
-    scrollbar-color: auto !important;
-    /* Allow normal touch interactions */
-    touch-action: auto !important;
-  }
-  
-  /* Removed custom scrollbar styles - using simple iPhone menu drawer approach */
+  /* Let JavaScript handle all drawer positioning and scrolling - no CSS overrides */
+}
+
+/* Minimal scrollbar styling for settings drawer */
+.settings-drawer-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-drawer-scrollable::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.settings-drawer-scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.settings-drawer-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Minimal scrollbar styling for menu drawer */
+.menu-drawer-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu-drawer-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.menu-drawer-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.menu-drawer-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Force critical style overrides for portrait mode */

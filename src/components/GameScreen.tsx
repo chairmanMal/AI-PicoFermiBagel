@@ -436,35 +436,41 @@ const GameScreen: React.FC = () => {
               ‹
         </button>
         </div>
-          <div className="drawer-content" style={{
+                    <div className="drawer-content" style={{
             position: 'fixed',
-            top: 'calc(10px + env(safe-area-inset-top) + 40px + 20px)', // 20px below settings icon
-            left: 'calc(10px + env(safe-area-inset-left) + 20px)', // Align with center of settings icon
-            width: '350px',
-            maxHeight: 'calc(100vh - 10px - 40px - 20px - 20px)', // Fit on screen with 20px gap
+            top: `${34 + 40 + 20}px`, // Settings button top (34px) + button height (40px) + 20px gap
+            left: `30px`, // Align with settings button center
+            width: '375px',
+            height: `${Math.min((window.innerHeight - 100) - (34 + 40 + 20), window.innerHeight * 0.75)}px`, // Max 75% of screen height
             background: 'white',
             borderRadius: '12px',
-            padding: '15px',
+            padding: '0',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            overflow: 'auto', // Enable scrolling
-            WebkitOverflowScrolling: 'touch',
+            overflow: 'hidden',
             zIndex: 5000,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '15px'
+            flexDirection: 'column'
           }}
           ref={(el) => {
             if (el && isSettingsDrawerOpen) {
               const rect = el.getBoundingClientRect();
-              const computedStyle = window.getComputedStyle(el);
-              console.log('🔧 Settings drawer content position:', {
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-                paddingLeft: computedStyle.paddingLeft,
-                calculatedPaddingLeft: `calc(10px + env(safe-area-inset-left) + 20px)`,
-                safeAreaInsetLeft: getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)')
+              const screenHeight = window.innerHeight;
+              const drawerBottom = rect.top + rect.height;
+              const calculation1 = (screenHeight - 100) - (34 + 40 + 20);
+              const calculation2 = screenHeight * 0.75;
+              const chosenHeight = Math.min(calculation1, calculation2);
+              
+              console.log('🔧 Settings drawer DEBUG:', {
+                screenHeight: screenHeight,
+                drawerTop: rect.top,
+                drawerHeight: rect.height,
+                drawerBottom: drawerBottom,
+                distanceFromBottom: screenHeight - drawerBottom,
+                calculation1: calculation1,
+                calculation2: calculation2,
+                chosenHeight: chosenHeight,
+                actualHeight: rect.height,
+                PROBLEM: drawerBottom > screenHeight ? 'DRAWER EXTENDS OFF SCREEN!' : 'OK'
               });
             }
           }}>
@@ -525,21 +531,21 @@ const GameScreen: React.FC = () => {
             <div className="drawer-content" style={{
               position: 'fixed',
               top: 'calc(10px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + gap
-              right: 'calc(10px + env(safe-area-inset-right) + 20px)', // Align right edge with hamburger icon center (10px + 20px = center of 40px button)
-              left: 'auto', // Remove left positioning to let right positioning work
-              width: '450px', // Fixed width for consistent sizing
-              height: '500px', // Increased height to cover entire Score element including game details
-              background: 'transparent', // FIXED: Make container background transparent
+              right: 'calc(10px + env(safe-area-inset-right) + 20px)', // Align right edge with hamburger icon center
+              left: 'auto',
+              width: '450px',
+              height: `${window.innerHeight - 60 - 15}px`, // Extend to 15px above bottom of screen
+              background: 'transparent',
               borderRadius: '12px',
               border: '3px solid #ff0000', // RED BORDER
               padding: '0',
-              margin: '0', // Remove any margin
-              boxSizing: 'border-box', // Include border in width calculation
+              margin: '0',
+              boxSizing: 'border-box',
               overflow: 'hidden',
               zIndex: 1002,
-              boxShadow: 'none', // FIXED: Remove shadow since background is transparent
-                        display: 'flex',
-                        flexDirection: 'column'
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             ref={(el) => {
               if (el) {
@@ -561,45 +567,24 @@ const GameScreen: React.FC = () => {
               <div style={{
                 border: '2px solid #00ff00', // GREEN BORDER
                 borderRadius: '8px',
-                position: 'absolute', // Use absolute positioning to match red border exactly
+                position: 'absolute',
                 top: '0',
                 left: '0',
-                right: '-3px', // FIXED: Extend past red border (3px red border width)
-                margin: '0', // Remove any margin
-                boxSizing: 'border-box', // Include border in width calculation
-                height: 'fit-content', // FIXED: Only extend to content height, not full container
-                maxHeight: '100%', // FIXED: Don't exceed container height
+                right: '-3px', // Extend exactly to red border edge (3px red border width)
+                height: '705px', // Set specific height to encompass menu content
+                maxHeight: '100%', // Don't exceed red container height
+                margin: '0',
+                boxSizing: 'border-box',
                 background: 'white',
-                padding: '5px 10px 10px 5px', // FIXED: Reduce left padding by 50% (10px -> 5px)
-                overflow: 'auto', // FIXED: Enable scrolling when content exceeds container
-                WebkitOverflowScrolling: 'touch',
-                transform: (() => {
-                  // Calculate scaling based on available width (no margins now)
-                  const availableWidth = window.innerWidth - 15 - 30; // left margin + right margin only
-                  const naturalContentWidth = 420; // From MenuDrawerContent
-                  const scale = Math.max(0.5, Math.min(1.0, availableWidth / naturalContentWidth));
-                  console.log('🔍 SCALING CALCULATION:', {
-                    availableWidth: `${availableWidth}px`,
-                    naturalContentWidth: `${naturalContentWidth}px`,
-                    scale: `${scale}`,
-                    transform: `scale(${scale})`
-                  });
-                  return `scale(${scale})`;
-                })(),
-                transformOrigin: 'top left',
-                width: '420px' // Set to natural content width, then scale
+                padding: '10px',
+                overflow: 'auto', // Standard browser scrolling
+                width: '100%' // Use full width of container
               }}>
-                <div style={{
-                  width: '415px', // Increase width since no right padding
-                  minHeight: '100%',
-                  paddingRight: '20px' // Move scrollbar space to content container
-                }}>
-                  <MenuDrawerContent />
+                <MenuDrawerContent />
               </div>
               </div>
               </div>
               </div>
-            </div>
       )}
 
       {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}
