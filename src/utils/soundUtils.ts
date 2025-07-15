@@ -18,6 +18,22 @@ class SoundUtils {
     this.initializeAudioContext();
     this.initializeRoundRobinIndices();
     this.generateVolumeLevel(5); // Generate default level (10%) immediately
+    
+    // Ensure default volume level is ready for immediate playback
+    this.ensureDefaultVolumeReady();
+  }
+
+  // Ensure default volume level is ready for immediate playback
+  private async ensureDefaultVolumeReady() {
+    // Wait a bit for the initial generation to complete
+    setTimeout(async () => {
+      if (!this.preCalculatedAudio.has(this.currentVolumeLevel)) {
+        console.log('🎵 ⚠️ Default volume level not ready, regenerating...');
+        await this.generateVolumeLevel(this.currentVolumeLevel);
+      } else {
+        console.log('🎵 ✅ Default volume level ready for playback');
+      }
+    }, 100);
   }
 
   private initializeAudioContext() {
@@ -488,19 +504,33 @@ class SoundUtils {
   private playSound(soundName: string) {
     console.log(`🎵 🎯 Attempting to play ${soundName} sound...`);
     console.log(`🎵 🔍 AudioContext state: ${this.audioContext?.state}`);
+    console.log(`🎵 🔍 AudioContext activated: ${this.audioContextActivated}`);
     console.log(`🎵 🔍 Master volume: ${this.masterVolume}`);
+    console.log(`🎵 🔍 Current volume level: ${this.currentVolumeLevel}`);
+    
+    // Ensure audio is activated before attempting to play
+    if (!this.audioContextActivated && this.audioContext) {
+      console.log('🎵 🎯 Auto-activating audio before playing sound...');
+      this.activateAudio().catch(error => {
+        console.error('🎵 ❌ Failed to auto-activate audio:', error);
+      });
+    }
     
     // Try HTML5 Audio first for iOS silent mode compatibility
     const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
     if (levelAudioMap) {
       const audioPool = levelAudioMap.get(soundName);
       if (audioPool && audioPool.length > 0) {
+        console.log(`🎵 ✅ Found audio pool for ${soundName}, size: ${audioPool.length}`);
         try {
           const currentIdx = this.currentIndex.get(soundName) || 0;
           const audio = audioPool[currentIdx];
           
+          console.log(`🎵 🔍 Audio element ${currentIdx} ready state: ${audio.readyState}`);
+          
           // Stop any currently playing instance to prevent overlaps
           if (!audio.paused) {
+            console.log(`🎵 ⏸️ Stopping currently playing audio`);
             audio.pause();
           }
           
@@ -546,6 +576,21 @@ class SoundUtils {
       this.playWithWebAudio(soundName);
     } else {
       console.log(`🎵 ⚠️ Skipping audio playback during regeneration`);
+    }
+    
+    // Final fallback: Try to create and play a simple audio element as last resort
+    console.log(`🎵 🚨 Final fallback: Creating simple audio element for ${soundName}`);
+    try {
+      const fallbackAudio = new Audio();
+      fallbackAudio.src = this.createToneDataUrlWithVolume(800, 0.08, 0.1); // Simple tone
+      fallbackAudio.volume = 0.1;
+      fallbackAudio.play().then(() => {
+        console.log(`🎵 ✅ Fallback audio played successfully for ${soundName}`);
+      }).catch(error => {
+        console.error(`🎵 ❌ Fallback audio also failed for ${soundName}:`, error);
+      });
+    } catch (error) {
+      console.error(`🎵 ❌ Failed to create fallback audio for ${soundName}:`, error);
     }
   }
 
@@ -817,7 +862,58 @@ class SoundUtils {
     const blob = new Blob([buffer], { type: 'audio/wav' });
     return URL.createObjectURL(blob);
   }
+
+  // Public test method for debugging
+  testSoundSystem() {
+    console.log('🎵 🧪 Testing sound system...');
+    this.debugSoundSystem();
+    
+    // Try to play a test sound
+    console.log('🎵 🧪 Attempting to play test sound...');
+    this.playDigitPlaceSound();
+    
+    // Check if audio context is ready
+    if (this.audioContext) {
+      console.log(`🎵 🧪 AudioContext state: ${this.audioContext.state}`);
+      if (this.audioContext.state === 'suspended') {
+        console.log('🎵 🧪 AudioContext is suspended, attempting to resume...');
+        this.audioContext.resume().then(() => {
+          console.log('🎵 🧪 AudioContext resumed successfully');
+        }).catch(error => {
+          console.error('🎵 🧪 Failed to resume AudioContext:', error);
+        });
+      }
+    }
+  }
+
+  // Debug method to test sound system
+  debugSoundSystem() {
+    console.log('🎵 🔍 Sound System Debug Info:');
+    console.log(`🎵   AudioContext state: ${this.audioContext?.state}`);
+    console.log(`🎵   AudioContext activated: ${this.audioContextActivated}`);
+    console.log(`🎵   Master volume: ${this.masterVolume}`);
+    console.log(`🎵   Current volume level: ${this.currentVolumeLevel}`);
+    console.log(`🎵   Pre-calculated audio levels: ${Array.from(this.preCalculatedAudio.keys()).join(', ')}`);
+    
+    const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
+    if (levelAudioMap) {
+      console.log(`🎵   Available sounds for level ${this.currentVolumeLevel}: ${Array.from(levelAudioMap.keys()).join(', ')}`);
+      const digitPool = levelAudioMap.get('digit');
+      if (digitPool) {
+        console.log(`🎵   Digit sound pool size: ${digitPool.length}`);
+        console.log(`🎵   Digit sound ready states: ${digitPool.map(audio => audio.readyState).join(', ')}`);
+      }
+    } else {
+      console.log(`🎵   ⚠️ No audio available for level ${this.currentVolumeLevel}`);
+    }
+  }
 }
 
 // Create a singleton instance
 export const soundUtils = new SoundUtils();
+
+// Expose to global scope for debugging
+if (typeof window !== 'undefined') {
+  (window as any).soundUtils = soundUtils;
+  console.log('🎵 SoundUtils exposed to global scope as window.soundUtils');
+}

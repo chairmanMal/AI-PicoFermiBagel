@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { HelpCircle } from 'lucide-react';
+import { useGameStore } from '@/stores/gameStore';
 import YourGuessBlock from '../blocks/YourGuessBlock';
 import SelectionArea from '../SelectionArea';
 import MenuDrawerContent from '../MenuDrawerContent';
@@ -11,176 +13,181 @@ interface LandscapeLayoutCleanProps {
 
 const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElementRef }) => {
   const landscapeRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const { settings } = useGameStore();
+
+  // Show help toast for Number Selection
+  const showNumberSelectionHelp = () => {
+    console.log(`🔍 Number Selection Help clicked - showing toast`);
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483647;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      padding-top: 80px;
+    `;
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+        <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px;">Number Selection Help</h3>
+        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
+          <strong>Tap</strong> any number to automatically fill the next available position in your guess.
+        </p>
+        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
+          <strong>Drag</strong> a number to place it in a specific position in your guess.
+        </p>
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+          Numbers 0-${settings.digitRange} are available for this game mode.
+        </p>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          margin-top: 15px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+        ">Got it!</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+  };
 
   useEffect(() => {
-    console.log('🎯 ========= LANDSCAPE LAYOUT BUILD 808 - NATURAL EXPANSION + REMAINING SPACE ========= 🎯');
+    console.log('🎯 ========= LANDSCAPE LAYOUT CLEAN - CONTENT-ONLY AUTO-SCALING ========= 🎯');
+    console.log('🎯 VIEWPORT:', `${window.innerWidth}x${window.innerHeight}`);
+
+    // Get the actual block containers
+    const yourGuessBlock = document.querySelector('.your-guess-block') as HTMLElement;
+    const numberSelectionBlock = document.querySelector('.number-selection-block') as HTMLElement;
     
-    const viewport = {
-      width: window.innerWidth,
-      height: window.innerHeight
-    };
-    
-    console.log('📐 VIEWPORT:', `${viewport.width}x${viewport.height}`);
-    
-    // Calculate title and subtitle heights first
-    setTimeout(() => {
-      const titleElement = document.querySelector('.landscape-title') as HTMLElement;
-      const subtitleElement = document.querySelector('.landscape-subtitle') as HTMLElement;
-      
-      if (titleElement && subtitleElement) {
-        const titleHeight = titleElement.offsetHeight;
-        const subtitleHeight = subtitleElement.offsetHeight;
-        const titleAreaHeight = titleHeight + subtitleHeight + 5; // 5px gap between title and subtitle
-        
-        console.log('📝 TITLE AREA:', { titleHeight, subtitleHeight, totalHeight: titleAreaHeight });
-        
-        // RED BORDER: Displayable area
-        const redBorder = {
-          top: 10, // 10px from top
-          left: 5, // 5px from left edge
-          right: 5, // 5px from right edge  
-          bottom: 10, // 10px from bottom
-          width: viewport.width - 10, // 5px each side
-          height: viewport.height - 20 // 10px top + 10px bottom
-        };
-        
-        console.log('🔴 RED BORDER (Displayable Area):', redBorder);
-        
-        // ORANGE BORDER: 3-column container within red border, below subtitle
-        const orangeBorder = {
-          top: redBorder.top + titleAreaHeight + 15, // 15px below subtitle (reduced from 30px by 50%)
-          left: redBorder.left,
-          right: redBorder.right,
-          bottom: redBorder.bottom,
-          width: redBorder.width,
-          height: redBorder.height - titleAreaHeight - 15
-        };
-        
-        console.log('🟠 ORANGE BORDER (3-Column Container):', orangeBorder);
-        
-        // COLUMN CALCULATIONS
-        const columnGap = 5; // 5px gaps between columns
-        const totalGaps = 2 * columnGap; // 2 gaps for 3 columns
-        const columnWidth = (orangeBorder.width - totalGaps) / 3;
-        
-        console.log('📊 COLUMNS:', {
-          columnWidth: columnWidth.toFixed(1),
-          columnGap,
-          totalWidth: (columnWidth * 3 + totalGaps).toFixed(1),
-          availableHeight: orangeBorder.height
-        });
-        
-        // SUBMIT BUTTON: Above column 1, centered horizontally over column 1
-        const submitButton = {
-          top: orangeBorder.top - 96, // 96px above orange border (76px button height + 20px margin)
-          left: redBorder.left + (columnWidth / 2) - 38, // Center above column 1 (button is 76px wide)
-          width: 76,
-          height: 76
-        };
-        
-        console.log('🔘 SUBMIT BUTTON:', submitButton);
-        
-        // Apply red border to landscape container
-        const landscapeContainer = landscapeRef.current;
-        if (landscapeContainer) {
-          // landscapeContainer.style.setProperty('border', '2px solid red', 'important'); // DISABLED for production
-          landscapeContainer.style.setProperty('position', 'fixed', 'important');
-          landscapeContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
-          landscapeContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
-          landscapeContainer.style.setProperty('width', `${redBorder.width}px`, 'important');
-          landscapeContainer.style.setProperty('height', `${redBorder.height}px`, 'important');
-          landscapeContainer.style.setProperty('z-index', '50', 'important');
-          
-          console.log('✅ RED BORDER: Applied to landscape container');
-        }
-        
-        // Apply orange border to 3-column container
-        const orangeContainer = document.querySelector('.orange-container') as HTMLElement;
-        if (orangeContainer) {
-          // orangeContainer.style.setProperty('border', '2px solid orange', 'important'); // DISABLED for production
-          orangeContainer.style.setProperty('position', 'absolute', 'important');
-          orangeContainer.style.setProperty('top', `${titleAreaHeight + 15}px`, 'important');
-          orangeContainer.style.setProperty('left', '0px', 'important');
-          orangeContainer.style.setProperty('width', `${orangeBorder.width}px`, 'important');
-          orangeContainer.style.setProperty('height', `${orangeBorder.height}px`, 'important');
-          orangeContainer.style.setProperty('display', 'flex', 'important');
-          orangeContainer.style.setProperty('gap', `${columnGap}px`, 'important');
-          
-          console.log('✅ ORANGE BORDER: Applied to 3-column container');
-        }
-        
-                 // SUBMIT BUTTON: Now in Column 2 - no positioning needed
-         console.log('✅ SUBMIT BUTTON: Moved to Column 2, no absolute positioning needed');
-        
-        // Smart scaling: Only scale Number Selection buttons to fit remaining space
-        setTimeout(() => {
-          const column1 = document.querySelector('.landscape-column:first-child') as HTMLElement;
-          if (column1) {
-            const selectionBlock = column1.querySelector('div:last-child') as HTMLElement;
-            if (selectionBlock) {
-              const numberButtons = selectionBlock.querySelectorAll('.number-button');
-              
-              console.log(`🎯 SMART SCALING: Found ${numberButtons.length} number buttons to scale`);
-              
-              if (numberButtons.length > 0) {
-                // Check if Number Selection content overflows its allocated space
-                const selectionContentHeight = selectionBlock.scrollHeight;
-                const selectionAllocatedHeight = selectionBlock.offsetHeight;
-                const selectionOverhead = 100; // Title, subtitle, padding
-                const availableSelectionHeight = selectionAllocatedHeight - selectionOverhead;
-                
-                console.log(`   📐 Selection Content: ${selectionContentHeight}px`);
-                console.log(`   📐 Selection Allocated: ${selectionAllocatedHeight}px`);
-                console.log(`   📐 Selection Available: ${availableSelectionHeight}px`);
-                
-                if (selectionContentHeight > availableSelectionHeight) {
-                  const selectionScale = Math.max(0.5, availableSelectionHeight / selectionContentHeight);
-                  
-                  console.log(`   🎯 SCALING NUMBER BUTTONS: ${selectionScale.toFixed(3)}x (${(selectionScale * 100).toFixed(1)}%)`);
-                  
-                  numberButtons.forEach(button => {
-                    (button as HTMLElement).style.setProperty('transform', `scale(${selectionScale})`, 'important');
-                    (button as HTMLElement).style.setProperty('transform-origin', 'center', 'important');
-                  });
-                  
-                  console.log(`   ✅ APPLIED SCALING: ${selectionScale.toFixed(3)}x to prevent clipping`);
-                } else {
-                  console.log(`   ✅ NO SCALING NEEDED: Number Selection fits naturally`);
-                }
-              }
-            }
-          }
-          
-          // Apply improved scaling to other columns using actual available area
-          const otherColumns = document.querySelectorAll('.landscape-column:not(:first-child)');
-          otherColumns.forEach((column, index) => {
-            const columnElement = column as HTMLElement;
-            const contentElement = columnElement.querySelector('div') as HTMLElement;
-            
-            if (contentElement) {
-              const contentHeight = contentElement.scrollHeight;
-              const containerHeight = columnElement.offsetHeight;
-              // Column 3 has no padding, others have 10px (5px top + 5px bottom)
-              const columnPadding = (index === 1) ? 0 : 10; // Column 3 (index 1) has no padding
-              const availableHeight = containerHeight - columnPadding;
-              
-              console.log(`📏 COLUMN ${index + 2}: Content=${contentHeight}px, Container=${containerHeight}px, Available=${availableHeight}px`);
-              
-              if (contentHeight > availableHeight) {
-                const scaleFactor = Math.max(0.6, availableHeight / contentHeight); // Minimum 60% scale
-                contentElement.style.setProperty('transform', `scale(${scaleFactor})`, 'important');
-                contentElement.style.setProperty('transform-origin', 'top center', 'important');
-                console.log(`📏 COLUMN ${index + 2} SCALED: ${scaleFactor.toFixed(3)}x to fit ${availableHeight}px`);
-              } else {
-                contentElement.style.setProperty('transform', 'none', 'important');
-                console.log(`📏 COLUMN ${index + 2}: No scaling needed`);
-              }
-            }
-          });
-        }, 150);
+    console.log('🎯 Your Guess Block found:', !!yourGuessBlock);
+    console.log('🎯 Number Selection Block found:', !!numberSelectionBlock);
+
+    // Helper to scale only the content grids, not the entire blocks
+    const scaleContentGrids = (containerEl: HTMLElement, blockType: string, minScale = 0.15) => {
+      if (!containerEl) {
+        console.log(`   🎯 No container element found for ${blockType}`);
+        return;
       }
-    }, 100);
+      
+      console.log(`   🎯 Processing ${blockType} container:`, containerEl.className);
+      
+      // Find the content grids within the container (both types)
+      const numbersGrid = containerEl.querySelector('.numbers-grid') as HTMLElement;
+      const guessGrid = containerEl.querySelector('.guess-grid') as HTMLElement;
+      const gridToScale = numbersGrid || guessGrid;
+      
+      if (!gridToScale) {
+        console.log(`   🎯 No grid found in ${blockType} (looked for .numbers-grid and .guess-grid)`);
+        return;
+      }
+      
+      // Set overflow: visible to prevent accidental clipping
+      if (gridToScale.parentElement) gridToScale.parentElement.style.overflow = 'visible';
+      gridToScale.style.overflow = 'visible';
+      
+      console.log(`   🎯 Found grid in ${blockType}:`, gridToScale.className);
+      
+      // Reset scaling first
+      gridToScale.style.transform = 'none';
+      gridToScale.style.transformOrigin = 'top center';
+      
+      // Get the container dimensions
+      const containerHeight = containerEl.offsetHeight;
+      const containerWidth = containerEl.offsetWidth;
+      const gridHeight = gridToScale.scrollHeight;
+      const gridWidth = gridToScale.scrollWidth;
+      
+      // Dynamically measure title and footer heights
+      const titleEl = containerEl.querySelector('.selection-title, .guess-title') as HTMLElement;
+      const footerEl = containerEl.querySelector('.block-footer') as HTMLElement;
+      const titleHeight = titleEl ? titleEl.offsetHeight + 12 : 50; // Add more margin for title
+      const footerHeight = footerEl ? footerEl.offsetHeight + 20 : 50; // Add more padding and margin for footer
+      
+      // Measure numbers-container padding
+      const numbersContainer = containerEl.querySelector('.numbers-container') as HTMLElement;
+      let numbersPadding = 0;
+      if (numbersContainer) {
+        const style = window.getComputedStyle(numbersContainer);
+        numbersPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      }
+      // Measure numbers-grid gap (vertical)
+      let gridGap = 0;
+      if (numbersGrid) {
+        const style = window.getComputedStyle(numbersGrid);
+        gridGap = parseFloat(style.rowGap || style.gap || '0');
+      }
+      
+      const reserved = titleHeight + footerHeight + numbersPadding + gridGap;
+      
+      console.log(`   🎯 ${blockType} measured heights:`, {
+        titleHeight,
+        footerHeight,
+        numbersPadding,
+        gridGap,
+        totalReserved: reserved
+      });
+      
+      // Calculate available space for grid
+      const availableHeight = Math.max(containerHeight - reserved - 10, 100); // Extra 10px buffer
+      const availableWidth = containerWidth - 20; // 10px padding on each side
+      
+      console.log(`   🎯 ${blockType} available space:`, `${availableWidth}x${availableHeight}`);
+      
+      // Calculate scale factors
+      const heightScale = availableHeight / gridHeight;
+      const widthScale = availableWidth / gridWidth;
+      const scale = Math.max(Math.min(heightScale, widthScale), minScale);
+      
+      console.log(`   🎯 ${blockType} scale calculation:`, {
+        heightScale: heightScale.toFixed(3),
+        widthScale: widthScale.toFixed(3),
+        finalScale: scale.toFixed(3)
+      });
+      
+      // Apply scaling if needed
+      if (scale < 1) {
+        gridToScale.style.transform = `scale(${scale})`;
+        console.log(`   🎯 Applied scale ${scale.toFixed(3)} to ${blockType}`);
+      } else {
+        console.log(`   🎯 No scaling needed for ${blockType} (scale would be ${scale.toFixed(3)})`);
+      }
+    };
+
+    // Apply scaling to both blocks
+    if (yourGuessBlock) {
+      scaleContentGrids(yourGuessBlock, 'Your Guess Block');
+    }
     
+    if (numberSelectionBlock) {
+      scaleContentGrids(numberSelectionBlock, 'Number Selection Block');
+    }
+
+    // Cleanup function
+    return () => {
+      console.log('🎯 Cleaning up scaling observers');
+    };
   }, []);
 
   return (
@@ -196,15 +203,15 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         zIndex: 50,
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         pointerEvents: 'auto',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       {/* Title and Subtitle - Top justified, horizontally centered */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '5px',
-        right: '5px',
+      <div ref={headerRef} style={{
+        flex: '0 0 auto',
+        padding: '10px 5px 5px 5px',
         textAlign: 'center',
         color: 'white'
       }}>
@@ -224,35 +231,38 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         </p>
       </div>
       
-      {/* Submit Button moved to Column 2 - no longer positioned here */}
-      
       {/* Orange Container - 3 Columns within red border */}
       <div className="orange-container" style={{
+        flex: '1',
         display: 'flex',
         justifyContent: 'center', // Center the columns horizontally
         alignItems: 'stretch', // Stretch columns to full height
         gap: '5px',
-        padding: '2.5px' // Reduced by 50% from 5px to 2.5px
+        padding: '2.5px 2.5px 12.5px 2.5px', // Added 10px bottom padding (2.5 + 10 = 12.5)
+        minHeight: 0 // Allow container to shrink
       }}>
         {/* Column 1: Target Display + Your Guess + Number Selection stacked */}
         <div className="landscape-column column-1" style={{
-          flex: '1',
+          flex: '1.2', // Reduced from '1.4' to '1.2' (50% less growth)
           display: 'flex',
           flexDirection: 'column',
           gap: '5px',
           height: '100%',
-          padding: '2.5px' // Reduced by 50% from 5px to 2.5px
+          padding: '2.5px', // Reduced by 50% from 5px to 2.5px
+          minHeight: 0 // Allow column to shrink
         }}>
           {/* Target Display - Only shows if enabled */}
-          <div style={{
-            flex: '0 0 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'center'
-          }}>
-            <TargetDisplay />
-          </div>
+          {settings.showTarget && (
+            <div style={{
+              flex: '0 0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'center'
+            }}>
+              <TargetDisplay />
+            </div>
+          )}
           
           {/* Your Guess Block - Natural expansion with embedded submit button */}
           <div style={{
@@ -266,7 +276,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           </div>
           
           {/* Number Selection Block - Takes remaining space */}
-          <div style={{
+          <div className="number-selection-block" style={{
             background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '12px',
             padding: '15px',
@@ -277,19 +287,54 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             flexDirection: 'column',
             justifyContent: 'flex-start',
             alignItems: 'center',
-            overflow: 'hidden'
+            overflow: 'visible',
+            minHeight: 0,
+            position: 'relative'
           }}>
+            {/* Help icon absolutely positioned in upper left - same as Your Guess block */}
+            <button
+              className="help-button"
+              onClick={showNumberSelectionHelp}
+              aria-label="Show help"
+              style={{
+                position: 'absolute',
+                top: '2px',
+                left: '2px',
+                background: 'none',
+                border: 'none',
+                color: '#6b7280',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '6px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 11
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
+                e.currentTarget.style.color = '#374151';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+                e.currentTarget.style.color = '#6b7280';
+              }}
+            >
+              <HelpCircle size={27} />
+            </button>
             <SelectionArea />
           </div>
         </div>
         
-        {/* Column 2: Recent Guesses (Full Height) */}
+        {/* Column 2: Recent Guesses (Reduced Width) */}
         <div className="landscape-column column-2" style={{
-          flex: '1',
+          flex: '0.9', // Increased from '0.8' to '0.9' (50% less reduction)
           height: '100%',
           padding: '2.5px', // Reduced by 50% from 5px to 2.5px
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          minHeight: 0 // Allow column to shrink
         }}>
           {/* Recent Guesses - Takes full available space */}
           <div style={{
@@ -301,7 +346,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             flex: '1', // Takes full available space
             minHeight: 0, // Allow shrinking below content size
             maxHeight: '100%', // Don't exceed container
-            overflow: 'hidden', // Let inner component handle scrolling
+            overflow: 'auto', // Changed from 'hidden' to 'auto' for consistency
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start' // Align to top
@@ -312,9 +357,10 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         
         {/* Column 3: Menu Content (Always Open, No Close Icon) */}
         <div className="landscape-column column-3" style={{
-          flex: '1',
+          flex: '1', // Keep the same width
           height: '100%',
-          padding: '0px' // Remove all padding to make content wider
+          padding: '0px', // Remove all padding to make content wider
+          minHeight: 0 // Allow column to shrink
         }}>
           <div style={{
             background: 'transparent',

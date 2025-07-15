@@ -75,87 +75,83 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      <div 
-        className="your-guess-block"
-        ref={guessElementRef}
+    <div 
+      className="your-guess-block"
+      ref={guessElementRef}
+      style={{
+        background: 'white', // Add white background for portrait mode
+        borderRadius: '12px', // Add rounded corners
+        padding: '16px', // Add padding
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
+        border: '2px solid purple', // ENABLED for debugging - purple border
+        width: '100%',
+        height: '100%', // Fill the full height of the container
+        boxSizing: 'border-box',
+        position: 'relative',
+        margin: '0',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
+      <button
+        className="help-button"
+        onClick={showToast}
+        aria-label="Show help"
         style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '16px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e2e8f0',
-          width: '100%',
-          boxSizing: 'border-box',
-          position: 'relative',
-          minHeight: 'max-content',
-          paddingBottom: '8px',
+          position: 'absolute',
+          top: '-2px',
+          left: '-2px',
+          background: 'none',
+          border: 'none',
+          color: '#6b7280',
+          cursor: 'pointer',
+          padding: '6px',
+          borderRadius: '6px',
+          transition: 'all 0.2s ease',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 11
         }}
       >
-        {/* Help icon absolutely positioned in upper left */}
-        <button
-          className="help-button"
-          onClick={showToast}
-          aria-label="Show help"
-          style={{
-            position: 'absolute',
-            top: '2px',
-            left: '2px',
-            background: 'none',
-            border: 'none',
-            color: '#6b7280',
-            cursor: 'pointer',
-            padding: '6px',
-            borderRadius: '6px',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 11
-          }}
-        >
-          <HelpCircle size={27} />
-        </button>
-        {/* Title centered at the top */}
-        <h3 className="guess-title" style={{
-          margin: '0 0 clamp(4px, 1vw, 8px) 0',
-          fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
-          color: '#1f2937',
-          fontWeight: 600,
-          textAlign: 'center',
-          width: '100%'
-        }}>Your Guess</h3>
-        {/* Submit button in upper right corner */}
-        <div style={{
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          zIndex: 10
-        }}>
-          <CircularSubmitButton />
-        </div>
-        {/* Main content with right padding to avoid overlap with submit button */}
-        <div style={{
-          paddingRight: '80px',
-          marginTop: '16px',
-          width: '100%'
-        }}>
-          <GuessArea />
-        </div>
-        {/* Subtitle as footer */}
-        <div className="block-footer" style={{
-          marginTop: '4px',
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-          color: '#6b7280',
-          fontWeight: 400,
-          textAlign: 'center',
-          width: '100%'
-        }}>
-          Tap a box to select, drag to swap, long-press to lock
-        </div>
+        <HelpCircle size={27} />
+      </button>
+
+      {/* Title centered at the top */}
+      <h3 className="guess-title" style={{
+        margin: '0 0 clamp(4px, 1vw, 8px) 0',
+        fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+        color: '#1f2937',
+        fontWeight: 600,
+        textAlign: 'center',
+        width: '100%'
+      }}>Your Guess</h3>
+      {/* Submit button in upper right corner */}
+      <div style={{
+        position: 'absolute',
+        top: '2px',
+        right: '2px',
+        zIndex: 10
+      }}>
+        <CircularSubmitButton />
+      </div>
+      {/* Main content - directly in card */}
+      <GuessArea />
+
+      {/* Subtitle as footer */}
+      <div className="block-footer" style={{
+        marginTop: '4px',
+        fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+        color: '#6b7280',
+        fontWeight: 400,
+        textAlign: 'center',
+        width: '100%',
+        padding: '0',
+        marginLeft: '0',
+        marginRight: '0'
+      }}>
+        Tap a box to select, drag to swap, long-press to lock
       </div>
     </div>
   );

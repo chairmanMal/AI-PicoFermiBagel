@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { HelpCircle } from 'lucide-react';
+import { useGameStore } from '@/stores/gameStore';
 import TargetDisplay from './TargetDisplay';
 import YourGuessBlock from './blocks/YourGuessBlock';
 import SelectionArea from './SelectionArea';
@@ -10,6 +12,64 @@ interface PortraitLayoutProps {
 
 const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
   const portraitRef = useRef<HTMLDivElement>(null);
+  const { settings } = useGameStore();
+
+  // Show help toast for Number Selection
+  const showNumberSelectionHelp = () => {
+    console.log(`🔍 Number Selection Help clicked - showing toast`);
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483647;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      padding-top: 80px;
+    `;
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+        <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px;">Number Selection Help</h3>
+        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
+          <strong>Tap</strong> any number to automatically fill the next available position in your guess.
+        </p>
+        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
+          <strong>Drag</strong> a number to place it in a specific position in your guess.
+        </p>
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+          Numbers 0-${settings.digitRange} are available for this game mode.
+        </p>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          margin-top: 15px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+        ">Got it!</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+  };
 
   useEffect(() => {
     console.log('🎯 ========= PORTRAIT LAYOUT WITH COLORED BORDERS ========= 🎯');
@@ -78,7 +138,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
     // Apply red border to portrait container
     const portraitContainer = portraitRef.current;
     if (portraitContainer) {
-      // portraitContainer.style.setProperty('border', '2px solid red', 'important'); // DISABLED for production
+      portraitContainer.style.setProperty('border', '2px solid red', 'important'); // ENABLED for debugging
       portraitContainer.style.setProperty('position', 'fixed', 'important');
       portraitContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
       portraitContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
@@ -92,7 +152,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
     // Step 3: Position title section for portrait (centered horizontally, BELOW DRAWER ICONS)
     const titleSection = document.querySelector('.title-section') as HTMLElement;
     if (titleSection) {
-      const titleMarginTop = 25; // Moved up 25px to match icon positioning (was 50px)
+      const titleMarginTop = 35; // Increased from 12px to 35px - move title down to center with drawer icons
       
       titleSection.style.setProperty('position', 'fixed', 'important');
       titleSection.style.setProperty('top', `${redBorder.top + titleMarginTop}px`, 'important');
@@ -114,7 +174,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       const subtitle = titleSection.querySelector('.game-subtitle') as HTMLElement;
       
       if (title) {
-        title.style.margin = '10px 0 5px 0';
+        title.style.margin = '10px 0 7px 0'; // Keep the reduced bottom margin
         title.style.fontSize = '1.8rem';
         title.style.fontWeight = '600';
         title.style.color = 'white';
@@ -122,13 +182,15 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       }
       
       if (subtitle) {
-        subtitle.style.margin = '0 0 10px 0';
+        subtitle.style.margin = '0 0 0 0'; // Reset all margins
+        subtitle.style.position = 'relative'; // Enable positioning
+        subtitle.style.top = '-10px'; // Keep subtitle close to title
         subtitle.style.fontSize = '1.1rem';
         subtitle.style.color = 'rgba(255, 255, 255, 0.9)';
         subtitle.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
       }
       
-      console.log('🎯 PORTRAIT TITLE SECTION: Positioned with proper margins');
+      console.log('🎯 PORTRAIT TITLE SECTION: Positioned with title centered with drawer icons');
     }
     
     // Step 4: Calculate content area positioning
@@ -142,7 +204,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       const subtitleBottom = subtitleRect.bottom;
       
       // ORANGE BORDER: Main content container (starts below title/subtitle with reduced margin)
-      const contentGap = 15; // Reduced gap by 50% between title and content
+      const contentGap = 3; // Reduced from 7.5px to 3px - compress gap between subtitle and content
       const orangeBorder = {
         top: subtitleBottom + contentGap,
         left: redBorder.left, // No margin from red border - extend to edges
@@ -157,7 +219,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       // Step 5: Position portrait content container and apply orange border
       const portraitContentEl = document.querySelector('.portrait-content') as HTMLElement;
       if (portraitContentEl) {
-        // portraitContentEl.style.setProperty('border', '2px solid orange', 'important'); // DISABLED for production
+        portraitContentEl.style.setProperty('border', '2px solid orange', 'important'); // ENABLED for debugging
         portraitContentEl.style.setProperty('position', 'fixed', 'important');
         portraitContentEl.style.setProperty('top', `${orangeBorder.top}px`, 'important');
         portraitContentEl.style.setProperty('left', `${orangeBorder.left}px`, 'important');
@@ -173,6 +235,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         portraitContentEl.style.setProperty('background', 'transparent', 'important');
         portraitContentEl.style.setProperty('overflow-y', 'auto', 'important');
         portraitContentEl.style.setProperty('padding', '0px', 'important');
+        portraitContentEl.style.setProperty('padding', '0px', 'important');
         portraitContentEl.style.setProperty('margin', '0', 'important');
         
         console.log('🟠 ORANGE BORDER: Applied to portrait content container');
@@ -180,6 +243,37 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       
       // Submit button is now embedded in YourGuessBlock - no separate positioning needed
       console.log('🎯 PORTRAIT SUBMIT BUTTON: Embedded in YourGuessBlock');
+      
+      // Debug Your Guess block positioning
+      setTimeout(() => {
+        const yourGuessBlock = document.querySelector('.your-guess-block') as HTMLElement;
+        const guessSection = document.querySelector('.guess-section') as HTMLElement;
+        
+        if (yourGuessBlock) {
+          const blockRect = yourGuessBlock.getBoundingClientRect();
+          const blockStyles = window.getComputedStyle(yourGuessBlock);
+          console.log('🔵 YOUR GUESS BLOCK DEBUG:');
+          console.log('  - Position:', blockRect);
+          console.log('  - Padding:', blockStyles.padding);
+          console.log('  - Margin:', blockStyles.margin);
+          console.log('  - Border:', blockStyles.border);
+          console.log('  - Box-sizing:', blockStyles.boxSizing);
+          console.log('  - Width:', blockStyles.width);
+          console.log('  - Height:', blockStyles.height);
+        }
+        
+        if (guessSection) {
+          const sectionRect = guessSection.getBoundingClientRect();
+          const sectionStyles = window.getComputedStyle(guessSection);
+          console.log('🔵 GUESS SECTION DEBUG:');
+          console.log('  - Position:', sectionRect);
+          console.log('  - Padding:', sectionStyles.padding);
+          console.log('  - Margin:', sectionStyles.margin);
+          console.log('  - Border:', sectionStyles.border);
+          console.log('  - Width:', sectionStyles.width);
+          console.log('  - Height:', sectionStyles.height);
+        }
+      }, 200);
     }, 100);
     
     // Hide old container
@@ -190,6 +284,25 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
     }
     
     console.log('🎯 ========= PORTRAIT LAYOUT BUILD 665 COMPLETE ========= 🎯');
+  }, []);
+
+  // Add a style tag to force subtitle positioning with maximum specificity
+  useEffect(() => {
+    // Remove any existing style tag
+    const existingStyle = document.getElementById('portrait-subtitle-override');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
+    console.log('🎯 SUBTITLE POSITIONING: Handled by JavaScript inline styles in PortraitLayout');
+    
+    return () => {
+      // Cleanup
+      const styleToRemove = document.getElementById('portrait-subtitle-override');
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
   }, []);
 
   // Cleanup function to reset portrait styles when switching orientations
@@ -240,13 +353,23 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       <div className="title-section" style={{
         position: 'fixed',
         zIndex: 100,
-        pointerEvents: 'none',
-        padding: '10px 20px',
+        pointerEvents: 'auto',
+        padding: '120px 20px 60px 20px',
         margin: '0',
         boxSizing: 'border-box',
-        background: 'transparent', // Remove gradient background
-        backdropFilter: 'none', // Remove blur effect
-        boxShadow: 'none' // Remove any shadows
+        background: 'transparent',
+        backdropFilter: 'none',
+        boxShadow: 'none'
+      } as React.CSSProperties & {
+        position: 'fixed !important';
+        zIndex: '100 !important';
+        pointerEvents: 'auto !important';
+        padding: '120px 20px 60px 20px !important';
+        margin: '0 !important';
+        boxSizing: 'border-box !important';
+        background: 'transparent !important';
+        backdropFilter: 'none !important';
+        boxShadow: 'none !important';
       }}>
         <h1 className="game-title" style={{
           margin: '10px 0 5px 0',
@@ -259,7 +382,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           PicoFermiBagel
         </h1>
         <p className="game-subtitle" style={{
-          margin: '0 0 10px 0',
+          margin: '0 0 25px 0',
           fontSize: '1.1rem',
           color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
@@ -275,7 +398,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '5px', // Minimum 5px gap between stacked elements
+        gap: '0px', // Remove gap to eliminate spacing between elements
         overflow: 'hidden' // Ensure content stays within orange border
       }}>
         {/* Target Display */}
@@ -283,18 +406,60 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           <TargetDisplay />
         </div>
         
-        {/* Guess Area - Should abut top orange border */}
+        {/* Guess Area - Should expand to fill allocated space */}
         <div className="guess-section" style={{ 
           position: 'relative',
-          flexShrink: 0,
           width: '100%',
-          marginTop: '0px' // Ensure no margin preventing abutting
+          height: '400px', // Set a fixed height to make it more visible
+          marginTop: '0px', // Ensure no margin preventing abutting
+          background: 'transparent !important',
+          borderRadius: '0 !important',
+          padding: '0 !important', // Force zero padding to eliminate double-padding issue
+          boxShadow: 'none !important',
+          backdropFilter: 'none !important',
+          border: '2px solid blue !important' // ENABLED for debugging
         }}>
           <YourGuessBlock guessElementRef={guessElementRef} />
         </div>
         
         {/* Number Selection */}
-        <div className="selection-section" style={{ flexShrink: 0, width: '100%' }}>
+        <div className="selection-section" style={{ 
+          position: 'relative',
+          flexShrink: 0, 
+          width: '100%' 
+        }}>
+          {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
+          <button
+            className="help-button"
+            onClick={showNumberSelectionHelp}
+            aria-label="Show help"
+            style={{
+              position: 'absolute',
+              top: '-2px',
+              left: '-2px',
+              background: 'none',
+              border: 'none',
+              color: '#6b7280',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 11
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
+              e.currentTarget.style.color = '#374151';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none';
+              e.currentTarget.style.color = '#6b7280';
+            }}
+          >
+            <HelpCircle size={27} />
+          </button>
           <SelectionArea />
         </div>
         

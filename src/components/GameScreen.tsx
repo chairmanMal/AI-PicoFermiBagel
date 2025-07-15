@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Menu } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 // Audio system is available via soundUtils when needed
+import { soundUtils } from '../utils/soundUtils';
 
 // Layout Components
 import LandscapeLayoutClean from './layouts/LandscapeLayoutClean';
@@ -87,8 +88,19 @@ const GameScreen: React.FC = () => {
   // ==========================================
   useEffect(() => {
     console.log('🎵 Audio system initialized');
-    // Audio system is initialized when soundUtils is imported
-    // No additional initialization needed
+    
+    // Auto-activate audio if sound is enabled by default
+    const { settings } = useGameStore.getState();
+    if (settings.soundEnabled) {
+      console.log('🎵 🎯 Auto-activating audio on app start (sound enabled by default)');
+      
+      // Set the volume level to match user settings
+      soundUtils.setVolume(settings.soundVolume || 0.1);
+      
+      soundUtils.activateAudio().catch(error => {
+        console.error('🎵 ❌ Failed to auto-activate audio on app start:', error);
+      });
+    }
   }, []);
 
   // ==========================================
@@ -357,7 +369,9 @@ const GameScreen: React.FC = () => {
         aria-label="Open Settings"
         style={{
           position: 'fixed',
-          top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
+          top: currentLayout.isIpadPortrait 
+            ? 'calc(10px + env(safe-area-inset-top))' // Move down 10px for iPad portrait only
+            : 'calc(0px + env(safe-area-inset-top))', // Normal position for iPhone
           left: 'calc(10px + env(safe-area-inset-left))', // Move in 10px from CSS default
           background: 'rgba(255, 255, 255, 0.9)',
           border: 'none',
@@ -407,7 +421,9 @@ const GameScreen: React.FC = () => {
           aria-label="Open Menu"
           style={{ 
             position: 'fixed',
-            top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
+            top: currentLayout.isIpadPortrait 
+              ? 'calc(10px + env(safe-area-inset-top))' // Move down 10px for iPad portrait only
+              : 'calc(0px + env(safe-area-inset-top))', // Normal position for iPhone
             right: 'calc(10px + env(safe-area-inset-right))', // Move in 10px from CSS default
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -462,7 +478,9 @@ const GameScreen: React.FC = () => {
               aria-label="Close Settings"
           style={{ 
                 position: 'fixed',
-                top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
+                top: currentLayout.isIpadPortrait 
+                  ? 'calc(10px + env(safe-area-inset-top))' // Move down 10px for iPad portrait only
+                  : 'calc(0px + env(safe-area-inset-top))', // Normal position for iPhone
                 left: 'calc(10px + env(safe-area-inset-left))', // Keep same horizontal position
             background: 'rgba(255, 255, 255, 0.9)',
             border: 'none',
@@ -658,14 +676,14 @@ const GameScreen: React.FC = () => {
                 zIndex: 1500 // ABOVE overlay (1000) to ensure it appears on top
               }}>
                 <MenuDrawerContent />
-              </div>
+                      </div>
               
 
 
               </div>
-              </div>
-              </div>
-      )}
+            </div>
+          </div>
+        )}
 
 
       
@@ -753,7 +771,7 @@ const GameScreen: React.FC = () => {
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'transparent', // TEMPORARILY DISABLED: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.5)', // RESTORED: Darkened background to cover orange-bordered area
             zIndex: 3999,
             pointerEvents: 'auto',
             touchAction: 'none',

@@ -79,25 +79,12 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
     // Snap to nearest 10% increment (0.0, 0.1, 0.2, ..., 1.0)
     const snappedVolume = Math.round(rawVolume * 10) / 10;
     
-    console.log(`🎵 Volume slider: raw=${rawVolume.toFixed(2)}, snapped=${snappedVolume.toFixed(1)}`);
-    
     updateSettings({ soundVolume: snappedVolume });
     
     // Play a throttled test sound to demonstrate the volume change without crackling
     import('../utils/soundUtils').then(({ soundUtils }) => {
       soundUtils.playVolumeTestSound();
     });
-  };
-
-  const handleVolumeSliderStart = (e: React.TouchEvent | React.MouseEvent) => {
-    // Prevent event bubbling to avoid triggering swipe gestures
-    e.stopPropagation();
-  };
-
-  const handleVolumeSliderMove = (e: React.TouchEvent | React.MouseEvent) => {
-    // Prevent event bubbling and default behavior during slider interaction
-    e.stopPropagation();
-    e.preventDefault();
   };
 
   const handleOpenManual = () => {
@@ -139,7 +126,12 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           margin: '0',
           // Minimal scrollbar styling
           scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 #f1f5f9'
+          scrollbarColor: '#cbd5e1 #f1f5f9',
+          pointerEvents: 'auto',
+          touchAction: 'pan-y', // Allow vertical scrolling but not horizontal gestures
+        } as React.CSSProperties & {
+          pointerEvents: 'auto !important';
+          touchAction: 'pan-y !important';
         }}
         className="settings-drawer-scrollable"
       >
@@ -392,8 +384,6 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           {settings.soundEnabled && (
             <div 
               style={{ marginBottom: '16px' }}
-              onTouchStart={handleVolumeSliderStart}
-              onTouchMove={handleVolumeSliderMove}
             >
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#374151', fontSize: '0.9rem', fontWeight: '500' }}>
                 <Volume2 size={16} />
@@ -409,10 +399,6 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
                 step="0.1"
                 value={settings.soundVolume || 0.1}
                 onChange={handleVolumeChange}
-                onTouchStart={handleVolumeSliderStart}
-                onTouchMove={handleVolumeSliderMove}
-                onMouseDown={handleVolumeSliderStart}
-                onMouseMove={handleVolumeSliderMove}
                 style={{
                   width: '100%',
                   background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(settings.soundVolume || 0.1) * 100}%, #e5e7eb ${(settings.soundVolume || 0.1) * 100}%, #e5e7eb 100%)`

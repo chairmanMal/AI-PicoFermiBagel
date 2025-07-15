@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { HelpCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { isNumberUsedInGuess } from '@/utils/gameLogic';
+import { soundUtils } from '@/utils/soundUtils';
 import './SelectionArea.css';
 
 interface NumberButtonProps {
@@ -105,14 +105,15 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       
       // Set timeout for drag detection
       dragTimeoutRef.current = setTimeout(() => {
-        if (isLongPressing && dragStart) { // Only start drag if still pressing and not moved
+        // Check if we're still in the same touch session
+        if (isLongPressing) {
           setIsLongPressing(false);
           setIsDragging(true);
           createDragIndicator(touch.clientX, touch.clientY);
         }
       }, 300);
     }
-  }, [digit, isLongPressing, dragStart]);
+  }, [isLongPressing, createDragIndicator]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (dragStart && !isDragging) {
@@ -133,13 +134,17 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     if (dragStart) {
       e.preventDefault();
       const touch = e.touches[0];
+      
+      // Start dragging immediately on any movement
       if (!isDragging) {
+        setIsLongPressing(false);
         setIsDragging(true);
         createDragIndicator(touch.clientX, touch.clientY);
+      } else {
+        updateDragIndicator(touch.clientX, touch.clientY);
       }
-      updateDragIndicator(touch.clientX, touch.clientY);
     }
-  }, [dragStart, isDragging, digit, createDragIndicator, updateDragIndicator]);
+  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     const touch = e.changedTouches[0];
@@ -169,10 +174,14 @@ const NumberButton: React.FC<NumberButtonProps> = ({
         if (!isLocked) {
           dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
           
-          // Play drip sound for drag and drop placement
-          import('../utils/soundUtils').then(({ soundUtils }) => {
-            soundUtils.playDripSound();
-          });
+          // Play drip sound for drag and drop placement with delay to ensure audio context is ready
+          setTimeout(() => {
+            try {
+              soundUtils.playDripSound();
+            } catch (error) {
+              console.warn('🎵 Failed to play drip sound:', error);
+            }
+          }, 10);
         }
       }
     } else {
@@ -214,10 +223,14 @@ const NumberButton: React.FC<NumberButtonProps> = ({
         if (!isLocked) {
           dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
           
-          // Play drip sound for drag and drop placement
-          import('../utils/soundUtils').then(({ soundUtils }) => {
-            soundUtils.playDripSound();
-          });
+          // Play drip sound for drag and drop placement with delay to ensure audio context is ready
+          setTimeout(() => {
+            try {
+              soundUtils.playDripSound();
+            } catch (error) {
+              console.warn('🎵 Failed to play drip sound:', error);
+            }
+          }, 10);
         }
       }
     }
@@ -264,19 +277,19 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     }
   }, [dragStart, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-  // Global cleanup for orphaned drag indicators - less aggressive
+  // Global cleanup for orphaned drag indicators - more aggressive
   React.useEffect(() => {
     const handleGlobalTouchEnd = () => {
-      // Only clean up if we have an orphaned drag indicator
-      if (dragIndicatorElement && !isDragging) {
+      // Always clean up any orphaned indicators, regardless of drag state
+      if (dragIndicatorElement) {
         console.log(`🎯 SelectionArea: Global cleanup - removing orphaned drag indicator for digit ${digit}`);
         removeDragIndicator();
       }
     };
 
     const handleGlobalMouseUp = () => {
-      // Only clean up if we have an orphaned drag indicator
-      if (dragIndicatorElement && !isDragging) {
+      // Always clean up any orphaned indicators, regardless of drag state
+      if (dragIndicatorElement) {
         console.log(`🎯 SelectionArea: Global mouse cleanup - removing orphaned drag indicator for digit ${digit}`);
         removeDragIndicator();
       }
@@ -290,13 +303,22 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       document.addEventListener('touchcancel', handleGlobalTouchEnd, { passive: true });
     }, 50);
 
+    // Add a timeout-based cleanup as fallback
+    const fallbackCleanup = setTimeout(() => {
+      if (dragIndicatorElement) {
+        console.log(`🎯 SelectionArea: Fallback cleanup - removing orphaned drag indicator for digit ${digit}`);
+        removeDragIndicator();
+      }
+    }, 5000); // 5 second fallback
+
     return () => {
       clearTimeout(timeoutId);
+      clearTimeout(fallbackCleanup);
       document.removeEventListener('touchend', handleGlobalTouchEnd);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('touchcancel', handleGlobalTouchEnd);
     };
-  }, [isDragging, dragIndicatorElement, digit, removeDragIndicator]);
+  }, [dragIndicatorElement, digit, removeDragIndicator]);
 
   // Cleanup drag indicator on unmount or when digit changes
   React.useEffect(() => {
@@ -350,23 +372,20 @@ const NumberButton: React.FC<NumberButtonProps> = ({
 };
 
 const SelectionArea: React.FC = () => {
-  const { 
-    gameState, 
-    settings, 
-    hintState,
-    scratchpadState,
-    dispatch 
-  } = useGameStore();
+  const { gameState, hintState, scratchpadState, settings, dispatch } = useGameStore();
+  const { currentGuess, guesses } = gameState;
 
   // Clean up any orphaned drag indicators on mount/unmount
   React.useEffect(() => {
     const cleanupOrphanedIndicators = () => {
+      // Look for any elements with the drag indicator styling
       const indicators = document.querySelectorAll('[style*="z-index: 2147483647"][style*="position: fixed"]');
       indicators.forEach(indicator => {
-        if (indicator.textContent && /^\d$/.test(indicator.textContent)) {
+        // Check if it looks like a drag indicator (has text content that's a number)
+        if (indicator.textContent && /^\d$/.test(indicator.textContent.trim())) {
           try {
             document.body.removeChild(indicator);
-            // console.log('🧹 Cleaned up orphaned drag indicator');
+            console.log('🧹 Cleaned up orphaned drag indicator:', indicator.textContent);
           } catch (error) {
             console.warn('🧹 Failed to clean up orphaned indicator:', error);
           }
@@ -374,103 +393,45 @@ const SelectionArea: React.FC = () => {
       });
     };
 
+    // Clean up on mount
     cleanupOrphanedIndicators();
+    
+    // Also clean up on window focus/blur events as a safety net
+    const handleWindowFocus = () => {
+      setTimeout(cleanupOrphanedIndicators, 100);
+    };
+    
+    const handleWindowBlur = () => {
+      cleanupOrphanedIndicators();
+    };
+    
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('blur', handleWindowBlur);
     
     return () => {
       cleanupOrphanedIndicators();
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
     };
   }, []);
 
 
 
-  // Create toast outside of any stacking context
-  const showToast = () => {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 2147483647;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    `;
-    
-    overlay.innerHTML = `
-      <div style="
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        max-width: 400px;
-        width: 100%;
-        max-height: 80vh;
-        overflow-y: auto;
-        z-index: 2147483647;
-      ">
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e5e7eb;
-          background: #f8fafc;
-          border-radius: 12px 12px 0 0;
-        ">
-          <h4 style="margin: 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;">How to Select Numbers</h4>
-          <button id="close-toast" style="
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #6b7280;
-            padding: 4px;
-            border-radius: 4px;
-            font-size: 18px;
-          ">✕</button>
-        </div>
-        <div style="padding: 20px;">
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fecaca; border: 1px solid #ef4444;"></div>
-              <span><strong>Bagel</strong> - Not in target number</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #fde68a; border: 1px solid #f59e0b;"></div>
-              <span><strong>Pico</strong> - In target, wrong position</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #a7f3d0; border: 1px solid #10b981;"></div>
-              <span><strong>Fermi</strong> - In target, correct position</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #374151;">
-              <div style="width: 16px; height: 16px; border-radius: 3px; background-color: #e5e7eb; border: 1px solid #9ca3af;"></div>
-              <span><strong>Used</strong> - Currently in guess</span>
-            </div>
-          </div>
-          <div style="border-top: 1px solid #e5e7eb; padding-top: 16px;">
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Auto-fill:</strong> Tap numbers to fill the highlighted guess position (blue outline)</p>
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Manual:</strong> Click a guess box first (moves blue outline), then tap a number to fill that guess position</p>
-            <p style="margin: 8px 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;"><strong>Drag & Drop:</strong> Hold and drag a number to a specific guess position and release to assign that position your dragged number</p>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    const closeToast = () => {
-      document.body.removeChild(overlay);
-    };
-    
-    overlay.addEventListener('click', closeToast);
-    overlay.querySelector('#close-toast')?.addEventListener('click', closeToast);
-    
-    document.body.appendChild(overlay);
-  };
-
   const handleNumberClick = (digit: number) => {
     if (!gameState.isGameActive) return;
+    
+    console.log(`🎵 Number click: digit=${digit}, soundEnabled=${settings.soundEnabled}`);
+    
+    // Ensure audio is activated on first interaction (fallback)
+    if (settings.soundEnabled) {
+      // Small delay to avoid interfering with immediate number placement
+      setTimeout(() => {
+        console.log(`🎵 Attempting to activate audio for digit ${digit}`);
+        soundUtils.activateAudio().catch(error => {
+          console.error('🎵 ❌ Failed to activate audio on number click:', error);
+        });
+      }, 10);
+    }
     
     dispatch({ type: 'ADD_DIGIT_SEQUENTIAL', digit });
   };
@@ -490,7 +451,7 @@ const SelectionArea: React.FC = () => {
   };
 
   const isNumberUsedInSubmittedGuesses = (digit: number): boolean => {
-    return gameState.guesses.some(guess => guess.digits.includes(digit));
+    return guesses.some(guess => guess.digits.includes(digit));
   };
 
   const availableNumbers = Array.from(
@@ -498,51 +459,52 @@ const SelectionArea: React.FC = () => {
     (_, i) => i
   );
 
-  // Check if we're in iPad portrait mode for dynamic width expansion
-  // const width = window.innerWidth;
-  // const height = window.innerHeight;
-  // const isPortrait = height > width;
-  // const isIpadPortrait = isPortrait && width >= 768 && width <= 1024; // Removed for production
-  
   // Debug logging to understand what's happening
-  // console.log(`🔍 SelectionArea Debug:`, {
-  //   width,
-  //   height,
-  //   isPortrait,
-  //   isIpadPortrait,
-  //   targetLength: settings.targetLength,
-  //   gridRows: settings.gridRows,
-  //   gridColumns: settings.gridColumns,
-  //   digitRange: settings.digitRange,
-  //   availableNumbersCount: availableNumbers.length
-  // });
+  console.log(`🔍 SelectionArea Debug:`, {
+    digitRange: settings.digitRange,
+    availableNumbersCount: availableNumbers.length,
+    availableNumbers: availableNumbers,
+    targetLength: settings.targetLength,
+    gridRows: settings.gridRows,
+    gridColumns: settings.gridColumns,
+    difficulty: settings.difficulty,
+    windowWidth: window.innerWidth,
+    windowHeight: window.innerHeight,
+    orientation: window.innerHeight > window.innerWidth ? 'portrait' : 'landscape',
+    containerStyle: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start'
+    }
+  });
+
+  // Additional debugging for the numbers grid
+  useEffect(() => {
+    const numbersGrid = document.querySelector('.numbers-grid') as HTMLElement;
+    if (numbersGrid) {
+      console.log(`🔍 Numbers Grid Debug:`, {
+        gridElement: numbersGrid,
+        gridHeight: numbersGrid.offsetHeight,
+        gridWidth: numbersGrid.offsetWidth,
+        gridChildren: numbersGrid.children.length,
+        gridStyle: window.getComputedStyle(numbersGrid),
+        containerHeight: numbersGrid.parentElement?.offsetHeight,
+        containerStyle: numbersGrid.parentElement ? window.getComputedStyle(numbersGrid.parentElement) : null
+      });
+    }
+  }, [availableNumbers]);
 
   return (
-    <div className="selection-area" style={{ position: 'relative' }}>
+    <div className="selection-area" style={{ 
+      position: 'relative',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start'
+    }}>
       {/* Help icon absolutely positioned in upper left */}
-      <button
-        className="help-button"
-        onClick={showToast}
-        aria-label="Show help"
-        style={{
-          position: 'absolute',
-          top: '2px',
-          left: '2px',
-          background: 'none',
-          border: 'none',
-          color: '#6b7280',
-          cursor: 'pointer',
-          padding: '6px',
-          borderRadius: '6px',
-          transition: 'all 0.2s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 11
-        }}
-      >
-        <HelpCircle size={27} />
-      </button>
+      {/* Removed the info icon button */}
       {/* Title centered at the top */}
       <h3 className="selection-title" style={{
         margin: '0 0 clamp(4px, 1vw, 8px) 0',
@@ -550,15 +512,25 @@ const SelectionArea: React.FC = () => {
         color: '#1f2937',
         fontWeight: 600,
         textAlign: 'center',
-        width: '100%'
+        width: '100%',
+        flexShrink: 0
       }}>Number Selection</h3>
-      <div className="numbers-container">
+      <div className="numbers-container" style={{ 
+        flex: '1',
+        minHeight: 0,
+        overflow: 'auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: '10px', // Add top padding to prevent clipping
+        paddingBottom: '10px' // Add bottom padding for balance
+      }}>
         <div className="numbers-grid">
           {availableNumbers.map((digit) => (
             <NumberButton
               key={digit}
               digit={digit}
-              isUsed={isNumberUsedInGuess(digit, gameState.currentGuess)}
+              isUsed={isNumberUsedInGuess(digit, currentGuess)}
               isUsedInSubmitted={isNumberUsedInSubmittedGuesses(digit)}
               hintColor={getHintColor(digit)}
               onNumberClick={handleNumberClick}
@@ -566,16 +538,22 @@ const SelectionArea: React.FC = () => {
           ))}
         </div>
       </div>
-      {/* Subtitle as footer */}
+      {/* Subtitle as footer - positioned absolutely at bottom */}
       <div className="block-footer" style={{
-        marginTop: '4px',
+        position: 'absolute',
+        bottom: '8px',
+        left: '0',
+        right: '0',
         fontSize: 'clamp(0.85rem, 2vw, 1rem)',
         color: '#6b7280',
         fontWeight: 400,
         textAlign: 'center',
-        width: '100%'
+        width: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: '4px 0',
+        zIndex: 10
       }}>
-        Tap to auto-fill or drag to specific positions
+        Tap to auto-fill or drag to specific guess positions
       </div>
     </div>
   );

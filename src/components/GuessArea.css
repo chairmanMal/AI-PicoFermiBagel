@@ -40,6 +40,7 @@
   position: relative;
   margin-bottom: 0;
   padding-bottom: 0;
+  width: 100%;
 }
 
 /* iPad Landscape Mode - Double padding under the last row of guess boxes */
@@ -180,12 +181,12 @@
 
 .lock-indicator {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: 1px;
+  right: 1px;
   background: rgba(107, 114, 128, 0.9);
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -379,8 +380,8 @@
   
   .lock-indicator,
   .lock-toggle {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
   }
   
   .guess-placeholder {

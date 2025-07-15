@@ -205,6 +205,8 @@ export const useGameStore = create<GameStore>()(
             const lockedPositions = new Set(state.gameState.lockedPositions);
             const activePosition = state.gameState.activeGuessPosition;
             
+            console.log(`🎵 ADD_DIGIT_SEQUENTIAL: digit=${digit}, activePosition=${activePosition}, soundEnabled=${state.settings.soundEnabled}`);
+            
             // console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
             // console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
             
@@ -216,11 +218,14 @@ export const useGameStore = create<GameStore>()(
             
             // Play sound if sound is enabled
             if (state.settings.soundEnabled) {
+              console.log(`🎵 Playing sound for digit ${digit}, redundant=${isRedundant}`);
               if (isRedundant) {
                 soundUtils.playDudSound();
               } else {
                 soundUtils.playDigitPlaceSound();
               }
+            } else {
+              console.log(`🎵 Sound disabled, skipping sound for digit ${digit}`);
             }
             
             // Auto-advance to next unlocked position
@@ -524,9 +529,16 @@ export const useGameStore = create<GameStore>()(
               }
 
               // Start new game if game-affecting settings changed
-              const gameAffectingSettings = ['difficulty', 'targetLength', 'digitRange', 'gridRows', 'gridColumns'];
+              const gameAffectingSettings = ['difficulty', 'targetLength']; // Removed digitRange, gridRows, gridColumns
               const gameAffectingChanged = gameAffectingSettings.some(
-                key => action.settings[key as keyof GameSettings] !== undefined
+                key => {
+                  if (key === 'difficulty') {
+                    // Don't restart for difficulty changes to 'custom' (custom settings adjustments)
+                    const newDifficulty = action.settings[key as keyof GameSettings];
+                    return newDifficulty !== undefined && newDifficulty !== 'custom';
+                  }
+                  return action.settings[key as keyof GameSettings] !== undefined;
+                }
               );
 
               if (gameAffectingChanged) {

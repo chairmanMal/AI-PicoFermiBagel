@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Lock } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
+import { soundUtils } from '@/utils/soundUtils';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -93,7 +94,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     longPressCompleted.current = false;
-    if (value !== null && !isLocked) {
+    // Allow long press on any position with a value (locked or unlocked)
+    if (value !== null) {
       const rect = e.currentTarget.getBoundingClientRect();
       setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       
@@ -104,20 +106,21 @@ const GuessBox: React.FC<GuessBoxProps> = ({
         }
       }, 200); // 200ms delay before showing orange indicator
       
-      // Set up long press timer for locking
+      // Set up long press timer for locking/unlocking
       longPressTimer.current = setTimeout(() => {
         onLockToggle(position);
         longPressCompleted.current = true;
         setDragStart(null); // Cancel any potential drag
         // Note: setIsLongPressing(false) is handled in mouse/touch up events
-      }, 700); // Increased to 700ms for more deliberate long press
+      }, 700); // 700ms for more deliberate long press
     }
-  }, [value, position, onLockToggle, isLocked]);
+  }, [value, position, onLockToggle]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     longPressCompleted.current = false;
-    if (value !== null && !isLocked) {
+    // Allow long press on any position with a value (locked or unlocked)
+    if (value !== null) {
       const touch = e.touches[0];
       const rect = e.currentTarget.getBoundingClientRect();
       setDragStart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
@@ -129,15 +132,15 @@ const GuessBox: React.FC<GuessBoxProps> = ({
         }
       }, 200); // 200ms delay before showing orange indicator
       
-      // Set up long press timer for locking
+      // Set up long press timer for locking/unlocking
       longPressTimer.current = setTimeout(() => {
         onLockToggle(position);
         longPressCompleted.current = true;
         setDragStart(null); // Cancel any potential drag
         // Note: setIsLongPressing(false) is handled in mouse/touch up events
-      }, 700); // Increased to 700ms for more deliberate long press
+      }, 700); // 700ms for more deliberate long press
     }
-  }, [value, position, onLockToggle, isLocked]);
+  }, [value, position, onLockToggle]);
 
   // Mouse move handler for dragging
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -223,9 +226,13 @@ const GuessBox: React.FC<GuessBoxProps> = ({
           dropSuccessful = true;
           
           // Play drip sound for successful swap
-          import('../utils/soundUtils').then(({ soundUtils }) => {
-            soundUtils.playDripSound();
-          });
+          setTimeout(() => {
+            try {
+              soundUtils.playDripSound();
+            } catch (error) {
+              console.warn('🎵 Failed to play drip sound:', error);
+            }
+          }, 10);
         }
       }
     }
@@ -254,12 +261,14 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       handleDragEnd(e.clientX, e.clientY);
     } else if (!longPressCompleted.current) {
       // This was a regular click, not a long press - allow clicking on any unlocked position
-      onBoxClick(position);
+      if (!isLocked) {
+        onBoxClick(position);
+      }
     } else if (longPressCompleted.current) {
       // Reset the flag for next interaction
       longPressCompleted.current = false;
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (longPressTimer.current) {
@@ -275,12 +284,14 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       handleDragEnd(touch.clientX, touch.clientY);
     } else if (!longPressCompleted.current) {
       // This was a regular tap, not a long press - allow tapping on any unlocked position
-      onBoxClick(position);
+      if (!isLocked) {
+        onBoxClick(position);
+      }
     } else if (longPressCompleted.current) {
       // Reset the flag for next interaction
       longPressCompleted.current = false;
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked]);
 
   const handleDoubleClick = () => {
     if (value !== null && !isLocked) {
@@ -318,9 +329,13 @@ const GuessBox: React.FC<GuessBoxProps> = ({
         });
         
         // Play drip sound for drag and drop placement
-        import('../utils/soundUtils').then(({ soundUtils }) => {
-          soundUtils.playDripSound();
-        });
+        setTimeout(() => {
+          try {
+            soundUtils.playDripSound();
+          } catch (error) {
+            console.warn('🎵 Failed to play drip sound:', error);
+          }
+        }, 10);
       }
     }
   }, [position, isLocked]);
@@ -354,8 +369,16 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   // Global cleanup for orphaned drag indicators
   React.useEffect(() => {
     const handleGlobalTouchEnd = () => {
-      // If we're not actively dragging, clean up any orphaned indicators
-      if (!isDragging && dragIndicatorElement) {
+      // Always clean up any orphaned indicators, regardless of drag state
+      if (dragIndicatorElement) {
+        console.log(`🎯 GuessArea: Global cleanup - removing orphaned drag indicator for position ${position}`);
+        removeDragIndicator();
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      // Always clean up any orphaned indicators, regardless of drag state
+      if (dragIndicatorElement) {
         console.log(`🎯 GuessArea: Global cleanup - removing orphaned drag indicator for position ${position}`);
         removeDragIndicator();
       }
@@ -363,13 +386,22 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 
     // Add global touch/click listeners for cleanup
     document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
-    document.addEventListener('mouseup', handleGlobalTouchEnd, { passive: true });
+    document.addEventListener('mouseup', handleGlobalMouseUp, { passive: true });
+
+    // Add a timeout-based cleanup as fallback
+    const timeoutCleanup = setTimeout(() => {
+      if (dragIndicatorElement) {
+        console.log(`🎯 GuessArea: Timeout cleanup - removing orphaned drag indicator for position ${position}`);
+        removeDragIndicator();
+      }
+    }, 5000); // 5 second fallback
 
     return () => {
       document.removeEventListener('touchend', handleGlobalTouchEnd);
-      document.removeEventListener('mouseup', handleGlobalTouchEnd);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      clearTimeout(timeoutCleanup);
     };
-  }, [isDragging, dragIndicatorElement, position, removeDragIndicator]);
+  }, [dragIndicatorElement, position, removeDragIndicator]);
 
   // Cleanup drag indicator on unmount
   React.useEffect(() => {
@@ -416,7 +448,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       
       {isLocked && (
         <div className="lock-indicator">
-          <Lock size={14} />
+          <Lock size={12} />
         </div>
       )}
       
@@ -552,13 +584,15 @@ const GuessArea: React.FC = () => {
   };
 
   return (
-    <div className="guess-area">
-      <div className="guess-grid" style={{
-        '--grid-rows': settings.gridRows,
-        '--grid-columns': settings.gridColumns
-      } as React.CSSProperties}>
-        {createGuessGrid()}
-      </div>
+    <div className="guess-grid" style={{
+      '--grid-rows': settings.gridRows,
+      '--grid-columns': settings.gridColumns,
+      flex: '1',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center'
+    } as React.CSSProperties}>
+      {createGuessGrid()}
     </div>
   );
 };

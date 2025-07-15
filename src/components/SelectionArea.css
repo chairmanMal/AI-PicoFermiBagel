@@ -61,6 +61,10 @@
   text-align: center !important;
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
+  height: auto !important; /* Allow height to expand */
+  min-height: auto !important; /* Remove any min-height constraints */
+  max-height: none !important; /* Remove any max-height constraints */
+  overflow: visible !important; /* Ensure all content is visible */
 }
 
 .selection-area .numbers-container .numbers-grid {
@@ -579,6 +583,8 @@
     width: 100% !important; /* Use full parent width */
     max-width: none !important;
     margin: 0 !important;
+    height: auto !important; /* Allow height to expand */
+    min-height: auto !important; /* Remove any min-height constraints */
   }
   
   /* Force full-width expansion for all portrait devices */
@@ -587,6 +593,9 @@
     max-width: none !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+    height: auto !important; /* Allow height to expand */
+    min-height: auto !important; /* Remove any min-height constraints */
+    overflow: visible !important; /* Ensure all content is visible */
   }
   
   .selection-area .numbers-container .numbers-grid {
@@ -595,6 +604,9 @@
     padding: 0.3rem !important; /* Even less padding for maximum space */
     box-sizing: border-box !important;
     gap: clamp(3px, 0.5vw, 4px) !important; /* Much smaller gap to fit 10 per row - reduced by 50% */
+    height: auto !important; /* Allow height to expand */
+    min-height: auto !important; /* Remove any min-height constraints */
+    overflow: visible !important; /* Ensure all content is visible */
   }
   
   /* Make buttons smaller in portrait mode to fit 10 per row */

@@ -375,9 +375,9 @@
   }
   
   .submit-btn {
-    min-width: 180px;
-    height: 42px;
-    font-size: 0.9rem;
+    min-width: 204px !important; /* 240px * 0.85 = 204px (15% reduction) */
+    height: 51px !important; /* 60px * 0.85 = 51px (15% reduction) */
+    font-size: 0.94rem !important; /* 1.1rem * 0.85 = 0.94rem (15% reduction) */
   }
   
   .game-end-message {
