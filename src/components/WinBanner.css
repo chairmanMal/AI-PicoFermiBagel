@@ -1,0 +1,181 @@
+/* Confetti Container */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+/* Confetti Pieces */
+.confetti-piece {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+.confetti-piece.floating {
+  animation: floatDown linear infinite;
+}
+
+@keyframes floatDown {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(calc(var(--rotation-speed) * 100));
+    opacity: 0;
+  }
+}
+
+/* Banner Content */
+.win-banner-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.win-banner-header {
+  margin-bottom: 30px;
+}
+
+.trophy-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.win-banner-header h2 {
+  font-size: 2.5rem;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sparkles {
+  font-size: 1.5rem;
+  letter-spacing: 10px;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.win-banner-stats {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+  font-size: 1.2rem;
+  padding: 8px 0;
+}
+
+.stat-label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 1.1rem;
+}
+
+.stat-value {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #FFD700;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.win-banner-message {
+  font-size: 1.3rem;
+  margin: 25px 0;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.win-banner-dismiss {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .win-banner-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+  
+  .trophy-icon {
+    font-size: 50px;
+  }
+  
+  .win-banner-header h2 {
+    font-size: 2rem;
+  }
+  
+  .stat-item {
+    font-size: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+  
+  .win-banner-message {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .win-banner-content {
+    padding: 25px 15px;
+    margin: 15px;
+  }
+  
+  .trophy-icon {
+    font-size: 40px;
+  }
+  
+  .win-banner-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .sparkles {
+    font-size: 1.2rem;
+    letter-spacing: 8px;
+  }
+} 

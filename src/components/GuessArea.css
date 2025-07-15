@@ -2,23 +2,19 @@
   width: 100%;
 }
 
-.guess-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: clamp(15px, 3vw, 20px);
+.card-header {
   position: relative;
-}
-
-.guess-title {
-  margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  color: #1f2937;
-  font-weight: 600;
-  text-align: center;
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .help-button {
+  position: absolute;
+  top: 2px;
+  left: 2px;
   background: none;
   border: none;
   color: #6b7280;
@@ -29,10 +25,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-30%);
 }
 
 .help-button:hover {
@@ -45,8 +37,9 @@
   flex-direction: column;
   gap: clamp(8px, 2vw, 12px);
   align-items: center;
-  /* Remove padding-right to center the boxes properly */
   position: relative;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 /* iPad Landscape Mode - Double padding under the last row of guess boxes */
@@ -147,6 +140,12 @@
 .guess-box.locked {
   border-color: #6b7280 !important;
   background: white !important;
+}
+
+.guess-box.dragging {
+  opacity: 0.5;
+  transform: scale(0.9);
+  cursor: grabbing;
 }
 
 .guess-box.long-pressing {
@@ -316,6 +315,15 @@
 
 .help-content strong {
   color: #1f2937;
+}
+
+.block-footer {
+  margin-top: 8px;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: #6b7280;
+  font-weight: 400;
+  text-align: center;
+  width: 100%;
 }
 
 /* Responsive Design */

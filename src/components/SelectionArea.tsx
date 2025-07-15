@@ -69,14 +69,16 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     }
   }, [dragIndicatorElement]);
 
-  // Remove drag indicator
+  // Remove drag indicator with safety checks
   const removeDragIndicator = useCallback(() => {
-    if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
+    if (dragIndicatorElement) {
       try {
-        document.body.removeChild(dragIndicatorElement);
-        // console.log(`🎯 Removed drag indicator for digit ${digit}`);
+        if (document.body.contains(dragIndicatorElement)) {
+          document.body.removeChild(dragIndicatorElement);
+          console.log(`🎯 SelectionArea: Removed drag indicator for digit ${digit}`);
+        }
       } catch (error) {
-        console.warn(`🎯 Failed to remove drag indicator for digit ${digit}:`, error);
+        console.warn(`🎯 SelectionArea: Failed to remove drag indicator for digit ${digit}:`, error);
       }
       setDragIndicatorElement(null);
     }
@@ -101,21 +103,16 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       setDragStart({ x: relativeX, y: relativeY });
       setIsLongPressing(true);
       
-      // console.log(`🎯 Touch start on digit ${digit}:`, {
-      //   touchClient: `${touch.clientX}, ${touch.clientY}`,
-      //   buttonRect: `${rect.left}, ${rect.top}, ${rect.width}x${rect.height}`,
-      //   relative: `${relativeX}, ${relativeY}`
-      // });
-      
-      // Start drag after a short delay to differentiate from tap
+      // Set timeout for drag detection
       dragTimeoutRef.current = setTimeout(() => {
-        setIsLongPressing(false);
-        setIsDragging(true);
-        createDragIndicator(touch.clientX, touch.clientY);
-        // console.log(`🎯 Drag started for digit ${digit} at:`, touch.clientX, touch.clientY);
-      }, 200); // Slightly longer delay for better UX
+        if (isLongPressing && dragStart) { // Only start drag if still pressing and not moved
+          setIsLongPressing(false);
+          setIsDragging(true);
+          createDragIndicator(touch.clientX, touch.clientY);
+        }
+      }, 300);
     }
-  }, [digit]);
+  }, [digit, isLongPressing, dragStart]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (dragStart && !isDragging) {
@@ -139,22 +136,30 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       if (!isDragging) {
         setIsDragging(true);
         createDragIndicator(touch.clientX, touch.clientY);
-        // console.log(`🎯 Drag started during move for digit ${digit}`);
       }
       updateDragIndicator(touch.clientX, touch.clientY);
-      // console.log(`🎯 Touch move for digit ${digit}:`, touch.clientX, touch.clientY);
     }
   }, [dragStart, isDragging, digit, createDragIndicator, updateDragIndicator]);
 
-  const handleDragEnd = useCallback((clientX: number, clientY: number) => {
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    const touch = e.changedTouches[0];
+    
+    // Clear the drag timeout immediately
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
       dragTimeoutRef.current = null;
     }
-
-    if (isDragging) {
-      // Find the element under the drop point
-      const elementBelow = document.elementFromPoint(clientX, clientY);
+    
+    console.log(`🎯 Touch end for digit ${digit}: isLongPressing=${isLongPressing}, isDragging=${isDragging}`);
+    
+    // Handle tap - if we were long pressing but never started dragging, it's a tap
+    if (isLongPressing && !isDragging) {
+      console.log(`🎯 Tap detected for digit ${digit} - calling onNumberClick`);
+      onNumberClick(digit);
+    } else if (isDragging) {
+      // Handle drag end
+      console.log(`🎯 Drag end for digit ${digit}`);
+      const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
       const guessBox = elementBelow?.closest('.guess-box');
       
       if (guessBox) {
@@ -170,26 +175,77 @@ const NumberButton: React.FC<NumberButtonProps> = ({
           });
         }
       }
-    } else if (!isLongPressing) {
-      // This was a tap/click, not a drag or long press
+    } else {
+      // Fallback - if somehow we get here without proper state, treat as tap
+      console.log(`🎯 Fallback tap for digit ${digit}`);
       onNumberClick(digit);
     }
-
-    // Reset all states
+    
+    // Always reset states and clean up
     setIsDragging(false);
     setIsLongPressing(false);
     setDragStart(null);
     removeDragIndicator();
-  }, [isDragging, isLongPressing, digit, dispatch, onNumberClick, removeDragIndicator]);
+  }, [isLongPressing, isDragging, digit, onNumberClick, dispatch, removeDragIndicator]);
 
   const handleMouseUp = useCallback((e: MouseEvent) => {
-    handleDragEnd(e.clientX, e.clientY);
-  }, [handleDragEnd]);
+    // Clear the drag timeout immediately
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+      dragTimeoutRef.current = null;
+    }
+    
+    console.log(`🎯 Mouse up for digit ${digit}: isDragging=${isDragging}`);
+    
+    // If we were not dragging, it's a click
+    if (!isDragging) {
+      console.log(`🎯 Click detected for digit ${digit} - calling onNumberClick`);
+      onNumberClick(digit);
+    } else {
+      // Handle drag end
+      console.log(`🎯 Mouse drag end for digit ${digit}`);
+      const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+      const guessBox = elementBelow?.closest('.guess-box');
+      
+      if (guessBox) {
+        const position = parseInt(guessBox.getAttribute('data-position') || '0');
+        const isLocked = guessBox.classList.contains('locked');
+        
+        if (!isLocked) {
+          dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+          
+          // Play drip sound for drag and drop placement
+          import('../utils/soundUtils').then(({ soundUtils }) => {
+            soundUtils.playDripSound();
+          });
+        }
+      }
+    }
+    
+    // Always reset states and clean up
+    setIsDragging(false);
+    setIsLongPressing(false);
+    setDragStart(null);
+    removeDragIndicator();
+  }, [isDragging, digit, onNumberClick, dispatch, removeDragIndicator]);
 
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    const touch = e.changedTouches[0];
-    handleDragEnd(touch.clientX, touch.clientY);
-  }, [handleDragEnd]);
+  // Add a simple click handler for mouse users
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // Only handle click if we're not in a drag state
+    if (!isDragging && !isLongPressing) {
+      e.preventDefault();
+      onNumberClick(digit);
+    }
+  }, [isDragging, isLongPressing, digit, onNumberClick]);
+
+  // Add a simple touch end handler for immediate tap response
+  const handleTouchEndImmediate = useCallback((e: React.TouchEvent) => {
+    // Only handle if we're not in a drag state and it's a quick tap
+    if (!isDragging && isLongPressing) {
+      e.preventDefault();
+      // This will be handled by the document touch end handler
+    }
+  }, [isDragging, isLongPressing]);
 
   // Add event listeners for mouse/touch events
   React.useEffect(() => {
@@ -208,14 +264,49 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     }
   }, [dragStart, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  // Global cleanup for orphaned drag indicators - less aggressive
+  React.useEffect(() => {
+    const handleGlobalTouchEnd = () => {
+      // Only clean up if we have an orphaned drag indicator
+      if (dragIndicatorElement && !isDragging) {
+        console.log(`🎯 SelectionArea: Global cleanup - removing orphaned drag indicator for digit ${digit}`);
+        removeDragIndicator();
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      // Only clean up if we have an orphaned drag indicator
+      if (dragIndicatorElement && !isDragging) {
+        console.log(`🎯 SelectionArea: Global mouse cleanup - removing orphaned drag indicator for digit ${digit}`);
+        removeDragIndicator();
+      }
+    };
+
+    // Add global listeners with passive: true for better performance
+    // Use a slight delay to avoid interfering with the component's own handlers
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+      document.addEventListener('mouseup', handleGlobalMouseUp, { passive: true });
+      document.addEventListener('touchcancel', handleGlobalTouchEnd, { passive: true });
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('touchend', handleGlobalTouchEnd);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('touchcancel', handleGlobalTouchEnd);
+    };
+  }, [isDragging, dragIndicatorElement, digit, removeDragIndicator]);
+
   // Cleanup drag indicator on unmount or when digit changes
   React.useEffect(() => {
     return () => {
       if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
         try {
           document.body.removeChild(dragIndicatorElement);
+          console.log(`🎯 SelectionArea: Cleanup on unmount - removed drag indicator for digit ${digit}`);
         } catch (error) {
-          console.warn(`🎯 Cleanup: Failed to remove drag indicator for digit ${digit}:`, error);
+          console.warn(`🎯 SelectionArea: Cleanup on unmount - failed to remove drag indicator for digit ${digit}:`, error);
         }
       }
       if (dragTimeoutRef.current) {
@@ -239,6 +330,8 @@ const NumberButton: React.FC<NumberButtonProps> = ({
         className={buttonClasses}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
+        onClick={handleClick}
+        onTouchEnd={handleTouchEndImmediate}
         role="button"
         tabIndex={0}
         style={{
@@ -425,21 +518,40 @@ const SelectionArea: React.FC = () => {
   // });
 
   return (
-    <div className="selection-area">
-      <div className="selection-header">
-        <div className="selection-titles">
-          <h3 className="selection-title">Number Selection</h3>
-          <p className="selection-subtitle">Tap to auto-fill or drag to specific positions</p>
-        </div>
-        <button
-          className="help-button"
-          onClick={showToast}
-          aria-label="Show help"
-        >
-          <HelpCircle size={27} />
-        </button>
-      </div>
-
+    <div className="selection-area" style={{ position: 'relative' }}>
+      {/* Help icon absolutely positioned in upper left */}
+      <button
+        className="help-button"
+        onClick={showToast}
+        aria-label="Show help"
+        style={{
+          position: 'absolute',
+          top: '2px',
+          left: '2px',
+          background: 'none',
+          border: 'none',
+          color: '#6b7280',
+          cursor: 'pointer',
+          padding: '6px',
+          borderRadius: '6px',
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 11
+        }}
+      >
+        <HelpCircle size={27} />
+      </button>
+      {/* Title centered at the top */}
+      <h3 className="selection-title" style={{
+        margin: '0 0 clamp(4px, 1vw, 8px) 0',
+        fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+        color: '#1f2937',
+        fontWeight: 600,
+        textAlign: 'center',
+        width: '100%'
+      }}>Number Selection</h3>
       <div className="numbers-container">
         <div className="numbers-grid">
           {availableNumbers.map((digit) => (
@@ -454,8 +566,17 @@ const SelectionArea: React.FC = () => {
           ))}
         </div>
       </div>
-
-
+      {/* Subtitle as footer */}
+      <div className="block-footer" style={{
+        marginTop: '4px',
+        fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+        color: '#6b7280',
+        fontWeight: 400,
+        textAlign: 'center',
+        width: '100%'
+      }}>
+        Tap to auto-fill or drag to specific positions
+      </div>
     </div>
   );
 };

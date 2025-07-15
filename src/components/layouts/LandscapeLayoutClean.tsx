@@ -3,6 +3,7 @@ import YourGuessBlock from '../blocks/YourGuessBlock';
 import SelectionArea from '../SelectionArea';
 import MenuDrawerContent from '../MenuDrawerContent';
 import RecentGuessHistory from '../RecentGuessHistory';
+import TargetDisplay from '../TargetDisplay';
 
 interface LandscapeLayoutCleanProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
@@ -233,7 +234,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         gap: '5px',
         padding: '2.5px' // Reduced by 50% from 5px to 2.5px
       }}>
-        {/* Column 1: Your Guess + Number Selection stacked */}
+        {/* Column 1: Target Display + Your Guess + Number Selection stacked */}
         <div className="landscape-column column-1" style={{
           flex: '1',
           display: 'flex',
@@ -242,6 +243,17 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           height: '100%',
           padding: '2.5px' // Reduced by 50% from 5px to 2.5px
         }}>
+          {/* Target Display - Only shows if enabled */}
+          <div style={{
+            flex: '0 0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: 'center'
+          }}>
+            <TargetDisplay />
+          </div>
+          
           {/* Your Guess Block - Natural expansion with embedded submit button */}
           <div style={{
             flex: '0 0 auto',

@@ -37,17 +37,26 @@ const defaultSettings: GameSettings = {
   clearGuessAfterSubmit: true,
 };
 
-const createInitialGameState = (settings: GameSettings): GameState => ({
-  target: generateTarget(settings),
-  currentGuess: Array(settings.targetLength).fill(null),
-  guesses: [],
-  gameStartTime: new Date(),
-  score: 0,
-  isGameWon: false,
-  isGameActive: true,
-  activeGuessPosition: 0,
-  lockedPositions: new Set(),
-});
+const createInitialGameState = (settings: GameSettings): GameState => {
+  console.log('🎮 CREATING INITIAL GAME STATE with settings:', {
+    difficulty: settings.difficulty,
+    digitRange: settings.digitRange,
+    targetLength: settings.targetLength,
+    fullSettings: settings
+  });
+  
+  return {
+    target: generateTarget(settings),
+    currentGuess: Array(settings.targetLength).fill(null),
+    guesses: [],
+    gameStartTime: new Date(),
+    score: 0,
+    isGameWon: false,
+    isGameActive: true,
+    activeGuessPosition: 0,
+    lockedPositions: new Set(),
+  };
+};
 
 const createInitialHintState = (): HintState => ({
   purchasedHints: {
@@ -88,9 +97,9 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       settings: defaultSettings,
-      gameState: createInitialGameState(defaultSettings),
-      hintState: createInitialHintState(),
-      scratchpadState: createInitialScratchpadState(defaultSettings.digitRange),
+      gameState: null as any, // Will be initialized after settings are loaded
+      hintState: null as any, // Will be initialized after settings are loaded
+      scratchpadState: null as any, // Will be initialized after settings are loaded
       stats: new Map(),
       // leaderboard: new Map(), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
 
@@ -653,24 +662,47 @@ export const useGameStore = create<GameStore>()(
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name);
-          if (!str) return null;
           
-          const parsed = JSON.parse(str);
+          let settings: GameSettings;
+          let stats: Map<string, any>;
+          
+          if (!str) {
+            // First run - no localStorage data
+            console.log('💾 First run - no localStorage data, using default settings');
+            settings = { ...defaultSettings };
+            stats = new Map();
+          } else {
+            // Subsequent runs - load from localStorage
+            const parsed = JSON.parse(str);
+            settings = parsed.state?.settings || defaultSettings;
+            stats = new Map(Object.entries(parsed.state.stats || {}));
+            console.log('💾 Loading from localStorage');
+          }
           
           // CRITICAL: Always override showTarget to false on app startup
-          // This ensures the target is never displayed when the app loads
-          const settings = parsed.state?.settings || {};
           settings.showTarget = false;
           
-          console.log('💾 Loading from localStorage - forcing showTarget=false');
+          console.log('💾 Final settings:', {
+            difficulty: settings.difficulty,
+            digitRange: settings.digitRange,
+            targetLength: settings.targetLength
+          });
+          
+          // Create initial state with the correct settings (only once!)
+          const gameState = createInitialGameState(settings);
+          const hintState = createInitialHintState();
+          const scratchpadState = createInitialScratchpadState(settings.digitRange);
+          
+          console.log('💾 Created initial game state with correct settings');
           
           return {
-            ...parsed,
             state: {
-              ...parsed.state,
               settings,
-              stats: new Map(Object.entries(parsed.state.stats || {})),
-              // leaderboard: new Map(Object.entries(parsed.state.leaderboard || {})), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+              gameState,
+              hintState,
+              scratchpadState,
+              stats,
+              // leaderboard: new Map(), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
             }
           };
         },

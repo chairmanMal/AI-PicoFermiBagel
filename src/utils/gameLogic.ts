@@ -4,10 +4,27 @@ import { GameSettings, GuessResult, ScoreData } from '@/types/game';
  * Generates a random target number based on game settings
  */
 export function generateTarget(settings: GameSettings): number[] {
-  const { targetLength, digitRange } = settings;
+  const { targetLength, digitRange, difficulty } = settings;
   
-  // Debug logging
-  console.log('🎯 GENERATING TARGET:', { targetLength, digitRange, difficulty: settings.difficulty });
+  // Debug logging with more detail
+  console.log('🎯 GENERATING TARGET:', { 
+    targetLength, 
+    digitRange, 
+    difficulty,
+    fullSettings: settings
+  });
+  
+  // Validate that settings match expected difficulty
+  const expectedSettings = getDifficultySettings(difficulty);
+  if (expectedSettings.digitRange !== digitRange) {
+    console.error('🚨 SETTINGS MISMATCH:', {
+      difficulty,
+      expectedDigitRange: expectedSettings.digitRange,
+      actualDigitRange: digitRange,
+      expectedSettings,
+      actualSettings: settings
+    });
+  }
   
   const target: number[] = [];
   const usedDigits = new Set<number>();
@@ -34,6 +51,17 @@ export function generateTarget(settings: GameSettings): number[] {
   }
 
   console.log('🎯 GENERATED TARGET:', target, 'for digit range 0-' + digitRange);
+  
+  // Validation: Ensure target has correct length and no duplicates
+  if (target.length !== targetLength) {
+    console.error('🚨 TARGET LENGTH ERROR:', { target, expectedLength: targetLength, actualLength: target.length });
+  }
+  
+  const uniqueDigits = new Set(target);
+  if (uniqueDigits.size !== target.length) {
+    console.error('🚨 TARGET DUPLICATE ERROR:', { target, uniqueCount: uniqueDigits.size, expectedCount: target.length });
+  }
+  
   return target;
 }
 
@@ -45,29 +73,52 @@ export function evaluateGuess(guess: number[], target: number[]): GuessResult {
   let fermis = 0;
   let bagels = 0;
 
+  // Debug logging to catch the mathematical impossibility
+  console.log('🔍 EVALUATING GUESS:', {
+    guess,
+    target,
+    targetLength: target.length,
+    guessLength: guess.length
+  });
+
   for (let i = 0; i < guess.length; i++) {
     const guessDigit = guess[i];
     
     if (guessDigit === target[i]) {
       // Correct digit in correct position
       fermis++;
+      console.log(`  Position ${i}: ${guessDigit} = FERMI (correct position)`);
     } else if (target.includes(guessDigit)) {
       // Correct digit in wrong position
       picos++;
+      console.log(`  Position ${i}: ${guessDigit} = PICO (wrong position, target has it)`);
     } else {
       // Digit not in target
       bagels++;
+      console.log(`  Position ${i}: ${guessDigit} = BAGEL (not in target)`);
     }
   }
 
-  const isWinner = fermis === target.length && picos === 0 && bagels === 0;
-
-  return {
+  const result = {
     picos,
     fermis,
     bagels,
-    isWinner
+    isWinner: fermis === target.length && picos === 0 && bagels === 0
   };
+
+  console.log('🔍 EVALUATION RESULT:', result);
+  
+  // Validation check for mathematical impossibility
+  if (bagels > target.length) {
+    console.error('🚨 MATHEMATICAL ERROR: More bagels than possible!', {
+      bagels,
+      maxPossibleBagels: target.length,
+      guess,
+      target
+    });
+  }
+
+  return result;
 }
 
 /**

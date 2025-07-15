@@ -29,9 +29,25 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const [showManual, setShowManual] = useState(false);
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
 
+  // Simple cleanup on component unmount
+  React.useEffect(() => {
+    return () => {
+      console.log('🔧 SettingsDrawerContent: Component unmounting - cleaning up');
+      // Component is being unmounted, no need to reset state as it will be destroyed
+    };
+  }, []);
+
+  const handleCloseDrawer = () => {
+    setShowManual(false);
+    setShowCustomSettings(false);
+    if (onClose) {
+      onClose();
+    }
+  };
+
   const handleStartNewGame = () => {
     resetGame();
-    if (onClose) onClose();
+    handleCloseDrawer();
   };
 
   const toggleShowTarget = () => {
@@ -489,7 +505,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
       
       {/* Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach */}
 
-      {/* Manual Modal */}
+      {/* Manual Modal - Full screen sized with proper dismissal */}
       <AnimatePresence>
         {showManual && (
           <motion.div
@@ -499,12 +515,15 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.5)',
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              zIndex: 10000,
-              padding: '20px'
+              zIndex: 20000, // Higher than everything else
+              padding: '20px',
+              boxSizing: 'border-box'
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -515,14 +534,13 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
               style={{
                 background: 'white',
                 borderRadius: '12px',
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                width: '800px',
-                height: '600px',
+                width: 'min(95vw, 1200px)', // Much larger width
+                height: 'min(90vh, 900px)', // Much larger height
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+                position: 'relative'
               }}
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -534,25 +552,38 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '16px 20px',
+                padding: '20px 24px',
                 borderBottom: '1px solid #e5e7eb',
-                background: '#f8fafc'
+                background: '#f8fafc',
+                flexShrink: 0
               }}>
-                <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.1rem', fontWeight: '600' }}>How to Play - PicoFermiBagel</h3>
+                <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.3rem', fontWeight: '600' }}>How to Play - PicoFermiBagel</h3>
                 <button
                   onClick={() => setShowManual(false)}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#6b7280',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#dc2626',
                     cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '6px',
-                    transition: 'all 0.2s ease'
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.9rem',
+                    fontWeight: '500'
                   }}
                   aria-label="Close manual"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                  }}
                 >
-                  <X size={20} />
+                  <X size={18} style={{ marginRight: '6px' }} />
+                  Close
                 </button>
               </div>
               
@@ -563,6 +594,23 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   frameBorder="0"
                 />
+              </div>
+              
+              {/* Dismiss instruction */}
+              <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                backdropFilter: 'blur(4px)',
+                zIndex: 1
+              }}>
+                Click anywhere outside to close
               </div>
             </motion.div>
           </motion.div>

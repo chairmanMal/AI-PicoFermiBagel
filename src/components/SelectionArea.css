@@ -4,10 +4,11 @@
 
 .selection-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
   margin-bottom: clamp(15px, 3vw, 20px);
   position: relative;
+  margin-left: 0;
 }
 
 .selection-titles {
@@ -30,6 +31,9 @@
 }
 
 .help-button {
+  position: absolute;
+  top: 2px;
+  left: 2px;
   background: none;
   border: none;
   color: #6b7280;
@@ -40,9 +44,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  top: 6px;
-  left: 0;
 }
 
 .help-button:hover {
@@ -58,6 +59,8 @@
   width: 100% !important;
   margin: 0 auto !important;
   text-align: center !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .selection-area .numbers-container .numbers-grid {
@@ -70,6 +73,8 @@
   /* Remove max-width constraint - let parent container determine width dynamically */
   margin: 0 auto !important;
   padding: 1rem !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* Force line breaks for center-justified text effect */
@@ -179,10 +184,28 @@
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.used-submitted {
-  background-color: #f3f4f6 !important;
-  color: #6b7280 !important;
-  border-color: #d1d5db !important;
-  opacity: 0.8 !important;
+  background-color: #f8fafc !important;
+  color: #4b5563 !important;
+  border-color: #9ca3af !important;
+  opacity: 0.9 !important;
+  /* Ensure these are still clearly clickable */
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.used-submitted:hover {
+  background-color: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  color: #4338ca !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.selection-area .numbers-container .numbers-grid .number-button.used-submitted:active {
+  background-color: #c7d2fe !important;
+  border-color: #4f46e5 !important;
+  color: #3730a3 !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4) !important;
 }
 
 .selection-area .numbers-container .numbers-grid .number-button.hint-bagel {
@@ -663,4 +686,13 @@
 .number-button.selecting {
   animation: numberSelect 0.3s ease-in-out;
   /* No transforms - only color and shadow changes */
+} 
+
+.block-footer {
+  margin-top: 8px;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: #6b7280;
+  font-weight: 400;
+  text-align: center;
+  width: 100%;
 } 

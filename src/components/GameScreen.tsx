@@ -8,6 +8,7 @@ import LandscapeLayoutClean from './layouts/LandscapeLayoutClean';
 import PortraitLayout from './PortraitLayout';
 import SettingsDrawerContent from './SettingsDrawerContent';
 import MenuDrawerContent from './MenuDrawerContent';
+import WinBanner from './WinBanner';
 
 // Utility Functions
 import { DeviceDetection } from '../utils/deviceDetection';
@@ -19,7 +20,7 @@ const GameScreen: React.FC = () => {
   // ==========================================
   // CORE RESPONSIBILITY 1: GAME STATE INTEGRATION
   // ==========================================
-  const { resetAllSettings } = useGameStore();
+  const { resetAllSettings, gameState } = useGameStore();
 
   // ==========================================
   // CORE RESPONSIBILITY 2: LAYOUT DETECTION & MANAGEMENT
@@ -30,10 +31,56 @@ const GameScreen: React.FC = () => {
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
 
+  // Win banner state
+  const [showWinBanner, setShowWinBanner] = useState(false);
+  const [winBannerDismissed, setWinBannerDismissed] = useState(false);
+
+  // Settings drawer close handler
+  const handleSettingsDrawerClose = () => {
+    console.log('🔧 Settings drawer closing - will reset internal state');
+    setIsSettingsDrawerOpen(false);
+  };
+
   // Refs for layout components
   const guessElementRef = useRef<HTMLDivElement>(null);
   const gameScreenRef = useRef<HTMLDivElement>(null);
   const previousLayoutRef = useRef(currentLayout);
+
+  // ==========================================
+  // WIN BANNER MANAGEMENT
+  // ==========================================
+  useEffect(() => {
+    if (gameState?.isGameWon && !showWinBanner && !winBannerDismissed) {
+      console.log('🎉 GameScreen: Game won - showing win banner');
+      setShowWinBanner(true);
+    } else if (!gameState?.isGameWon) {
+      console.log('🎉 GameScreen: Game reset - resetting win banner state');
+      setShowWinBanner(false);
+      setWinBannerDismissed(false);
+    }
+  }, [gameState?.isGameWon, showWinBanner, winBannerDismissed]);
+
+  const handleWinBannerDismiss = () => {
+    console.log('🎉 GameScreen: Win banner dismissed by user');
+    setShowWinBanner(false);
+    setWinBannerDismissed(true); // Prevent re-showing for this win
+  };
+
+  const getGameStats = () => {
+    if (!gameState) return { targetNumber: '', guessCount: 0, timeElapsed: '0:00', score: 0 };
+    
+    const endTime = gameState.gameEndTime || new Date();
+    const diffMs = endTime.getTime() - gameState.gameStartTime.getTime();
+    const minutes = Math.floor(diffMs / 60000);
+    const seconds = Math.floor((diffMs % 60000) / 1000);
+    
+    return {
+      targetNumber: gameState.target.join(''),
+      guessCount: gameState.guesses.length,
+      timeElapsed: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+      score: gameState.score
+    };
+  };
 
   // ==========================================
   // CORE RESPONSIBILITY 3: AUDIO SYSTEM
@@ -398,16 +445,20 @@ const GameScreen: React.FC = () => {
       {/* Render appropriate layout */}
       {renderLayout()}
 
+      {/* Win Banner - Shows when game is won */}
+      <WinBanner
+        isVisible={showWinBanner}
+        onDismiss={handleWinBannerDismiss}
+        gameStats={getGameStats()}
+      />
+
       {/* Settings Drawer - Enhanced styling for better portrait mode experience */}
       <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
         <div className="menu-drawer-container">
           <div className="drawer-header">
         <button
               className="drawer-close"
-              onClick={() => {
-                console.log('❌ Settings close button clicked - closing drawer');
-                setIsSettingsDrawerOpen(false);
-              }}
+              onClick={handleSettingsDrawerClose}
               aria-label="Close Settings"
           style={{ 
                 position: 'fixed',
@@ -494,7 +545,10 @@ const GameScreen: React.FC = () => {
               });
             }
           }}>
-            <SettingsDrawerContent />
+            <SettingsDrawerContent 
+              key={isSettingsDrawerOpen ? 'open' : 'closed'} 
+              onClose={handleSettingsDrawerClose} 
+            />
                     </div>
                   </div>
                   </div>
@@ -681,13 +735,13 @@ const GameScreen: React.FC = () => {
             console.log('🎯 Settings overlay clicked - closing drawer');
             e.preventDefault();
             e.stopPropagation();
-            setIsSettingsDrawerOpen(false);
+            handleSettingsDrawerClose();
           }}
           onTouchStart={(e) => {
             console.log('🎯 Settings overlay touched - closing drawer');
             e.preventDefault();
             e.stopPropagation();
-            setIsSettingsDrawerOpen(false);
+            handleSettingsDrawerClose();
           }}
           style={{
             position: 'fixed',

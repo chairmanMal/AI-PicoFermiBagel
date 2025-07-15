@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { HelpCircle, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
 import './GuessArea.css';
@@ -27,69 +27,260 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const longPressCompleted = useRef(false);
+  
+  // New state for dragging guess box numbers
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragIndicatorElement, setDragIndicatorElement] = useState<HTMLDivElement | null>(null);
+  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { dispatch } = useGameStore();
 
-  const handleMouseDown = useCallback(() => {
+  // Create drag indicator for guess box numbers
+  const createDragIndicator = useCallback((x: number, y: number) => {
+    if (value === null) return null;
+    
+    const indicator = document.createElement('div');
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${x - 35}px;
+      top: ${y - 35}px;
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      border: 4px solid #10b981;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 900;
+      z-index: 2147483647;
+      pointer-events: none;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(16, 185, 129, 0.3);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      opacity: 1;
+      visibility: visible;
+    `;
+    indicator.textContent = value.toString();
+    document.body.appendChild(indicator);
+    setDragIndicatorElement(indicator);
+    return indicator;
+  }, [value]);
+
+  // Update drag indicator position
+  const updateDragIndicator = useCallback((x: number, y: number) => {
+    if (dragIndicatorElement) {
+      dragIndicatorElement.style.left = `${x - 35}px`;
+      dragIndicatorElement.style.top = `${y - 35}px`;
+    }
+  }, [dragIndicatorElement]);
+
+  // Remove drag indicator with safety checks
+  const removeDragIndicator = useCallback(() => {
+    if (dragIndicatorElement) {
+      try {
+        if (document.body.contains(dragIndicatorElement)) {
+          document.body.removeChild(dragIndicatorElement);
+          console.log(`🎯 GuessArea: Removed drag indicator for position ${position}`);
+        }
+      } catch (error) {
+        console.warn(`🎯 GuessArea: Failed to remove drag indicator for position ${position}:`, error);
+      }
+      setDragIndicatorElement(null);
+    }
+  }, [dragIndicatorElement, position]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     longPressCompleted.current = false;
-    if (value !== null) {
-      setIsLongPressing(true);
+    if (value !== null && !isLocked) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      
+      // Delay showing the long-press indicator to avoid visual noise
+      setTimeout(() => {
+        if (longPressTimer.current) { // Only show if timer is still active
+          setIsLongPressing(true);
+        }
+      }, 200); // 200ms delay before showing orange indicator
+      
+      // Set up long press timer for locking
       longPressTimer.current = setTimeout(() => {
         onLockToggle(position);
-        setIsLongPressing(false);
         longPressCompleted.current = true;
-      }, 500); // 500ms for long press
+        setDragStart(null); // Cancel any potential drag
+        // Note: setIsLongPressing(false) is handled in mouse/touch up events
+      }, 700); // Increased to 700ms for more deliberate long press
     }
-  }, [value, position, onLockToggle]);
+  }, [value, position, onLockToggle, isLocked]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     longPressCompleted.current = false;
-    if (value !== null) {
-      setIsLongPressing(true);
+    if (value !== null && !isLocked) {
+      const touch = e.touches[0];
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragStart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+      
+      // Delay showing the long-press indicator to avoid visual noise
+      setTimeout(() => {
+        if (longPressTimer.current) { // Only show if timer is still active
+          setIsLongPressing(true);
+        }
+      }, 200); // 200ms delay before showing orange indicator
+      
+      // Set up long press timer for locking
       longPressTimer.current = setTimeout(() => {
         onLockToggle(position);
-        setIsLongPressing(false);
         longPressCompleted.current = true;
-      }, 500); // 500ms for long press
+        setDragStart(null); // Cancel any potential drag
+        // Note: setIsLongPressing(false) is handled in mouse/touch up events
+      }, 700); // Increased to 700ms for more deliberate long press
     }
-  }, [value, position, onLockToggle]);
+  }, [value, position, onLockToggle, isLocked]);
 
-  const handleMouseUp = useCallback(() => {
+  // Mouse move handler for dragging
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (dragStart && !isDragging && !longPressCompleted.current && e.target) {
+      const target = e.target as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      
+      // Start dragging if we've moved enough
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - (dragStart.x + rect.left), 2) +
+        Math.pow(e.clientY - (dragStart.y + rect.top), 2)
+      );
+      
+      if (distance > 10) { // 10px threshold to start drag
+        // Cancel long press timer
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+        setIsLongPressing(false);
+        setIsDragging(true);
+        createDragIndicator(e.clientX, e.clientY);
+      }
+    }
+    if (isDragging) {
+      updateDragIndicator(e.clientX, e.clientY);
+    }
+  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
+
+  // Touch move handler for dragging
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (dragStart && !isDragging && !longPressCompleted.current && e.target) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const target = e.target as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      
+      // Start dragging if we've moved enough
+      const distance = Math.sqrt(
+        Math.pow(touch.clientX - (dragStart.x + rect.left), 2) +
+        Math.pow(touch.clientY - (dragStart.y + rect.top), 2)
+      );
+      
+      if (distance > 10) { // 10px threshold to start drag
+        // Cancel long press timer
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+        setIsLongPressing(false);
+        setIsDragging(true);
+        createDragIndicator(touch.clientX, touch.clientY);
+      }
+    }
+    if (isDragging) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      updateDragIndicator(touch.clientX, touch.clientY);
+    }
+  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
+
+  // Handle drag end for swapping
+  const handleDragEnd = useCallback((clientX: number, clientY: number) => {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+      dragTimeoutRef.current = null;
+    }
+
+    let dropSuccessful = false;
+
+    if (isDragging) {
+      // Find the element under the drop point
+      const elementBelow = document.elementFromPoint(clientX, clientY);
+      const targetGuessBox = elementBelow?.closest('.guess-box');
+      
+      if (targetGuessBox) {
+        const targetPosition = parseInt(targetGuessBox.getAttribute('data-position') || '0');
+        const targetIsLocked = targetGuessBox.classList.contains('locked');
+        
+        // Only swap if target is different position and not locked
+        if (targetPosition !== position && !targetIsLocked) {
+          dispatch({ type: 'MOVE_DIGIT', fromPosition: position, toPosition: targetPosition });
+          dropSuccessful = true;
+          
+          // Play drip sound for successful swap
+          import('../utils/soundUtils').then(({ soundUtils }) => {
+            soundUtils.playDripSound();
+          });
+        }
+      }
+    }
+
+    // Always reset drag states and remove indicator
+    setIsDragging(false);
+    setDragStart(null);
+    removeDragIndicator();
+
+    // Log the drop result for debugging
+    if (isDragging && !dropSuccessful) {
+      console.log(`🎯 GuessArea: Drag ended without valid drop target for position ${position}`);
+    }
+  }, [isDragging, position, dispatch, removeDragIndicator]);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    if (isLongPressing && !longPressCompleted.current) {
-      setIsLongPressing(false);
+    
+    // Always clear long-pressing state on mouse up
+    setIsLongPressing(false);
+    
+    if (isDragging) {
+      handleDragEnd(e.clientX, e.clientY);
+    } else if (!longPressCompleted.current) {
       // This was a regular click, not a long press - allow clicking on any unlocked position
       onBoxClick(position);
     } else if (longPressCompleted.current) {
       // Reset the flag for next interaction
       longPressCompleted.current = false;
-      setIsLongPressing(false);
-    } else if (!isLongPressing && !longPressCompleted.current) {
-      // This was a click on an empty position - still allow selection
-      onBoxClick(position);
     }
-  }, [isLongPressing, position, onBoxClick]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd]);
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    if (isLongPressing && !longPressCompleted.current) {
-      setIsLongPressing(false);
+    
+    // Always clear long-pressing state on touch end
+    setIsLongPressing(false);
+    
+    if (isDragging) {
+      const touch = e.changedTouches[0];
+      handleDragEnd(touch.clientX, touch.clientY);
+    } else if (!longPressCompleted.current) {
       // This was a regular tap, not a long press - allow tapping on any unlocked position
       onBoxClick(position);
     } else if (longPressCompleted.current) {
       // Reset the flag for next interaction
       longPressCompleted.current = false;
-      setIsLongPressing(false);
-    } else if (!isLongPressing && !longPressCompleted.current) {
-      // This was a tap on an empty position - still allow selection
-      onBoxClick(position);
     }
-  }, [isLongPressing, position, onBoxClick]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd]);
 
   const handleDoubleClick = () => {
     if (value !== null && !isLocked) {
@@ -147,9 +338,59 @@ const GuessBox: React.FC<GuessBoxProps> = ({
     setIsDragOver(false);
   }, []);
 
+  // Add event listeners for drag functionality
+  React.useEffect(() => {
+    if (dragStart) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
+    }
+  }, [dragStart, handleMouseMove, handleTouchMove]);
+
+  // Global cleanup for orphaned drag indicators
+  React.useEffect(() => {
+    const handleGlobalTouchEnd = () => {
+      // If we're not actively dragging, clean up any orphaned indicators
+      if (!isDragging && dragIndicatorElement) {
+        console.log(`🎯 GuessArea: Global cleanup - removing orphaned drag indicator for position ${position}`);
+        removeDragIndicator();
+      }
+    };
+
+    // Add global touch/click listeners for cleanup
+    document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+    document.addEventListener('mouseup', handleGlobalTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchend', handleGlobalTouchEnd);
+      document.removeEventListener('mouseup', handleGlobalTouchEnd);
+    };
+  }, [isDragging, dragIndicatorElement, position, removeDragIndicator]);
+
+  // Cleanup drag indicator on unmount
+  React.useEffect(() => {
+    return () => {
+      if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
+        try {
+          document.body.removeChild(dragIndicatorElement);
+          console.log(`🎯 GuessArea: Cleanup on unmount - removed drag indicator for position ${position}`);
+        } catch (error) {
+          console.warn(`🎯 GuessArea: Cleanup on unmount - failed to remove drag indicator for position ${position}:`, error);
+        }
+      }
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, [dragIndicatorElement, position]);
+
   return (
     <div
-      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isLongPressing ? 'long-pressing' : ''}`}
+      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isLongPressing ? 'long-pressing' : ''} ${isDragging ? 'dragging' : ''}`}
       data-position={position}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -161,7 +402,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       onDrop={handleDrop}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      title={value !== null && !isLocked ? "Click to select, double-click to clear, long-press to lock" : isLocked ? "Long-press to unlock" : "Click to select this position"}
+      title={value !== null && !isLocked ? "Click to select, double-click to clear, long-press to lock, or drag to swap with another position" : isLocked ? "Long-press to unlock" : "Click to select this position"}
     >
       <div className="guess-content">
         {value !== null && value !== undefined ? (
@@ -189,75 +430,6 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 const GuessArea: React.FC = () => {
 
 
-  // Create toast outside of any stacking context
-  const showToast = () => {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 2147483647;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 20px;
-      padding-top: 80px;
-    `;
-    
-    overlay.innerHTML = `
-      <div style="
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 100%;
-        max-height: 80vh;
-        overflow-y: auto;
-        z-index: 2147483647;
-      ">
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 20px 0;
-          border-bottom: 1px solid #e5e7eb;
-          margin-bottom: 20px;
-        ">
-          <h4 style="margin: 0; font-size: 1.2rem; color: #1f2937;">Guess Position Controls</h4>
-          <button id="close-toast" style="
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6b7280;
-            padding: 4px 8px;
-            border-radius: 4px;
-          ">×</button>
-        </div>
-        <div style="padding: 0 20px 20px;">
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Blue Outline:</strong> This is considered the active position. A tapped number in the selection grid will be assigned to this guess location. After autofill-ing, the active position will automatically advance</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Manual Selection:</strong> Click any unlocked box to make it the active position for autofill</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Long-press any filled guess position to lock/unlock it from changing values. Locking also causes the autofill advancing to skip that position</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
-        </div>
-      </div>
-    `;
-    
-    const closeToast = () => {
-      document.body.removeChild(overlay);
-    };
-    
-    overlay.addEventListener('click', closeToast);
-    overlay.querySelector('#close-toast')?.addEventListener('click', closeToast);
-    
-    document.body.appendChild(overlay);
-  };
   const { settings, gameState, hintState, dispatch } = useGameStore();
   
   // Calculate row sums if any have been purchased
@@ -381,25 +553,12 @@ const GuessArea: React.FC = () => {
 
   return (
     <div className="guess-area">
-      <div className="guess-header">
-        <h3 className="guess-title">Your Guess</h3>
-        <button
-          className="help-button"
-          onClick={showToast}
-          aria-label="Show help"
-        >
-          <HelpCircle size={27} />
-        </button>
-      </div>
-
       <div className="guess-grid" style={{
         '--grid-rows': settings.gridRows,
         '--grid-columns': settings.gridColumns
       } as React.CSSProperties}>
         {createGuessGrid()}
       </div>
-
-
     </div>
   );
 };

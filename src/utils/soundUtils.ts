@@ -617,7 +617,75 @@ class SoundUtils {
 
   // Play a celebration sound for game win
   playGameWonSound() {
-    this.playSound('won');
+    this.playCelebrationSound();
+  }
+
+  // Play simple celebration sound for game win
+  playCelebrationSound() {
+    if (!this.audioContext) {
+      console.warn('🎵 AudioContext not available for celebration');
+      return;
+    }
+
+    try {
+      // Create simple celebration sequence
+      const buffer = this.createCelebrationBuffer();
+      
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+      
+      source.buffer = buffer;
+      gainNode.gain.value = this.masterVolume;
+      
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      source.start();
+      console.log('🎵 🎉 Playing celebration sound for game win');
+    } catch (error) {
+      console.error('🎵 Failed to play celebration sound:', error);
+    }
+  }
+
+  // Create simple celebration buffer (ascending musical notes)
+  private createCelebrationBuffer(): AudioBuffer {
+    if (!this.audioContext) throw new Error('AudioContext not available');
+    
+    const sampleRate = this.audioContext.sampleRate;
+    const duration = 3.0; // 3 seconds total
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = this.audioContext.createBuffer(1, samples, sampleRate);
+    const channelData = buffer.getChannelData(0);
+    
+    // Victory fanfare notes (C major scale ascending)
+    const notes = [
+      { freq: 261.63, start: 0.0, duration: 0.4 }, // C4
+      { freq: 329.63, start: 0.3, duration: 0.4 }, // E4
+      { freq: 392.00, start: 0.6, duration: 0.4 }, // G4
+      { freq: 523.25, start: 0.9, duration: 0.6 }, // C5
+      { freq: 659.25, start: 1.4, duration: 0.6 }, // E5
+      { freq: 783.99, start: 1.9, duration: 0.8 }, // G5
+    ];
+    
+    for (let i = 0; i < samples; i++) {
+      const time = i / sampleRate;
+      let sound = 0;
+      
+      // Play each note at its scheduled time
+      for (const note of notes) {
+        if (time >= note.start && time < note.start + note.duration) {
+          const noteTime = time - note.start;
+          const envelope = Math.exp(-noteTime * 2); // Decay envelope
+          const tone = Math.sin(2 * Math.PI * note.freq * noteTime);
+          sound += tone * envelope * 0.3;
+        }
+      }
+      
+      const amplitude = 0.8 * this.masterVolume; // Loud and clear
+      channelData[i] = sound * amplitude;
+    }
+    
+    return buffer;
   }
 
   private createToneDataUrlWithVolume(frequency: number, duration: number, volume: number): string {
