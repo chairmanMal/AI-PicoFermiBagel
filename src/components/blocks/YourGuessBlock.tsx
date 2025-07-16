@@ -5,9 +5,10 @@ import { HelpCircle } from 'lucide-react';
 
 interface YourGuessBlockProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
+  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
 }
 
-const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
+const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLandscape = false }) => {
   // Show the same help toast as GuessArea
   const showToast = () => {
     const overlay = document.createElement('div');
@@ -81,7 +82,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '16px 16px 20px 16px', // Add padding with 20px bottom
+        padding: '16px 16px 40px 16px', // Add extra bottom padding for footer
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
         width: '100%',
         height: 'fit-content',
@@ -90,8 +91,8 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         margin: '0',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: 'lime', // BRIGHT GREEN
-        border: '5px solid red'
+        backgroundColor: isLandscape ? 'white' : 'lime', // BRIGHT GREEN (only in portrait)
+        border: isLandscape ? 'none' : '5px solid red'
       }}
     >
       {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -101,8 +102,8 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         aria-label="Show help"
         style={{
           position: 'absolute',
-          top: '-2px',
-          left: '-2px',
+          top: '2px',
+          left: '2px',
           background: 'none',
           border: 'none',
           color: '#6b7280',
@@ -119,43 +120,47 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         <HelpCircle size={27} />
       </button>
 
+      {/* Submit button in upper right corner */}
+      <div style={{
+        position: 'absolute',
+        top: '7px', // Moved down 5px from 2px to 7px
+        right: '7px', // 5px more space from the right edge
+        zIndex: 10
+      }}>
+        <CircularSubmitButton />
+      </div>
+
       {/* Title centered at the top */}
       <h3 className="guess-title" style={{
-        margin: '0 0 clamp(4px, 1vw, 8px) 0',
+        margin: '0 0 1px 0', // FURTHER REDUCED gap between title and array (50% less)
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
         textAlign: 'center',
         width: '100%'
       }}>Your Guess</h3>
-      {/* Submit button in upper right corner */}
-      <div style={{
-        position: 'absolute',
-        top: '2px',
-        right: '2px',
-        zIndex: 10
-      }}>
-        <CircularSubmitButton />
-      </div>
       {/* Main content - directly in card */}
-      <GuessArea />
+      <GuessArea isLandscape={isLandscape} />
 
-      {/* Subtitle as footer */}
+      {/* Footer positioned at bottom of card */}
       <div 
         className="block-footer" 
         style={{
-          marginTop: '8px',
-          marginBottom: '0px',
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          right: '0',
+          margin: '0',
           fontSize: 'clamp(0.85rem, 2vw, 1rem)',
           color: '#6b7280',
           fontWeight: 400,
           textAlign: 'center',
           width: '100%',
-          padding: '4px 0',
-          marginLeft: '0',
-          marginRight: '0',
-          backgroundColor: 'yellow', // BRIGHT YELLOW
-          border: '3px solid blue'
+          padding: '8px 0',
+          backgroundColor: isLandscape ? 'transparent' : 'yellow', // BRIGHT YELLOW (only in portrait)
+          border: isLandscape ? 'none' : '3px solid blue',
+          borderTop: 'none', // Remove the tiny line above footer
+          zIndex: 5
         }}
         onLoad={() => {
           console.log('🎯 YOUR GUESS FOOTER: Loaded with bright yellow background');

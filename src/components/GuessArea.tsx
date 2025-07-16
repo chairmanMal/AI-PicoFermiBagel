@@ -459,7 +459,11 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   );
 };
 
-const GuessArea: React.FC = () => {
+interface GuessAreaProps {
+  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
+}
+
+const GuessArea: React.FC<GuessAreaProps> = ({ isLandscape = false }) => {
 
 
   const { settings, gameState, hintState, dispatch } = useGameStore();
@@ -590,7 +594,15 @@ const GuessArea: React.FC = () => {
       flex: '1',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '0',
+      border: isLandscape ? 'none' : '5px solid magenta', // BRIGHT MAGENTA BORDER (only in portrait)
+      backgroundColor: isLandscape ? 'transparent' : 'cyan', // BRIGHT CYAN BACKGROUND (only in portrait)
+      padding: isLandscape ? '10px' : '10px', // Restore padding for structure
+      margin: isLandscape ? '10px 0' : '10px 0', // Restore margin for structure
+      borderRadius: isLandscape ? '8px' : '8px', // Restore border radius for structure
+      boxSizing: 'border-box' // Ensure proper sizing
     } as React.CSSProperties}>
       {createGuessGrid()}
     </div>

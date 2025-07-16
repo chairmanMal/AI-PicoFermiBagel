@@ -371,7 +371,11 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   );
 };
 
-const SelectionArea: React.FC = () => {
+interface SelectionAreaProps {
+  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
+}
+
+const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) => {
   const { gameState, hintState, scratchpadState, settings, dispatch } = useGameStore();
   const { currentGuess, guesses } = gameState;
 
@@ -510,7 +514,7 @@ const SelectionArea: React.FC = () => {
     }}>
       {/* Title centered at the top */}
       <h3 className="selection-title" style={{
-        margin: '0 0 clamp(4px, 1vw, 8px) 0',
+        margin: '0 0 clamp(8px, 2vw, 12px) 0', // RESTORED spacing between title and array
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
@@ -523,8 +527,8 @@ const SelectionArea: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: '10px', // Add top padding to prevent clipping
-        paddingBottom: '10px', // Add bottom padding for balance
+        paddingTop: '8px', // RESTORED top padding
+        paddingBottom: '0px', // REMOVED bottom padding to let footer abut the border
         flex: '1',
         minHeight: '0'
       }}>
@@ -541,23 +545,25 @@ const SelectionArea: React.FC = () => {
           ))}
         </div>
       </div>
-      {/* Subtitle as footer - in normal flow, flush with bottom */}
+      {/* Footer positioned at bottom of card */}
       <div 
         className="block-footer" 
         style={{
-          marginTop: 'auto', // Push to bottom
-          marginBottom: '0px',
+          position: 'absolute',
+          bottom: '-15px', // Position at bottom of parent container (accounting for parent padding)
+          left: '-15px', // Extend to left edge of parent container
+          right: '-15px', // Extend to right edge of parent container
+          margin: '0',
           fontSize: 'clamp(0.85rem, 2vw, 1rem)',
           color: '#6b7280',
           fontWeight: 400,
           textAlign: 'center',
-          padding: '8px 12px',
-          backgroundColor: 'yellow', // BRIGHT YELLOW
-          border: '3px solid orange',
-          flexShrink: 0,
-          marginLeft: '-15px', // Extend to left edge of card
-          marginRight: '-15px', // Extend to right edge of card
-          width: 'calc(100% + 30px)' // Compensate for negative margins
+          width: 'calc(100% + 30px)', // Compensate for negative margins
+          padding: '8px 0',
+          backgroundColor: isLandscape ? 'transparent' : 'yellow', // BRIGHT YELLOW (only in portrait)
+          border: isLandscape ? 'none' : '3px solid orange',
+          borderTop: '1px solid #e5e7eb',
+          zIndex: 5
         }}
         onLoad={() => {
           console.log('🎯 NUMBER SELECTION FOOTER: Loaded with bright cyan background');

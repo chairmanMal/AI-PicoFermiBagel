@@ -272,12 +272,12 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             justifyContent: 'flex-start',
             alignItems: 'center'
           }}>
-            <YourGuessBlock guessElementRef={guessElementRef} />
+            <YourGuessBlock guessElementRef={guessElementRef} isLandscape={true} />
           </div>
           
           {/* Number Selection Block - Takes remaining space */}
           <div className="number-selection-block" style={{
-            background: 'pink', // BRIGHT PINK - fills the entire card
+            background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '12px',
             padding: '15px',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
@@ -289,8 +289,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             alignItems: 'center',
             overflow: 'visible',
             minHeight: 0,
-            position: 'relative',
-            border: '5px solid purple' // BRIGHT PURPLE BORDER
+            position: 'relative'
           }}>
             {/* Help icon absolutely positioned in upper left - same as Your Guess block */}
             <button
@@ -324,7 +323,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             >
               <HelpCircle size={27} />
             </button>
-            <SelectionArea />
+            <SelectionArea isLandscape={true} />
           </div>
         </div>
         

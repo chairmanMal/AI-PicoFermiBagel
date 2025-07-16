@@ -526,7 +526,15 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         <div className="selection-section" style={{ 
           position: 'relative',
           flexShrink: 0, 
-          width: '100%' 
+          width: '100%',
+          background: 'pink', // BRIGHT PINK - fills the entire card
+          borderRadius: '12px',
+          padding: '15px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '5px solid purple', // BRIGHT PURPLE BORDER
+          margin: '10px',
+          boxSizing: 'border-box'
         }}>
           {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
           <button
@@ -535,8 +543,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
             aria-label="Show help"
             style={{
               position: 'absolute',
-              top: '-2px',
-              left: '-2px',
+              top: '2px',
+              left: '2px',
               background: 'none',
               border: 'none',
               color: '#6b7280',
