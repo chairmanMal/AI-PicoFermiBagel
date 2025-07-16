@@ -244,6 +244,100 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       // Submit button is now embedded in YourGuessBlock - no separate positioning needed
       console.log('🎯 PORTRAIT SUBMIT BUTTON: Embedded in YourGuessBlock');
       
+      // Add CSS overrides for both portrait and landscape modes
+      const style = document.createElement('style');
+      style.id = 'layout-footer-override';
+      style.textContent = `
+        /* Portrait mode specific footer positioning */
+        @media (orientation: portrait) {
+          .portrait-content .your-guess-block .block-footer {
+            position: absolute !important;
+            bottom: 0px !important;
+            left: 0px !important;
+            right: 0px !important;
+            margin: 0 !important;
+            padding: 8px 12px !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          .portrait-content .selection-area .block-footer {
+            margin-top: auto !important;
+            margin-bottom: 0px !important;
+            width: 100% !important;
+            padding: 8px 12px !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          .portrait-content .your-guess-block {
+            position: relative !important;
+            min-height: 200px !important;
+          }
+          
+          .portrait-content .selection-area {
+            position: relative !important;
+            min-height: 0 !important;
+            background: pink !important;
+            border-radius: inherit !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          
+          .portrait-content .number-selection-block {
+            /* Keep original card styling - no overrides */
+          }
+        }
+        
+        /* Landscape mode - restore pink background and footer visibility */
+        @media (orientation: landscape) {
+          .landscape-content .selection-area {
+            background: pink !important;
+            border-radius: inherit !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          
+          .landscape-content .number-selection-block {
+            /* Keep original card styling - no overrides */
+          }
+          
+          .landscape-content .selection-area .block-footer {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin-top: auto !important;
+            margin-bottom: 0px !important;
+            width: 100% !important;
+          }
+          
+          .landscape-content .your-guess-block .block-footer {
+            position: absolute !important;
+            bottom: 0px !important;
+            left: 0px !important;
+            right: 0px !important;
+            margin: 0 !important;
+            padding: 8px 12px !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          .landscape-content .your-guess-block {
+            position: relative !important;
+            min-height: 200px !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
       // Debug Your Guess block positioning
       setTimeout(() => {
         const yourGuessBlock = document.querySelector('.your-guess-block') as HTMLElement;
@@ -326,6 +420,12 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           });
         }
       });
+      
+      // Remove layout footer override style
+      const footerStyle = document.getElementById('layout-footer-override');
+      if (footerStyle) {
+        footerStyle.remove();
+      }
       
       console.log('🎯 PORTRAIT CLEANUP: All portrait styles reset, ready for landscape mode');
     };

@@ -81,16 +81,17 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '16px', // Add padding
+        padding: '16px 16px 20px 16px', // Add padding with 20px bottom
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
-        border: '2px solid purple', // ENABLED for debugging - purple border
         width: '100%',
-        height: '100%', // Fill the full height of the container
+        height: 'fit-content',
         boxSizing: 'border-box',
         position: 'relative',
         margin: '0',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        backgroundColor: 'lime', // BRIGHT GREEN
+        border: '5px solid red'
       }}
     >
       {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -140,17 +141,35 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
       <GuessArea />
 
       {/* Subtitle as footer */}
-      <div className="block-footer" style={{
-        marginTop: '4px',
-        fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-        color: '#6b7280',
-        fontWeight: 400,
-        textAlign: 'center',
-        width: '100%',
-        padding: '0',
-        marginLeft: '0',
-        marginRight: '0'
-      }}>
+      <div 
+        className="block-footer" 
+        style={{
+          marginTop: '8px',
+          marginBottom: '0px',
+          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+          color: '#6b7280',
+          fontWeight: 400,
+          textAlign: 'center',
+          width: '100%',
+          padding: '4px 0',
+          marginLeft: '0',
+          marginRight: '0',
+          backgroundColor: 'yellow', // BRIGHT YELLOW
+          border: '3px solid blue'
+        }}
+        onLoad={() => {
+          console.log('🎯 YOUR GUESS FOOTER: Loaded with bright yellow background');
+          const footerEl = document.querySelector('.your-guess-block .block-footer') as HTMLElement;
+          const parentEl = document.querySelector('.your-guess-block') as HTMLElement;
+          if (footerEl && parentEl) {
+            console.log('🎯 YOUR GUESS FOOTER: Position and size:', {
+              footerRect: footerEl.getBoundingClientRect(),
+              parentHeight: parentEl.offsetHeight,
+              footerHeight: footerEl.offsetHeight
+            });
+          }
+        }}
+      >
         Tap a box to select, drag to swap, long-press to lock
       </div>
     </div>

@@ -501,10 +501,13 @@ const SelectionArea: React.FC = () => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'flex-start'
+      justifyContent: 'flex-start',
+      backgroundColor: 'transparent', // Transparent since parent has pink background
+      border: 'none', // No border since parent has border
+      borderRadius: 'inherit', // Inherit from parent card
+      width: '100%',
+      minHeight: '0'
     }}>
-      {/* Help icon absolutely positioned in upper left */}
-      {/* Removed the info icon button */}
       {/* Title centered at the top */}
       <h3 className="selection-title" style={{
         margin: '0 0 clamp(4px, 1vw, 8px) 0',
@@ -516,14 +519,14 @@ const SelectionArea: React.FC = () => {
         flexShrink: 0
       }}>Number Selection</h3>
       <div className="numbers-container" style={{ 
-        flex: '1',
-        minHeight: 0,
-        overflow: 'auto',
+        overflow: 'visible',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         paddingTop: '10px', // Add top padding to prevent clipping
-        paddingBottom: '10px' // Add bottom padding for balance
+        paddingBottom: '10px', // Add bottom padding for balance
+        flex: '1',
+        minHeight: '0'
       }}>
         <div className="numbers-grid">
           {availableNumbers.map((digit) => (
@@ -538,21 +541,37 @@ const SelectionArea: React.FC = () => {
           ))}
         </div>
       </div>
-      {/* Subtitle as footer - positioned absolutely at bottom */}
-      <div className="block-footer" style={{
-        position: 'absolute',
-        bottom: '8px',
-        left: '0',
-        right: '0',
-        fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-        color: '#6b7280',
-        fontWeight: 400,
-        textAlign: 'center',
-        width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        padding: '4px 0',
-        zIndex: 10
-      }}>
+      {/* Subtitle as footer - in normal flow, flush with bottom */}
+      <div 
+        className="block-footer" 
+        style={{
+          marginTop: 'auto', // Push to bottom
+          marginBottom: '0px',
+          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+          color: '#6b7280',
+          fontWeight: 400,
+          textAlign: 'center',
+          padding: '8px 12px',
+          backgroundColor: 'yellow', // BRIGHT YELLOW
+          border: '3px solid orange',
+          flexShrink: 0,
+          marginLeft: '-15px', // Extend to left edge of card
+          marginRight: '-15px', // Extend to right edge of card
+          width: 'calc(100% + 30px)' // Compensate for negative margins
+        }}
+        onLoad={() => {
+          console.log('🎯 NUMBER SELECTION FOOTER: Loaded with bright cyan background');
+          const footerEl = document.querySelector('.selection-area .block-footer') as HTMLElement;
+          const parentEl = document.querySelector('.selection-area') as HTMLElement;
+          if (footerEl && parentEl) {
+            console.log('🎯 NUMBER SELECTION FOOTER: Position and size:', {
+              footerRect: footerEl.getBoundingClientRect(),
+              parentHeight: parentEl.offsetHeight,
+              footerHeight: footerEl.offsetHeight
+            });
+          }
+        }}
+      >
         Tap to auto-fill or drag to specific guess positions
       </div>
     </div>
