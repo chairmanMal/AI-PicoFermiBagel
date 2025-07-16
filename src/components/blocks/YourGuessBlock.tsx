@@ -9,6 +9,7 @@ interface YourGuessBlockProps {
 }
 
 const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLandscape = false }) => {
+  console.log('🎯 YourGuessBlock rendering - BUILD 1319 - isLandscape:', isLandscape);
   // Show the same help toast as GuessArea
   const showToast = () => {
     const overlay = document.createElement('div');
@@ -82,12 +83,12 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '16px 16px 40px 16px', // Add extra bottom padding for footer
+        padding: '16px', // Normal padding since footer is in flow
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
         width: '100%',
-        height: 'fit-content',
+        height: '100%', // Always use 100% height
         boxSizing: 'border-box',
-        position: 'relative',
+        position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
         display: 'flex',
         flexDirection: 'column',
@@ -140,29 +141,43 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
         width: '100%'
       }}>Your Guess</h3>
       {/* Main content - directly in card */}
-      <GuessArea isLandscape={isLandscape} />
+      <div style={{ 
+        flex: '1', 
+        display: 'flex', 
+        flexDirection: 'column',
+        paddingBottom: '0px', // REMOVED padding that was creating gap
+        minHeight: '0' // Allow shrinking
+      }}>
+        <GuessArea isLandscape={isLandscape} />
+      </div>
 
-      {/* Footer positioned at bottom of card */}
+      {/* Footer positioned at bottom */}
       <div 
         className="block-footer" 
         style={{
-          position: 'absolute',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          margin: '0',
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+          position: 'relative', // Use relative positioning
+          fontSize: 'clamp(0.85rem, 2vw, 1rem)', // Match Number Selection footer font
           color: '#6b7280',
-          fontWeight: 400,
+          fontWeight: 400, // Match Number Selection footer weight
           textAlign: 'center',
-          width: '100%',
           padding: '8px 0',
-          backgroundColor: isLandscape ? 'transparent' : 'yellow', // BRIGHT YELLOW (only in portrait)
-          border: isLandscape ? 'none' : '3px solid blue',
           borderTop: 'none', // Remove the tiny line above footer
-          zIndex: 5
+          zIndex: 5,
+          boxSizing: 'border-box', // Ensure padding is included in width calculation
+          flexShrink: 0, // Prevent footer from shrinking
+          // Override any CSS that might interfere
+          margin: '0', // Override the CSS margin-top: 8px
+          marginTop: 'auto', // Force auto margin to push to bottom
+          // Force the styles with very specific values
+          backgroundColor: isLandscape ? 'rgb(255, 0, 255)' : 'rgb(255, 255, 0)', // MAGENTA vs YELLOW
+          border: isLandscape ? '5px solid rgb(0, 0, 0)' : '3px solid rgb(0, 0, 255)', // BLACK vs BLUE
+          // Ensure full width by removing any container padding
+          marginLeft: '-16px', // Compensate for container padding
+          marginRight: '-16px', // Compensate for container padding
+          width: 'calc(100% + 32px)' // Extend beyond container padding
         }}
         onLoad={() => {
+          console.log('🎯 YOUR GUESS FOOTER STYLE DEBUG - isLandscape:', isLandscape, 'backgroundColor:', isLandscape ? 'MAGENTA' : 'YELLOW');
           console.log('🎯 YOUR GUESS FOOTER: Loaded with bright yellow background');
           const footerEl = document.querySelector('.your-guess-block .block-footer') as HTMLElement;
           const parentEl = document.querySelector('.your-guess-block') as HTMLElement;

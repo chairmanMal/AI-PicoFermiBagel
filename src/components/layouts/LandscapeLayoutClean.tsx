@@ -270,7 +270,8 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            alignItems: 'center'
+            alignItems: 'center',
+            height: 'fit-content' // Allow the component to determine its own height
           }}>
             <YourGuessBlock guessElementRef={guessElementRef} isLandscape={true} />
           </div>
@@ -285,7 +286,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             flex: '1',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-start',
+            justifyContent: 'space-between', // Changed to space-between to support footer positioning
             alignItems: 'center',
             overflow: 'visible',
             minHeight: 0,

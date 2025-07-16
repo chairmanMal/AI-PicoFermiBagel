@@ -376,6 +376,7 @@ interface SelectionAreaProps {
 }
 
 const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) => {
+  console.log('🎯 SelectionArea rendering - BUILD 1312 - isLandscape:', isLandscape);
   const { gameState, hintState, scratchpadState, settings, dispatch } = useGameStore();
   const { currentGuess, guesses } = gameState;
 
@@ -464,7 +465,7 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
   );
 
   // Debug logging to understand what's happening
-  console.log(`🔍 SelectionArea Debug:`, {
+  console.log(`🔍 SelectionArea Debug - BUILD 1319:`, {
     digitRange: settings.digitRange,
     availableNumbersCount: availableNumbers.length,
     availableNumbers: availableNumbers,
@@ -501,11 +502,10 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
 
   return (
     <div className="selection-area" style={{ 
-      position: 'relative',
+      position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'flex-start',
       backgroundColor: 'transparent', // Transparent since parent has pink background
       border: 'none', // No border since parent has border
       borderRadius: 'inherit', // Inherit from parent card
@@ -522,48 +522,62 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
         width: '100%',
         flexShrink: 0
       }}>Number Selection</h3>
-      <div className="numbers-container" style={{ 
-        overflow: 'visible',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: '8px', // RESTORED top padding
-        paddingBottom: '0px', // REMOVED bottom padding to let footer abut the border
-        flex: '1',
-        minHeight: '0'
+      
+      {/* Main content area - takes remaining space */}
+      <div style={{ 
+        flex: '1', 
+        display: 'flex', 
+        flexDirection: 'column',
+        minHeight: '0' // Allow shrinking
       }}>
-        <div className="numbers-grid">
-          {availableNumbers.map((digit) => (
-            <NumberButton
-              key={digit}
-              digit={digit}
-              isUsed={isNumberUsedInGuess(digit, currentGuess)}
-              isUsedInSubmitted={isNumberUsedInSubmittedGuesses(digit)}
-              hintColor={getHintColor(digit)}
-              onNumberClick={handleNumberClick}
-            />
-          ))}
+        <div className="numbers-container" style={{ 
+          overflow: 'visible',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: '8px', // RESTORED top padding
+          paddingBottom: '0px', // REMOVED padding that was pushing footer up
+          flex: '1',
+          minHeight: '0'
+        }}>
+          <div className="numbers-grid">
+            {availableNumbers.map((digit) => (
+              <NumberButton
+                key={digit}
+                digit={digit}
+                isUsed={isNumberUsedInGuess(digit, currentGuess)}
+                isUsedInSubmitted={isNumberUsedInSubmittedGuesses(digit)}
+                hintColor={getHintColor(digit)}
+                onNumberClick={handleNumberClick}
+              />
+            ))}
+          </div>
         </div>
       </div>
-      {/* Footer positioned at bottom of card */}
+      
+      {/* Footer positioned at bottom using flexbox */}
       <div 
         className="block-footer" 
         style={{
-          position: 'absolute',
-          bottom: '-15px', // Position at bottom of parent container (accounting for parent padding)
-          left: '-15px', // Extend to left edge of parent container
-          right: '-15px', // Extend to right edge of parent container
-          margin: '0',
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+          position: 'relative', // Use relative positioning
+          fontSize: 'clamp(0.85rem, 2vw, 1rem)', // Match Number Selection footer font
           color: '#6b7280',
-          fontWeight: 400,
+          fontWeight: 400, // Match Number Selection footer weight
           textAlign: 'center',
-          width: 'calc(100% + 30px)', // Compensate for negative margins
           padding: '8px 0',
-          backgroundColor: isLandscape ? 'transparent' : 'yellow', // BRIGHT YELLOW (only in portrait)
-          border: isLandscape ? 'none' : '3px solid orange',
+          backgroundColor: isLandscape ? 'cyan' : 'yellow', // BRIGHT CYAN in landscape, BRIGHT YELLOW in portrait
+          border: isLandscape ? '3px solid red' : '3px solid orange', // BRIGHT RED border in landscape
           borderTop: '1px solid #e5e7eb',
-          zIndex: 5
+          zIndex: 5,
+          boxSizing: 'border-box', // Ensure padding is included in width calculation
+          flexShrink: 0, // Prevent footer from shrinking
+          // Override any CSS that might interfere
+          margin: '0', // Override the CSS margin-top: 8px
+          marginTop: 'auto', // Force auto margin to push to bottom
+          // Ensure full width by removing any container padding
+          marginLeft: '0', // No container padding to compensate for
+          marginRight: '0', // No container padding to compensate for
+          width: '100%' // Full width
         }}
         onLoad={() => {
           console.log('🎯 NUMBER SELECTION FOOTER: Loaded with bright cyan background');

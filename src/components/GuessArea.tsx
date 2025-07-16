@@ -591,15 +591,15 @@ const GuessArea: React.FC<GuessAreaProps> = ({ isLandscape = false }) => {
     <div className="guess-grid" style={{
       '--grid-rows': settings.gridRows,
       '--grid-columns': settings.gridColumns,
-      flex: '1',
+      flex: isLandscape ? '1' : '0 0 auto', // Don't expand in portrait mode
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: isLandscape ? 'center' : 'flex-start', // Don't center in portrait
       alignItems: 'center',
       minHeight: '0',
       border: isLandscape ? 'none' : '5px solid magenta', // BRIGHT MAGENTA BORDER (only in portrait)
       backgroundColor: isLandscape ? 'transparent' : 'cyan', // BRIGHT CYAN BACKGROUND (only in portrait)
-      padding: isLandscape ? '10px' : '10px', // Restore padding for structure
+      padding: isLandscape ? '10px' : '20px 10px', // 20px top/bottom padding in portrait, 10px all around in landscape
       margin: isLandscape ? '10px 0' : '10px 0', // Restore margin for structure
       borderRadius: isLandscape ? '8px' : '8px', // Restore border radius for structure
       boxSizing: 'border-box' // Ensure proper sizing
