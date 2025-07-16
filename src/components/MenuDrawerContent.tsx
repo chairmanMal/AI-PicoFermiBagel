@@ -33,10 +33,12 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
+      height: 'fit-content', // Only as tall as content
+      maxHeight: '100%', // Don't exceed container height
       overflow: 'hidden',
       padding: '0',
-      position: 'relative'
+      position: 'relative',
+      background: 'transparent' // Transparent background
     }}>
       <div 
         className="menu-drawer-scroll"
@@ -44,8 +46,8 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           display: 'flex',
           flexDirection: 'column',
           gap: '5px',
-          flex: '1',
-          overflow: 'auto', // Standard browser scrolling
+          height: 'fit-content', // Only as tall as content
+          overflow: 'visible', // Allow content to determine height
           paddingRight: '0',
           paddingTop: '0',
           paddingLeft: '0',

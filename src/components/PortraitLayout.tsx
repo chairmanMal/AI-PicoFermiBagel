@@ -135,10 +135,9 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
     console.log('🔴 RED BORDER (Total Displayable):', redBorder);
     console.log('🎯 SCREEN VERIFICATION: Width=' + viewportWidth + ', Height=' + viewportHeight);
     
-    // Apply red border to portrait container
+    // Apply positioning to portrait container
     const portraitContainer = portraitRef.current;
     if (portraitContainer) {
-      portraitContainer.style.setProperty('border', '2px solid red', 'important'); // ENABLED for debugging
       portraitContainer.style.setProperty('position', 'fixed', 'important');
       portraitContainer.style.setProperty('top', `${redBorder.top}px`, 'important');
       portraitContainer.style.setProperty('left', `${redBorder.left}px`, 'important');
@@ -146,7 +145,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       portraitContainer.style.setProperty('height', `${redBorder.height}px`, 'important');
       portraitContainer.style.setProperty('z-index', '1', 'important');
       
-      console.log('✅ RED BORDER: Applied to portrait container');
+      console.log('✅ PORTRAIT CONTAINER: Positioned');
     }
     
     // Step 3: Position title section for portrait (centered horizontally, BELOW DRAWER ICONS)
@@ -216,15 +215,14 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       
       console.log('🟠 ORANGE BORDER (Main Content):', orangeBorder);
       
-      // Step 5: Position portrait content container and apply orange border
+      // Step 5: Position portrait content container
       const portraitContentEl = document.querySelector('.portrait-content') as HTMLElement;
       if (portraitContentEl) {
-        portraitContentEl.style.setProperty('border', '2px solid orange', 'important'); // ENABLED for debugging
         portraitContentEl.style.setProperty('position', 'fixed', 'important');
         portraitContentEl.style.setProperty('top', `${orangeBorder.top}px`, 'important');
         portraitContentEl.style.setProperty('left', `${orangeBorder.left}px`, 'important');
         portraitContentEl.style.setProperty('width', `${orangeBorder.width}px`, 'important');
-        portraitContentEl.style.setProperty('height', `${orangeBorder.height}px`, 'important');
+        portraitContentEl.style.setProperty('height', 'auto', 'important');
         portraitContentEl.style.setProperty('display', 'flex', 'important');
         portraitContentEl.style.setProperty('flex-direction', 'column', 'important');
         portraitContentEl.style.setProperty('gap', '5px', 'important');
@@ -238,7 +236,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         portraitContentEl.style.setProperty('padding', '0px', 'important');
         portraitContentEl.style.setProperty('margin', '0', 'important');
         
-        console.log('🟠 ORANGE BORDER: Applied to portrait content container');
+        console.log('✅ PORTRAIT CONTENT: Positioned');
       }
       
       // Submit button is now embedded in YourGuessBlock - no separate positioning needed
@@ -246,36 +244,45 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       
       // CSS overrides removed - positioning handled directly in components
       
-      // Debug Your Guess block positioning
+      // Debug card positioning
       setTimeout(() => {
-        const yourGuessBlock = document.querySelector('.your-guess-block') as HTMLElement;
-        const guessSection = document.querySelector('.guess-section') as HTMLElement;
+        const numberSelectionCard = document.querySelector('.selection-section') as HTMLElement;
+        const yourGuessCard = document.querySelector('.your-guess-block') as HTMLElement;
+        const portraitContent = document.querySelector('.portrait-content') as HTMLElement;
         
-        if (yourGuessBlock) {
-          const blockRect = yourGuessBlock.getBoundingClientRect();
-          const blockStyles = window.getComputedStyle(yourGuessBlock);
-          console.log('🔵 YOUR GUESS BLOCK DEBUG:');
-          console.log('  - Position:', blockRect);
-          console.log('  - Padding:', blockStyles.padding);
-          console.log('  - Margin:', blockStyles.margin);
-          console.log('  - Border:', blockStyles.border);
-          console.log('  - Box-sizing:', blockStyles.boxSizing);
-          console.log('  - Width:', blockStyles.width);
-          console.log('  - Height:', blockStyles.height);
+        if (numberSelectionCard) {
+          const rect = numberSelectionCard.getBoundingClientRect();
+          const styles = window.getComputedStyle(numberSelectionCard);
+          console.log('🔍 NUMBER SELECTION CARD DEBUG:');
+          console.log('  - Position:', rect);
+          console.log('  - Top:', rect.top, 'px');
+          console.log('  - CSS position:', styles.position);
+          console.log('  - CSS top:', styles.top);
+          console.log('  - CSS margin:', styles.margin);
+          console.log('  - CSS padding:', styles.padding);
+          console.log('  - CSS flex-shrink:', styles.flexShrink);
+          console.log('  - CSS flex-grow:', styles.flexGrow);
+          console.log('  - CSS transform:', styles.transform);
+          console.log('  - CSS z-index:', styles.zIndex);
         }
         
-        if (guessSection) {
-          const sectionRect = guessSection.getBoundingClientRect();
-          const sectionStyles = window.getComputedStyle(guessSection);
-          console.log('🔵 GUESS SECTION DEBUG:');
-          console.log('  - Position:', sectionRect);
-          console.log('  - Padding:', sectionStyles.padding);
-          console.log('  - Margin:', sectionStyles.margin);
-          console.log('  - Border:', sectionStyles.border);
-          console.log('  - Width:', sectionStyles.width);
-          console.log('  - Height:', sectionStyles.height);
+        if (yourGuessCard) {
+          const rect = yourGuessCard.getBoundingClientRect();
+          console.log('🔍 YOUR GUESS CARD DEBUG:');
+          console.log('  - Position:', rect);
+          console.log('  - Bottom:', rect.bottom, 'px');
         }
-      }, 200);
+        
+        if (portraitContent) {
+          const styles = window.getComputedStyle(portraitContent);
+          console.log('🔍 PORTRAIT CONTENT DEBUG:');
+          console.log('  - CSS height:', styles.height);
+          console.log('  - CSS justify-content:', styles.justifyContent);
+          console.log('  - CSS align-items:', styles.alignItems);
+          console.log('  - CSS gap:', styles.gap);
+          console.log('  - CSS overflow:', styles.overflow);
+        }
+      }, 500);
     }, 100);
     
     // Hide old container
@@ -403,10 +410,15 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '0px', // Remove gap to eliminate spacing between elements
-        overflow: 'hidden' // Ensure content stays within orange border
+        overflow: 'hidden', // Ensure content stays within orange border
+        height: 'auto !important' // Override CSS height: 100% to allow dynamic sizing
       }}>
         {/* Target Display */}
-        <div style={{ flexShrink: 0, width: '100%' }}>
+        <div style={{ 
+          flexShrink: 0, 
+          width: '100%',
+          margin: '0' // Remove any margin from Target Display container
+        }}>
           <TargetDisplay />
         </div>
         
@@ -420,8 +432,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           borderRadius: '0 !important',
           padding: '0 !important', // Force zero padding to eliminate double-padding issue
           boxShadow: 'none !important',
-          backdropFilter: 'none !important',
-          border: '2px solid blue !important' // ENABLED for debugging
+          backdropFilter: 'none !important'
         }}>
           <YourGuessBlock guessElementRef={guessElementRef} isLandscape={false} />
         </div>
@@ -429,15 +440,14 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         {/* Number Selection */}
         <div className="selection-section" style={{ 
           position: 'relative',
-          flexShrink: 0, 
+          flexShrink: 1, // Allow shrinking so it can move up when Your Guess card shrinks
           width: '100%',
-          background: 'pink', // BRIGHT PINK - fills the entire card
+          background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '12px',
           padding: '15px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           backdropFilter: 'blur(10px)',
-          border: '5px solid purple', // BRIGHT PURPLE BORDER
-          margin: '10px',
+          margin: '0px', // Remove margin so it abuts the Your Guess card
           boxSizing: 'border-box'
         }}>
           {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -477,8 +487,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         
         {/* Recent Guesses */}
         <div className="recent-guess-section" style={{ 
-          flex: '1',
-          minHeight: '200px',
+          height: '300px', // Fixed height to enable scrolling
           overflow: 'auto',
           width: '100%',
           touchAction: 'pan-y',

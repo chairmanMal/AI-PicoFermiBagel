@@ -11,9 +11,11 @@ export interface DrawerManagerConfig {
 export class DrawerManager {
   private config: DrawerManagerConfig;
   private resizeHandler?: () => void;
+  private previousLayout?: LayoutInfo;
 
   constructor(config: DrawerManagerConfig) {
     this.config = config;
+    this.previousLayout = config.currentLayout;
     this.initialize();
   }
 
@@ -32,6 +34,7 @@ export class DrawerManager {
 
   private handleLayoutChange() {
     const { currentLayout, setIsMenuDrawerOpen } = this.config;
+    const previousLayout = this.previousLayout;
 
     // In iPad landscape mode, force menu drawer open
     if (currentLayout.isIpadLandscape) {
@@ -39,10 +42,14 @@ export class DrawerManager {
       console.log('📱 Drawer Manager: Forced menu drawer open for iPad landscape');
     }
     
-    // In portrait mode, allow drawer to be controlled normally
-    if (currentLayout.orientation === 'portrait') {
-      console.log('📱 Drawer Manager: Portrait mode - normal drawer behavior');
+    // Only close menu drawer when transitioning from landscape to portrait
+    if (previousLayout?.orientation === 'landscape' && currentLayout.orientation === 'portrait') {
+      setIsMenuDrawerOpen(false);
+      console.log('📱 Drawer Manager: Transitioned from landscape to portrait - closed menu drawer');
     }
+    
+    // Update previous layout
+    this.previousLayout = currentLayout;
   }
 
   /**

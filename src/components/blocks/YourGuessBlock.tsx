@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import GuessArea from '../GuessArea';
 import CircularSubmitButton from '../CircularSubmitButton';
 import { HelpCircle } from 'lucide-react';
@@ -9,7 +9,39 @@ interface YourGuessBlockProps {
 }
 
 const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLandscape = false }) => {
-  console.log('🎯 YourGuessBlock rendering - BUILD 1319 - isLandscape:', isLandscape);
+  console.log('🎯 YourGuessBlock rendering - BUILD 1332 - isLandscape:', isLandscape);
+  
+  // Add CSS override with maximum specificity
+  useEffect(() => {
+    const styleId = 'your-guess-block-override';
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement;
+    
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    
+    styleEl.textContent = `
+      .portrait-content .guess-section .your-guess-block {
+        height: auto !important;
+        flex: 0 0 auto !important;
+        display: block !important;
+        min-height: 0 !important;
+        max-height: none !important;
+      }
+      
+      .portrait-content .target-display {
+        margin: 0 !important;
+      }
+    `;
+    
+    return () => {
+      if (styleEl && styleEl.parentNode) {
+        styleEl.parentNode.removeChild(styleEl);
+      }
+    };
+  }, []);
   // Show the same help toast as GuessArea
   const showToast = () => {
     const overlay = document.createElement('div');
@@ -83,17 +115,16 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '16px', // Normal padding since footer is in flow
+        padding: '16px 16px 0px 16px', // Remove bottom padding - footer extends beyond
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
         width: '100%',
-        height: '100%', // Always use 100% height
+        height: 'auto !important', // Override CSS height: 100%
         boxSizing: 'border-box',
         position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: isLandscape ? 'white' : 'lime', // BRIGHT GREEN (only in portrait)
-        border: isLandscape ? 'none' : '5px solid red'
+        flex: '0 0 auto !important', // Override CSS flex: 1 1 auto
+        display: 'block !important' // Override CSS display: flex
+        // Use natural flow - no flexbox
       }}
     >
       {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -133,22 +164,22 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
 
       {/* Title centered at the top */}
       <h3 className="guess-title" style={{
-        margin: '0 0 1px 0', // FURTHER REDUCED gap between title and array (50% less)
+        margin: '10px 0 10px 0', // 10px above and below title
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
         textAlign: 'center',
         width: '100%'
       }}>Your Guess</h3>
+      
       {/* Main content - directly in card */}
       <div style={{ 
-        flex: '1', 
-        display: 'flex', 
-        flexDirection: 'column',
-        paddingBottom: '0px', // REMOVED padding that was creating gap
-        minHeight: '0' // Allow shrinking
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingBottom: '8px' // Small gap above footer
       }}>
-        <GuessArea isLandscape={isLandscape} />
+        <GuessArea />
       </div>
 
       {/* Footer positioned at bottom */}
@@ -161,24 +192,18 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
           fontWeight: 400, // Match Number Selection footer weight
           textAlign: 'center',
           padding: '8px 0',
-          borderTop: 'none', // Remove the tiny line above footer
+          borderTop: '1px solid #e5e7eb', // Match Number Selection footer border
           zIndex: 5,
           boxSizing: 'border-box', // Ensure padding is included in width calculation
-          flexShrink: 0, // Prevent footer from shrinking
           // Override any CSS that might interfere
           margin: '0', // Override the CSS margin-top: 8px
-          marginTop: 'auto', // Force auto margin to push to bottom
-          // Force the styles with very specific values
-          backgroundColor: isLandscape ? 'rgb(255, 0, 255)' : 'rgb(255, 255, 0)', // MAGENTA vs YELLOW
-          border: isLandscape ? '5px solid rgb(0, 0, 0)' : '3px solid rgb(0, 0, 255)', // BLACK vs BLUE
           // Ensure full width by removing any container padding
           marginLeft: '-16px', // Compensate for container padding
           marginRight: '-16px', // Compensate for container padding
           width: 'calc(100% + 32px)' // Extend beyond container padding
         }}
         onLoad={() => {
-          console.log('🎯 YOUR GUESS FOOTER STYLE DEBUG - isLandscape:', isLandscape, 'backgroundColor:', isLandscape ? 'MAGENTA' : 'YELLOW');
-          console.log('🎯 YOUR GUESS FOOTER: Loaded with bright yellow background');
+          console.log('🎯 YOUR GUESS FOOTER: Loaded with proper positioning');
           const footerEl = document.querySelector('.your-guess-block .block-footer') as HTMLElement;
           const parentEl = document.querySelector('.your-guess-block') as HTMLElement;
           if (footerEl && parentEl) {
@@ -186,6 +211,16 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
               footerRect: footerEl.getBoundingClientRect(),
               parentHeight: parentEl.offsetHeight,
               footerHeight: footerEl.offsetHeight
+            });
+            
+            // Debug computed styles
+            const computedStyles = window.getComputedStyle(parentEl);
+            console.log('🎯 YOUR GUESS BLOCK COMPUTED STYLES:', {
+              height: computedStyles.height,
+              flex: computedStyles.flex,
+              display: computedStyles.display,
+              position: computedStyles.position,
+              boxSizing: computedStyles.boxSizing
             });
           }
         }}

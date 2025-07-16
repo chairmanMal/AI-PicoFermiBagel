@@ -460,10 +460,10 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 };
 
 interface GuessAreaProps {
-  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
+  // Removed isLandscape prop since we're no longer using conditional styling
 }
 
-const GuessArea: React.FC<GuessAreaProps> = ({ isLandscape = false }) => {
+const GuessArea: React.FC<GuessAreaProps> = () => {
 
 
   const { settings, gameState, hintState, dispatch } = useGameStore();
@@ -591,17 +591,15 @@ const GuessArea: React.FC<GuessAreaProps> = ({ isLandscape = false }) => {
     <div className="guess-grid" style={{
       '--grid-rows': settings.gridRows,
       '--grid-columns': settings.gridColumns,
-      flex: isLandscape ? '1' : '0 0 auto', // Don't expand in portrait mode
+      flex: '0 0 auto', // Don't expand, just take needed space
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: isLandscape ? 'center' : 'flex-start', // Don't center in portrait
+      justifyContent: 'center', // Always center
       alignItems: 'center',
       minHeight: '0',
-      border: isLandscape ? 'none' : '5px solid magenta', // BRIGHT MAGENTA BORDER (only in portrait)
-      backgroundColor: isLandscape ? 'transparent' : 'cyan', // BRIGHT CYAN BACKGROUND (only in portrait)
-      padding: isLandscape ? '10px' : '20px 10px', // 20px top/bottom padding in portrait, 10px all around in landscape
-      margin: isLandscape ? '10px 0' : '10px 0', // Restore margin for structure
-      borderRadius: isLandscape ? '8px' : '8px', // Restore border radius for structure
+      padding: '2px', // Minimal padding
+      margin: '0', // Remove margin to eliminate gaps
+      borderRadius: '8px', // Restore border radius for structure
       boxSizing: 'border-box' // Ensure proper sizing
     } as React.CSSProperties}>
       {createGuessGrid()}

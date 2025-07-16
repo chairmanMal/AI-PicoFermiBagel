@@ -807,7 +807,7 @@ const GameScreen: React.FC = () => {
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'transparent', // TEMPORARILY DISABLED: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.5)', // RESTORED: Darkened background like settings drawer
             zIndex: 999,
             pointerEvents: 'auto',
             touchAction: 'none',

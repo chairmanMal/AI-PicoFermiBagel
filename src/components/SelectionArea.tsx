@@ -565,8 +565,6 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
           fontWeight: 400, // Match Number Selection footer weight
           textAlign: 'center',
           padding: '8px 0',
-          backgroundColor: isLandscape ? 'cyan' : 'yellow', // BRIGHT CYAN in landscape, BRIGHT YELLOW in portrait
-          border: isLandscape ? '3px solid red' : '3px solid orange', // BRIGHT RED border in landscape
           borderTop: '1px solid #e5e7eb',
           zIndex: 5,
           boxSizing: 'border-box', // Ensure padding is included in width calculation
@@ -580,7 +578,7 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
           width: '100%' // Full width
         }}
         onLoad={() => {
-          console.log('🎯 NUMBER SELECTION FOOTER: Loaded with bright cyan background');
+          console.log('🎯 NUMBER SELECTION FOOTER: Loaded with proper positioning');
           const footerEl = document.querySelector('.selection-area .block-footer') as HTMLElement;
           const parentEl = document.querySelector('.selection-area') as HTMLElement;
           if (footerEl && parentEl) {
