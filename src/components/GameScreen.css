@@ -500,8 +500,7 @@
   background: white;
   border-radius: 12px 0 0 0;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-  /* Only constrain max height when content would overflow */
-  max-height: calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  /* Remove height constraints - let content determine size */
   min-height: auto; /* Let content determine minimum height */
   /* Allow vertical scrolling but prevent horizontal swipe gestures */
   touch-action: pan-y;

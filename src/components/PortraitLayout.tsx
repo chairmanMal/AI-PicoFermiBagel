@@ -487,8 +487,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         
         {/* Recent Guesses */}
         <div className="recent-guess-section" style={{ 
-          height: '300px', // Fixed height to enable scrolling
-          overflow: 'auto',
+          flex: '1', // Take all remaining space to bottom of displayable area
+          overflow: 'auto', // Enable scrolling for undisplayed content
           width: '100%',
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch'

@@ -33,9 +33,6 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'fit-content', // Only as tall as content
-      maxHeight: '100%', // Don't exceed container height
-      overflow: 'hidden',
       padding: '0',
       position: 'relative',
       background: 'transparent' // Transparent background
@@ -46,8 +43,6 @@ const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
           display: 'flex',
           flexDirection: 'column',
           gap: '5px',
-          height: 'fit-content', // Only as tall as content
-          overflow: 'visible', // Allow content to determine height
           paddingRight: '0',
           paddingTop: '0',
           paddingLeft: '0',
