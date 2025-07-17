@@ -222,21 +222,30 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         portraitContentEl.style.setProperty('top', `${orangeBorder.top}px`, 'important');
         portraitContentEl.style.setProperty('left', `${orangeBorder.left}px`, 'important');
         portraitContentEl.style.setProperty('width', `${orangeBorder.width}px`, 'important');
-        portraitContentEl.style.setProperty('height', 'auto', 'important');
+        portraitContentEl.style.setProperty('height', `${orangeBorder.height}px`, 'important'); // Set to orange border height
         portraitContentEl.style.setProperty('display', 'flex', 'important');
         portraitContentEl.style.setProperty('flex-direction', 'column', 'important');
-        portraitContentEl.style.setProperty('gap', '5px', 'important');
+        portraitContentEl.style.setProperty('gap', '10px', 'important');
         portraitContentEl.style.setProperty('align-items', 'center', 'important');
         portraitContentEl.style.setProperty('justify-content', 'flex-start', 'important');
         portraitContentEl.style.setProperty('box-sizing', 'border-box', 'important');
         portraitContentEl.style.setProperty('z-index', '20', 'important');
-        portraitContentEl.style.setProperty('background', 'transparent', 'important');
-        portraitContentEl.style.setProperty('overflow-y', 'auto', 'important');
-        portraitContentEl.style.setProperty('padding', '0px', 'important');
+        portraitContentEl.style.setProperty('background', 'rgba(255, 0, 0, 0.1)', 'important'); // DEBUG: Red background
+        portraitContentEl.style.setProperty('border', '2px solid red', 'important'); // DEBUG: Red border
+        portraitContentEl.style.setProperty('overflow-y', 'hidden', 'important'); // Prevent overflow
         portraitContentEl.style.setProperty('padding', '0px', 'important');
         portraitContentEl.style.setProperty('margin', '0', 'important');
         
-        console.log('✅ PORTRAIT CONTENT: Positioned');
+        console.log('✅ PORTRAIT CONTENT: Positioned with height', orangeBorder.height, 'px');
+        console.log('🔍 ORANGE BORDER HEIGHT SET:', orangeBorder.height, 'px');
+        
+        // Debug: Check computed height after setting
+        setTimeout(() => {
+          const computedHeight = window.getComputedStyle(portraitContentEl).height;
+          console.log('🔍 COMPUTED HEIGHT AFTER JS:', computedHeight);
+          console.log('🔍 ACTUAL ELEMENT HEIGHT:', portraitContentEl.offsetHeight, 'px');
+          console.log('🔍 ORANGE BORDER BOTTOM:', orangeBorder.bottom, 'px');
+        }, 100);
       }
       
       // Submit button is now embedded in YourGuessBlock - no separate positioning needed
@@ -248,7 +257,16 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       setTimeout(() => {
         const numberSelectionCard = document.querySelector('.selection-section') as HTMLElement;
         const yourGuessCard = document.querySelector('.your-guess-block') as HTMLElement;
+        const guessSection = document.querySelector('.guess-section') as HTMLElement;
         const portraitContent = document.querySelector('.portrait-content') as HTMLElement;
+        
+        // Force guess-section to not expand
+        if (guessSection) {
+          guessSection.style.setProperty('flex-shrink', '0', 'important');
+          guessSection.style.setProperty('flex-grow', '0', 'important');
+          guessSection.style.setProperty('height', 'auto', 'important');
+          console.log('🔧 GUESS SECTION: Forced flex-shrink: 0, flex-grow: 0, height: auto');
+        }
         
         if (numberSelectionCard) {
           const rect = numberSelectionCard.getBoundingClientRect();
@@ -268,9 +286,14 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         
         if (yourGuessCard) {
           const rect = yourGuessCard.getBoundingClientRect();
+          const styles = window.getComputedStyle(yourGuessCard);
           console.log('🔍 YOUR GUESS CARD DEBUG:');
           console.log('  - Position:', rect);
           console.log('  - Bottom:', rect.bottom, 'px');
+          console.log('  - CSS margin:', styles.margin);
+          console.log('  - CSS padding:', styles.padding);
+          console.log('  - CSS display:', styles.display);
+          console.log('  - CSS position:', styles.position);
         }
         
         if (portraitContent) {
@@ -281,6 +304,21 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           console.log('  - CSS align-items:', styles.alignItems);
           console.log('  - CSS gap:', styles.gap);
           console.log('  - CSS overflow:', styles.overflow);
+          
+          // Debug: List all child elements and their positions
+          console.log('🔍 PORTRAIT CONTENT CHILDREN:');
+          Array.from(portraitContent.children).forEach((child, index) => {
+            const rect = child.getBoundingClientRect();
+            const styles = window.getComputedStyle(child as HTMLElement);
+            console.log(`  - Child ${index}:`, {
+              tagName: child.tagName,
+              className: child.className,
+              position: { top: rect.top, bottom: rect.bottom, height: rect.height },
+              display: styles.display,
+              margin: styles.margin,
+              padding: styles.padding
+            });
+          });
         }
       }, 500);
     }, 100);
@@ -404,27 +442,29 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       </div>
       <div className="portrait-content" style={{
         pointerEvents: 'auto',
-        padding: '0', // Remove all padding so Your Guess block abuts orange border
+        padding: '0',
         margin: '0',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0px', // Remove gap to eliminate spacing between elements
+        gap: '10px', // Add proper gap between cards
         overflow: 'hidden', // Ensure content stays within orange border
-        height: 'auto !important' // Override CSS height: 100% to allow dynamic sizing
       }}>
-        {/* Target Display */}
-        <div style={{ 
-          flexShrink: 0, 
-          width: '100%',
-          margin: '0' // Remove any margin from Target Display container
-        }}>
-          <TargetDisplay />
-        </div>
+        {/* Target Display - Only render container when Target Display is enabled */}
+        {settings.showTarget && (
+          <div style={{ 
+            flexShrink: 0, 
+            width: '100%',
+            margin: '0' // Remove any margin from Target Display container
+          }}>
+            <TargetDisplay />
+          </div>
+        )}
         
         {/* Guess Area - Should dynamically size to content */}
         <div className="guess-section" style={{ 
           position: 'relative',
+          flexShrink: 0, // Don't expand - size to content
           width: '100%',
           height: 'auto', // Allow dynamic height based on content
           marginTop: '0px', // Ensure no margin preventing abutting
@@ -440,14 +480,14 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         {/* Number Selection */}
         <div className="selection-section" style={{ 
           position: 'relative',
-          flexShrink: 1, // Allow shrinking so it can move up when Your Guess card shrinks
+          flexShrink: 0, // Don't shrink - stay in natural position
           width: '100%',
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '12px',
           padding: '15px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           backdropFilter: 'blur(10px)',
-          margin: '0px', // Remove margin so it abuts the Your Guess card
+          margin: '0px',
           boxSizing: 'border-box'
         }}>
           {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -488,10 +528,19 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         {/* Recent Guesses */}
         <div className="recent-guess-section" style={{ 
           flex: '1', // Take all remaining space to bottom of displayable area
+          minHeight: 0, // Allow shrinking to fit container
           overflow: 'auto', // Enable scrolling for undisplayed content
           width: '100%',
+          background: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '12px',
+          padding: '15px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(10px)',
+          margin: '0px',
+          boxSizing: 'border-box',
           touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          border: '2px solid blue' // DEBUG: Blue border
         }}>
           <RecentGuessHistory />
         </div>
