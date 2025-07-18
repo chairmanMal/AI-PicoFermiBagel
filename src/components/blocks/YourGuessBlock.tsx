@@ -5,13 +5,14 @@ import { HelpCircle } from 'lucide-react';
 
 interface YourGuessBlockProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
-  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
+  // isLandscape?: boolean; // No longer used
 }
 
-const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLandscape = false }) => {
-  console.log('🎯 YourGuessBlock rendering - BUILD 1332 - isLandscape:', isLandscape);
-  
-  // Add CSS override with maximum specificity
+const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
+  // isLandscape prop is used by parent components for layout decisions
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    
+    // Add CSS override with maximum specificity
   useEffect(() => {
     const styleId = 'your-guess-block-override';
     let styleEl = document.getElementById(styleId) as HTMLStyleElement;
@@ -115,7 +116,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '16px 16px 0px 16px', // Remove bottom padding - footer extends beyond
+        padding: '15px 15px 0px 15px', // Match Number Selection card padding - footer extends beyond
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
         width: '100%',
         height: 'auto !important', // Override CSS height: 100%
@@ -198,32 +199,11 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
           // Override any CSS that might interfere
           margin: '0', // Override the CSS margin-top: 8px
           // Ensure full width by removing any container padding
-          marginLeft: '-16px', // Compensate for container padding
-          marginRight: '-16px', // Compensate for container padding
-          width: 'calc(100% + 32px)' // Extend beyond container padding
+          marginLeft: '-15px', // Compensate for container padding
+          marginRight: '-15px', // Compensate for container padding
+          width: 'calc(100% + 30px)' // Extend beyond container padding
         }}
-        onLoad={() => {
-          console.log('🎯 YOUR GUESS FOOTER: Loaded with proper positioning');
-          const footerEl = document.querySelector('.your-guess-block .block-footer') as HTMLElement;
-          const parentEl = document.querySelector('.your-guess-block') as HTMLElement;
-          if (footerEl && parentEl) {
-            console.log('🎯 YOUR GUESS FOOTER: Position and size:', {
-              footerRect: footerEl.getBoundingClientRect(),
-              parentHeight: parentEl.offsetHeight,
-              footerHeight: footerEl.offsetHeight
-            });
-            
-            // Debug computed styles
-            const computedStyles = window.getComputedStyle(parentEl);
-            console.log('🎯 YOUR GUESS BLOCK COMPUTED STYLES:', {
-              height: computedStyles.height,
-              flex: computedStyles.flex,
-              display: computedStyles.display,
-              position: computedStyles.position,
-              boxSizing: computedStyles.boxSizing
-            });
-          }
-        }}
+
       >
         Tap a box to select, drag to swap, long-press to lock
       </div>

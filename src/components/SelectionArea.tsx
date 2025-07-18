@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { isNumberUsedInGuess } from '@/utils/gameLogic';
 import { soundUtils } from '@/utils/soundUtils';
@@ -72,14 +72,13 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   // Remove drag indicator with safety checks
   const removeDragIndicator = useCallback(() => {
     if (dragIndicatorElement) {
-      try {
-        if (document.body.contains(dragIndicatorElement)) {
-          document.body.removeChild(dragIndicatorElement);
-          console.log(`🎯 SelectionArea: Removed drag indicator for digit ${digit}`);
+              try {
+          if (document.body.contains(dragIndicatorElement)) {
+            document.body.removeChild(dragIndicatorElement);
+          }
+        } catch (error) {
+          // Silently handle error
         }
-      } catch (error) {
-        console.warn(`🎯 SelectionArea: Failed to remove drag indicator for digit ${digit}:`, error);
-      }
       setDragIndicatorElement(null);
     }
   }, [dragIndicatorElement, digit]);
@@ -155,15 +154,13 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       dragTimeoutRef.current = null;
     }
     
-    console.log(`🎯 Touch end for digit ${digit}: isLongPressing=${isLongPressing}, isDragging=${isDragging}`);
+
     
     // Handle tap - if we were long pressing but never started dragging, it's a tap
     if (isLongPressing && !isDragging) {
-      console.log(`🎯 Tap detected for digit ${digit} - calling onNumberClick`);
       onNumberClick(digit);
     } else if (isDragging) {
       // Handle drag end
-      console.log(`🎯 Drag end for digit ${digit}`);
       const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
       const guessBox = elementBelow?.closest('.guess-box');
       
@@ -186,7 +183,6 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       }
     } else {
       // Fallback - if somehow we get here without proper state, treat as tap
-      console.log(`🎯 Fallback tap for digit ${digit}`);
       onNumberClick(digit);
     }
     
@@ -204,15 +200,13 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       dragTimeoutRef.current = null;
     }
     
-    console.log(`🎯 Mouse up for digit ${digit}: isDragging=${isDragging}`);
+
     
     // If we were not dragging, it's a click
     if (!isDragging) {
-      console.log(`🎯 Click detected for digit ${digit} - calling onNumberClick`);
       onNumberClick(digit);
     } else {
       // Handle drag end
-      console.log(`🎯 Mouse drag end for digit ${digit}`);
       const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
       const guessBox = elementBelow?.closest('.guess-box');
       
@@ -326,9 +320,8 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
         try {
           document.body.removeChild(dragIndicatorElement);
-          console.log(`🎯 SelectionArea: Cleanup on unmount - removed drag indicator for digit ${digit}`);
         } catch (error) {
-          console.warn(`🎯 SelectionArea: Cleanup on unmount - failed to remove drag indicator for digit ${digit}:`, error);
+          // Silently handle error
         }
       }
       if (dragTimeoutRef.current) {
@@ -372,11 +365,11 @@ const NumberButton: React.FC<NumberButtonProps> = ({
 };
 
 interface SelectionAreaProps {
-  isLandscape?: boolean; // Optional prop to remove debug colors in landscape mode
 }
 
-const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) => {
-  console.log('🎯 SelectionArea rendering - BUILD 1312 - isLandscape:', isLandscape);
+const SelectionArea: React.FC<SelectionAreaProps> = () => {
+  // isLandscape prop is used by parent components for layout decisions
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { gameState, hintState, scratchpadState, settings, dispatch } = useGameStore();
   const { currentGuess, guesses } = gameState;
 
@@ -390,9 +383,8 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
         if (indicator.textContent && /^\d$/.test(indicator.textContent.trim())) {
           try {
             document.body.removeChild(indicator);
-            console.log('🧹 Cleaned up orphaned drag indicator:', indicator.textContent);
           } catch (error) {
-            console.warn('🧹 Failed to clean up orphaned indicator:', error);
+            // Silently handle error
           }
         }
       });
@@ -425,15 +417,14 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
   const handleNumberClick = (digit: number) => {
     if (!gameState.isGameActive) return;
     
-    console.log(`🎵 Number click: digit=${digit}, soundEnabled=${settings.soundEnabled}`);
+
     
     // Ensure audio is activated on first interaction (fallback)
     if (settings.soundEnabled) {
       // Small delay to avoid interfering with immediate number placement
       setTimeout(() => {
-        console.log(`🎵 Attempting to activate audio for digit ${digit}`);
-        soundUtils.activateAudio().catch(error => {
-          console.error('🎵 ❌ Failed to activate audio on number click:', error);
+        soundUtils.activateAudio().catch(() => {
+          // Silently handle error
         });
       }, 10);
     }
@@ -464,46 +455,14 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
     (_, i) => i
   );
 
-  // Debug logging to understand what's happening
-  console.log(`🔍 SelectionArea Debug - BUILD 1319:`, {
-    digitRange: settings.digitRange,
-    availableNumbersCount: availableNumbers.length,
-    availableNumbers: availableNumbers,
-    targetLength: settings.targetLength,
-    gridRows: settings.gridRows,
-    gridColumns: settings.gridColumns,
-    difficulty: settings.difficulty,
-    windowWidth: window.innerWidth,
-    windowHeight: window.innerHeight,
-    orientation: window.innerHeight > window.innerWidth ? 'portrait' : 'landscape',
-    containerStyle: {
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start'
-    }
-  });
 
-  // Additional debugging for the numbers grid
-  useEffect(() => {
-    const numbersGrid = document.querySelector('.numbers-grid') as HTMLElement;
-    if (numbersGrid) {
-      console.log(`🔍 Numbers Grid Debug:`, {
-        gridElement: numbersGrid,
-        gridHeight: numbersGrid.offsetHeight,
-        gridWidth: numbersGrid.offsetWidth,
-        gridChildren: numbersGrid.children.length,
-        gridStyle: window.getComputedStyle(numbersGrid),
-        containerHeight: numbersGrid.parentElement?.offsetHeight,
-        containerStyle: numbersGrid.parentElement ? window.getComputedStyle(numbersGrid.parentElement) : null
-      });
-    }
-  }, [availableNumbers]);
+
+
 
   return (
     <div className="selection-area" style={{ 
       position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
-      height: '100%',
+      height: 'auto',
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: 'transparent', // Transparent since parent has pink background
@@ -523,9 +482,8 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
         flexShrink: 0
       }}>Number Selection</h3>
       
-      {/* Main content area - takes remaining space */}
+      {/* Main content area - natural sizing */}
       <div style={{ 
-        flex: '1', 
         display: 'flex', 
         flexDirection: 'column',
         minHeight: '0' // Allow shrinking
@@ -537,7 +495,6 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
           justifyContent: 'center',
           paddingTop: '8px', // RESTORED top padding
           paddingBottom: '0px', // REMOVED padding that was pushing footer up
-          flex: '1',
           minHeight: '0'
         }}>
           <div className="numbers-grid">

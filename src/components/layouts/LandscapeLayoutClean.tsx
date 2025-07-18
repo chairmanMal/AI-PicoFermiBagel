@@ -273,7 +273,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             alignItems: 'center',
             height: 'fit-content' // Allow the component to determine its own height
           }}>
-            <YourGuessBlock guessElementRef={guessElementRef} isLandscape={true} />
+            <YourGuessBlock guessElementRef={guessElementRef} />
           </div>
           
           {/* Number Selection Block - Takes remaining space */}
@@ -324,7 +324,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             >
               <HelpCircle size={27} />
             </button>
-            <SelectionArea isLandscape={true} />
+            <SelectionArea />
           </div>
         </div>
         

@@ -121,7 +121,7 @@ const GameScreen: React.FC = () => {
       }
       
       // Update refs and state
-      previousLayoutRef.current = currentLayout;
+      previousLayoutRef.current = detection; // Use detection instead of currentLayout
       setCurrentLayout(detection);
     };
 
