@@ -280,13 +280,13 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           <div className="number-selection-block" style={{
             background: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '12px',
-            padding: '15px',
+            padding: '15px 15px 0px 15px', // No bottom padding - footer will extend to edge
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             backdropFilter: 'blur(10px)',
             flex: '1',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between', // Changed to space-between to support footer positioning
+            justifyContent: 'flex-start', // Changed back to flex-start since footer is now positioned with marginTop: auto
             alignItems: 'center',
             overflow: 'visible',
             minHeight: 0,
@@ -325,6 +325,29 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
               <HelpCircle size={27} />
             </button>
             <SelectionArea />
+            {/* Footer positioned at bottom of card - moved outside SelectionArea */}
+            <div 
+              className="block-footer" 
+              style={{
+                position: 'relative',
+                fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+                color: '#6b7280',
+                fontWeight: 400,
+                textAlign: 'center',
+                padding: '8px 0',
+                zIndex: 5,
+                boxSizing: 'border-box',
+                flexShrink: 0,
+                margin: '0',
+                marginTop: 'auto', // Push to bottom of container
+                // Extend beyond container padding to match Your Guess footer
+                marginLeft: '-15px', // Compensate for container padding
+                marginRight: '-15px', // Compensate for container padding
+                width: 'calc(100% + 30px)' // Extend beyond container padding
+              }}
+            >
+              Tap to auto-fill or drag to specific guess positions
+            </div>
           </div>
         </div>
         

@@ -494,7 +494,7 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
           alignItems: 'center',
           justifyContent: 'center',
           paddingTop: '8px', // RESTORED top padding
-          paddingBottom: '0px', // REMOVED padding that was pushing footer up
+          paddingBottom: '8px', // Match YourGuessBlock's content padding approach
           minHeight: '0'
         }}>
           <div className="numbers-grid">
@@ -510,31 +510,6 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
             ))}
           </div>
         </div>
-      </div>
-      
-      {/* Footer positioned at bottom of card */}
-      <div 
-        className="block-footer" 
-        style={{
-          position: 'relative',
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-          color: '#6b7280',
-          fontWeight: 400,
-          textAlign: 'center',
-          padding: '8px 0',
-          zIndex: 5,
-          boxSizing: 'border-box',
-          flexShrink: 0,
-          margin: '0',
-          marginTop: 'auto',
-          // Extend beyond container padding to match Your Guess footer
-          marginLeft: '-15px', // Compensate for container padding
-          marginRight: '-15px', // Compensate for container padding
-          marginBottom: '-15px', // Extend to bottom edge of card (no bottom padding)
-          width: 'calc(100% + 30px)' // Extend beyond container padding
-        }}
-      >
-        Tap to auto-fill or drag to specific guess positions
       </div>
     </div>
   );
