@@ -49,7 +49,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       height: 70px;
       border-radius: 8px;
       background: #f3f4f6;
-      border: 4px solid #10b981;
+      // border: 4px solid #10b981; // DEBUG BORDER REMOVED
       color: #1f2937;
       display: flex;
       align-items: center;

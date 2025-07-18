@@ -318,7 +318,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             boxEl.style.setProperty('font-weight', 'bold', 'important');
             boxEl.style.setProperty('line-height', '1', 'important');
             boxEl.style.setProperty('border-radius', '6px', 'important');
-            boxEl.style.setProperty('border', '2px solid #d1d5db', 'important');
+            // boxEl.style.setProperty('border', '2px solid #d1d5db', 'important'); // DEBUG BORDER REMOVED
             boxEl.style.setProperty('background', 'white', 'important');
             boxEl.style.setProperty('box-sizing', 'border-box', 'important');
             boxEl.style.setProperty('flex-shrink', '0', 'important'); // Don't shrink in flexbox
@@ -344,7 +344,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
           scoreArea.style.setProperty('max-height', '200px', 'important'); // More space
           scoreArea.style.setProperty('background', 'linear-gradient(135deg, #f8fafc, #e2e8f0)', 'important');
           scoreArea.style.setProperty('border-radius', '12px', 'important');
-          scoreArea.style.setProperty('border', '1px solid #e2e8f0', 'important');
+          // scoreArea.style.setProperty('border', '1px solid #e2e8f0', 'important'); // DEBUG BORDER REMOVED
           scoreArea.style.setProperty('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.1)', 'important');
           scoreArea.style.setProperty('overflow', 'visible', 'important');
           
@@ -363,7 +363,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
           if (scoreStats) {
             scoreStats.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
             scoreStats.style.setProperty('border-radius', '6px', 'important');
-            scoreStats.style.setProperty('border', '1px solid #e5e7eb', 'important');
+            // scoreStats.style.setProperty('border', '1px solid #e5e7eb', 'important'); // DEBUG BORDER REMOVED
             scoreStats.style.setProperty('padding', '10px', 'important');
           }
           
@@ -382,7 +382,7 @@ const LandscapeLayout: React.FC<LandscapeLayoutProps> = ({ guessElementRef }) =>
             scoreBreakdown.style.setProperty('border-radius', '6px', 'important');
             scoreBreakdown.style.setProperty('padding', '8px', 'important');
             scoreBreakdown.style.setProperty('margin-bottom', '12px', 'important');
-            scoreBreakdown.style.setProperty('border', '1px solid #e5e7eb', 'important');
+            // scoreBreakdown.style.setProperty('border', '1px solid #e5e7eb', 'important'); // DEBUG BORDER REMOVED
           }
           
           // FORCE ALL score item elements to have white backgrounds

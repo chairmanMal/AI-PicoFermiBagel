@@ -230,8 +230,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         portraitContentEl.style.setProperty('justify-content', 'flex-start', 'important');
         portraitContentEl.style.setProperty('box-sizing', 'border-box', 'important');
         portraitContentEl.style.setProperty('z-index', '20', 'important');
-        portraitContentEl.style.setProperty('background', 'rgba(255, 0, 0, 0.1)', 'important'); // DEBUG: Red background
-        portraitContentEl.style.setProperty('border', '2px solid red', 'important'); // DEBUG: Red border
+        // portraitContentEl.style.setProperty('background', 'rgba(255, 0, 0, 0.1)', 'important'); // DEBUG: Red background - REMOVED
+        // portraitContentEl.style.setProperty('border', '2px solid red', 'important'); // DEBUG: Red border - REMOVED
         portraitContentEl.style.setProperty('overflow-y', 'hidden', 'important'); // Prevent overflow
         portraitContentEl.style.setProperty('padding', '0px', 'important');
         portraitContentEl.style.setProperty('margin', '0', 'important');

@@ -519,14 +519,14 @@ const GameScreen: React.FC = () => {
                     
                     <div className="drawer-content" style={{
             position: 'fixed',
-            top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + 10px gap
-            left: `20px`, // Align with settings button left edge
+            top: 'calc(0px + env(safe-area-inset-top) + 40px + 20px)', // Icon top + icon height + 20px gap
+            left: 'calc(10px + env(safe-area-inset-left) + 20px)', // Settings icon left + icon width/2 (center line)
             width: '280px', // Reduced width for iPhone
             height: '650px', // Set to 650px height
                             background: 'white',
                 borderRadius: '12px',
                 // border: '3px solid #ff0000', // RED BORDER for visual debugging - DISABLED
-                padding: '0 5px 0 0', // Reduced right padding for iPhone
+                padding: '0', // Remove all padding to align borders perfectly
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               overflow: 'auto',
             zIndex: 5000,
@@ -571,119 +571,174 @@ const GameScreen: React.FC = () => {
                   </div>
                   </div>
 
-      {/* Menu Drawer - Enhanced for portrait mode with MenuDrawerContent */}
-      {currentLayout.orientation === 'portrait' && (
-        <div className={`mobile-drawer ${isMenuDrawerOpen ? 'open' : ''}`} style={{
-          background: 'transparent !important',
-          width: 'auto', // Let content determine width
-          maxWidth: '320px', // Reduced for iPhone - was 500px
-          minWidth: '280px' // Minimum width constraint
+      {/* Menu Drawer - Only show in portrait mode (landscape has it in Column 3) */}
+      {currentLayout.orientation === 'portrait' && isMenuDrawerOpen && (
+        <div className="menu-drawer-container" style={{
+          height: 'auto', // Override CSS height: 100% to allow content-based sizing
+          minHeight: '0' // Override any min-height to allow shrinking
         }}>
-          <div className="menu-drawer-container" style={{
-            background: 'transparent !important',
-            zIndex: 1002
-          }}>
-            <div className="drawer-header" style={{
-                  background: 'transparent',
-              padding: '0',
-              margin: '0'
-            }}>
-              <button
-                className="drawer-close"
-                onClick={() => {
-                  console.log('❌ Menu close button clicked - closing drawer');
-                  setIsMenuDrawerOpen(false);
-                }}
-                aria-label="Close Menu"
-                style={{
-                  position: 'fixed',
-                  top: 'calc(0px + env(safe-area-inset-top))', // Move up 10px for iPhone
-                  right: 'calc(10px + env(safe-area-inset-right))',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                  transition: 'all 0.2s ease',
-                  touchAction: 'manipulation',
-                  zIndex: 6000,
-                  fontSize: '24px',
-                  color: '#374151'
-                }}
-              >
-                ›
-              </button>
-                    </div>
-            <div className="drawer-content" style={{
-              position: 'fixed',
-              top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Icon top + icon height + gap
-              right: 'calc(10px + env(safe-area-inset-right) + 5px)', // Reduced margin by 50% for iPhone
-              left: 'auto',
-              width: '320px', // Slightly increased to reduce gap from left edge
-              height: `${window.innerHeight - 60 - 15}px`, // Extend to 15px above bottom of screen
-              background: 'transparent',
-              borderRadius: '12px',
-              border: 'none', // Removed outer green border
-              padding: '0',
-              margin: '0',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-              zIndex: 1002,
-              boxShadow: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-              // Add gradient background: content area with green border, then transparent below
-              backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.95) 70%, transparent 100%)'
-            }}
-            ref={(el) => {
-              if (el) {
-                const rect = el.getBoundingClientRect();
-                const drawerWidth = rect.width; // This is 'x' - actual drawer width
-                const contentWidth = 420; // From MenuDrawerContent minWidth - this is natural content width
-                const greenBorderWidth = rect.width; // Full width now (no margins) = 'y'
-                const requiredScale = Math.max(0.5, Math.min(1.0, greenBorderWidth / contentWidth));
-                
-                console.log('📏 DRAWER SIZING ANALYSIS:', {
-                  drawerWidth: `${drawerWidth}px (x)`,
-                  greenBorderWidth: `${greenBorderWidth}px (y)`,
-                  contentWidth: `${contentWidth}px (natural content width)`,
-                  requiredScale: `${requiredScale} (y/x ratio)`,
-                  calculation: `${greenBorderWidth} / ${contentWidth} = ${requiredScale}`
-                });
-              }
-            }}>
-              <div style={{
-                // border: '2px solid #00ff00', // GREEN BORDER - DISABLED
+          <div className="drawer-header">
+            <button
+              className="drawer-close"
+              onClick={() => {
+                console.log('❌ Menu close button clicked - closing drawer');
+                setIsMenuDrawerOpen(false);
+              }}
+              aria-label="Close Menu"
+              style={{ 
+                position: 'fixed',
+                top: currentLayout.isIpadPortrait 
+                  ? 'calc(10px + env(safe-area-inset-top))' // Move down 10px for iPad portrait only
+                  : 'calc(0px + env(safe-area-inset-top))', // Normal position for iPhone
+                right: 'calc(10px + env(safe-area-inset-right))', // Keep same horizontal position
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
                 borderRadius: '8px',
-                position: 'absolute',
-                top: '0',
-                left: '0',
-                right: '-3px', // Extend exactly to red border edge (3px red border width)
-                height: '655px', // Reduced by 35px to hug content bottom
-                maxHeight: '100%', // Don't exceed red container height
-                margin: '0',
-                boxSizing: 'border-box',
-                background: 'white',
-                padding: '0',
-                overflow: 'auto', // Standard browser scrolling
-                width: '100%', // Use full width of container
-                zIndex: 1500 // ABOVE overlay (1000) to ensure it appears on top
-              }}>
-                <MenuDrawerContent />
-                      </div>
-              
-
-
-              </div>
-            </div>
+                padding: '10px', // MATCH settings button: 10px not 12px
+                width: '40px', // MATCH settings button: 40px not 48px
+                height: '40px', // MATCH settings button: 40px not 48px
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease',
+                touchAction: 'manipulation',
+                zIndex: 6000,
+                fontSize: '24px', // SAME size as settings icon
+                color: '#374151'
+              }}
+            >
+              ›
+            </button>
           </div>
-        )}
+          
+          <div className="drawer-content" style={{
+            position: 'fixed',
+            top: 'calc(0px + env(safe-area-inset-top) + 40px + 20px)', // Icon top + icon height + 20px gap
+            right: 'calc(10px + env(safe-area-inset-right) + 20px)', // Menu icon right + icon width/2 (center line)
+            width: '320px', // Fixed width like settings drawer
+            height: 'auto', // Will be set dynamically to match content exactly
+            background: 'white',
+            borderRadius: '12px',
+            padding: '0', // Remove all padding to align borders perfectly
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            overflow: 'auto',
+            zIndex: 6000, // Above overlay (2000) and same as settings drawer
+            display: 'flex',
+            flexDirection: 'column',
+            // border: '3px solid #00ff00', // GREEN BORDER - DEBUG: Menu drawer content container - REMOVED
+            minHeight: '0', // Override CSS min-height to allow content-based sizing
+            flex: '0 0 auto' // Override CSS flex: 1 to prevent stretching
+          }}
+          ref={(el) => {
+            if (el && isMenuDrawerOpen) {
+              console.log('🍔 Menu drawer ref callback - drawer is open');
+              console.log('🍔 Menu drawer element:', el);
+              console.log('🍔 Menu drawer element classes:', el.className);
+              
+              // Wait for content to render, then adjust height to match content exactly
+              setTimeout(() => {
+                console.log('🍔 Menu drawer timeout callback - looking for scrollable content');
+                const content = el.querySelector('.menu-drawer-scrollable') as HTMLElement;
+                console.log('🍔 Menu drawer scrollable content found:', !!content);
+                
+                if (content) {
+                  console.log('🍔 Menu drawer scrollable content element:', content);
+                  console.log('🍔 Menu drawer scrollable content classes:', content.className);
+                  console.log('🍔 Menu drawer scrollable content computed styles:', {
+                    height: window.getComputedStyle(content).height,
+                    scrollHeight: content.scrollHeight,
+                    offsetHeight: content.offsetHeight,
+                    clientHeight: content.clientHeight
+                  });
+                  
+                  // Get the actual content height by measuring the scrollable content
+                  const contentHeight = content.scrollHeight;
+                  console.log('🍔 Menu drawer content scrollHeight:', contentHeight);
+                  
+                  // The content height is exactly what we need - no need to add padding
+                  // since the container should size to its content
+                  const finalHeight = contentHeight;
+                  
+                  // Calculate available screen space
+                  const screenHeight = window.innerHeight;
+                  const drawerTop = el.offsetTop;
+                  const bottomMargin = 20; // 20px margin from bottom
+                  const maxHeight = screenHeight - drawerTop - bottomMargin;
+                  
+                  console.log('🍔 Menu drawer height calculation:', {
+                    screenHeight,
+                    drawerTop,
+                    bottomMargin,
+                    maxHeight,
+                    contentHeight,
+                    finalHeight
+                  });
+                  
+                  // Use the smaller of content height or max available height
+                  const actualHeight = Math.min(finalHeight, maxHeight);
+                  el.style.height = `${actualHeight}px`;
+                  console.log('🍔 Menu drawer height set to:', actualHeight);
+                  
+                  // Force the height with !important to override any CSS conflicts
+                  el.style.setProperty('height', `${actualHeight}px`, 'important');
+                  console.log('🍔 Menu drawer height set with !important to:', actualHeight);
+                  
+                  // Log the final container dimensions
+                  setTimeout(() => {
+                    console.log('🍔 Menu drawer final container dimensions:', {
+                      height: el.style.height,
+                      computedHeight: window.getComputedStyle(el).height,
+                      scrollHeight: el.scrollHeight,
+                      offsetHeight: el.offsetHeight,
+                      clientHeight: el.clientHeight,
+                      styleHeight: el.style.getPropertyValue('height'),
+                      importantHeight: el.style.getPropertyPriority('height')
+                    });
+                  }, 50);
+                } else {
+                  console.log('🍔 ERROR: Menu drawer scrollable content not found!');
+                  console.log('🍔 Available child elements:', Array.from(el.children).map(child => ({
+                    tagName: child.tagName,
+                    className: child.className,
+                    id: child.id
+                  })));
+                }
+              }, 100);
+              
+              const rect = el.getBoundingClientRect();
+              const screenHeight = window.innerHeight;
+              const drawerBottom = rect.top + rect.height;
+              
+              // Get the actual closing icon position
+              const closeButton = document.querySelector('.menu-drawer-container .drawer-close') as HTMLElement;
+              const closeButtonRect = closeButton?.getBoundingClientRect();
+              const iconBottom = closeButtonRect ? closeButtonRect.bottom : 50; // fallback
+              const gap = 10;
+              const bottomMargin = 50; // 30px original + 20px reduction = 50px total
+              const expectedDrawerTop = iconBottom + gap;
+              const chosenHeight = screenHeight - expectedDrawerTop - bottomMargin;
+              
+              console.log('🍔 Menu drawer DEBUG:', {
+                screenHeight: screenHeight,
+                iconBottom: iconBottom,
+                expectedDrawerTop: expectedDrawerTop,
+                actualDrawerTop: rect.top,
+                drawerHeight: rect.height,
+                drawerBottom: drawerBottom,
+                distanceFromBottom: screenHeight - drawerBottom,
+                chosenHeight: chosenHeight,
+                actualHeight: rect.height,
+                PROBLEM: drawerBottom > screenHeight ? 'DRAWER EXTENDS OFF SCREEN!' : 'OK',
+                POSITIONING: Math.abs(rect.top - expectedDrawerTop) > 2 ? 'DRAWER NOT POSITIONED 10PX BELOW ICON!' : 'OK'
+              });
+            }
+          }}>
+            <MenuDrawerContent />
+          </div>
+        </div>
+      )}
 
 
       
@@ -716,34 +771,7 @@ const GameScreen: React.FC = () => {
         }} />
       )}
 
-      {/* Menu drawer overlay - covers entire screen except green rectangle area */}
-      {isMenuDrawerOpen && currentLayout.orientation === 'portrait' && (
-        <div style={{
-          position: 'fixed',
-          top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Start at drawer top, not screen top
-          left: '0',
-          right: '0',
-          bottom: '0',
-          width: '100vw',
-          height: 'calc(100vh - env(safe-area-inset-top) - 40px - 10px)', // Adjust height to match top offset
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 1400, // Above main content but below green rectangle (1500)
-          pointerEvents: 'none', // Don't interfere with interactions
-          // Create cutout for green rectangle area
-          clipPath: `polygon(
-            0% 0%, 
-            0% 100%, 
-            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 100%, 
-            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 0%, 
-            calc(100vw - 10px - env(safe-area-inset-right) - 5px + 3px) 0%, 
-            calc(100vw - 10px - env(safe-area-inset-right) - 5px + 3px) 655px, 
-            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 655px, 
-            calc(100vw - 320px - 10px - env(safe-area-inset-right) - 5px) 100%, 
-            100% 100%, 
-            100% 0%
-          )`
-        }} />
-      )}
+
 
       {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}
       {isSettingsDrawerOpen && (

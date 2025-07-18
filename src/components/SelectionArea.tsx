@@ -39,7 +39,7 @@ const NumberButton: React.FC<NumberButtonProps> = ({
       height: 70px;
       border-radius: 50%;
       background: #1f2937;
-      border: 4px solid #3b82f6;
+      // border: 4px solid #3b82f6; // DEBUG BORDER REMOVED
       color: white;
       display: flex;
       align-items: center;
