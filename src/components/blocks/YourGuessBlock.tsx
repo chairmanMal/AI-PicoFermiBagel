@@ -192,7 +192,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef, isLand
           fontWeight: 400, // Match Number Selection footer weight
           textAlign: 'center',
           padding: '8px 0',
-          borderTop: '1px solid #e5e7eb', // Match Number Selection footer border
+          // borderTop: '1px solid #e5e7eb', // REMOVED: Faint line above footer
           zIndex: 5,
           boxSizing: 'border-box', // Ensure padding is included in width calculation
           // Override any CSS that might interfere

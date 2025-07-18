@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Clock, Target, Lightbulb, Hash, BarChart3, X } from 'lucide-react';
+import { Trophy, Clock, Lightbulb, Hash, BarChart3, X } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import './ScoreArea.css';
 
@@ -15,7 +15,10 @@ const ScoreArea: React.FC = () => {
     const timeMinutes = getGameTimeMinutes();
     const hintCosts = getTotalHintCost();
     
-    return Math.max(0, 100 - guessCount - timeMinutes - hintCosts);
+    // Score is now based on efficiency: fewer guesses, less time, fewer hints = higher score
+    // Start with a base score and subtract penalties
+    const baseScore = 100;
+    return Math.max(0, baseScore - guessCount - timeMinutes - hintCosts);
   };
 
   const currentScore = calculateCurrentScore();
@@ -45,12 +48,6 @@ const ScoreArea: React.FC = () => {
       </motion.div>
 
       <div className="score-breakdown">
-        <div className="score-item">
-          <Target size={16} />
-          <span className="score-text">Base Score</span>
-          <span className="score-number">100</span>
-        </div>
-
         <div className="score-item penalty">
           <Hash size={16} />
           <span className="score-text">Guesses</span>
@@ -58,18 +55,16 @@ const ScoreArea: React.FC = () => {
         </div>
 
         <div className="score-item penalty">
+          <Lightbulb size={16} />
+          <span className="score-text">Hints</span>
+          <span className="score-number">-{getTotalHintCost()}</span>
+        </div>
+
+        <div className="score-item penalty">
           <Clock size={16} />
           <span className="score-text">Time (min)</span>
           <span className="score-number">-{getGameTimeMinutes()}</span>
         </div>
-
-        {getTotalHintCost() > 0 && (
-          <div className="score-item penalty">
-            <Lightbulb size={16} />
-            <span className="score-text">Hints</span>
-            <span className="score-number">-{getTotalHintCost()}</span>
-          </div>
-        )}
       </div>
 
       {/* Stats Toast */}
