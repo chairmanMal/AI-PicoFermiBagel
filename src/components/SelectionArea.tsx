@@ -555,39 +555,26 @@ const SelectionArea: React.FC<SelectionAreaProps> = ({ isLandscape = false }) =>
         </div>
       </div>
       
-      {/* Footer positioned at bottom using flexbox */}
+      {/* Footer positioned at bottom of card */}
       <div 
         className="block-footer" 
         style={{
-          position: 'relative', // Use relative positioning
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)', // Match Number Selection footer font
+          position: 'relative',
+          fontSize: 'clamp(0.85rem, 2vw, 1rem)',
           color: '#6b7280',
-          fontWeight: 400, // Match Number Selection footer weight
+          fontWeight: 400,
           textAlign: 'center',
           padding: '8px 0',
-          // borderTop: '1px solid #e5e7eb', // REMOVED: Faint line above footer
           zIndex: 5,
-          boxSizing: 'border-box', // Ensure padding is included in width calculation
-          flexShrink: 0, // Prevent footer from shrinking
-          // Override any CSS that might interfere
-          margin: '0', // Override the CSS margin-top: 8px
-          marginTop: 'auto', // Force auto margin to push to bottom
-          // Ensure full width by removing any container padding
-          marginLeft: '0', // No container padding to compensate for
-          marginRight: '0', // No container padding to compensate for
-          width: '100%' // Full width
-        }}
-        onLoad={() => {
-          console.log('🎯 NUMBER SELECTION FOOTER: Loaded with proper positioning');
-          const footerEl = document.querySelector('.selection-area .block-footer') as HTMLElement;
-          const parentEl = document.querySelector('.selection-area') as HTMLElement;
-          if (footerEl && parentEl) {
-            console.log('🎯 NUMBER SELECTION FOOTER: Position and size:', {
-              footerRect: footerEl.getBoundingClientRect(),
-              parentHeight: parentEl.offsetHeight,
-              footerHeight: footerEl.offsetHeight
-            });
-          }
+          boxSizing: 'border-box',
+          flexShrink: 0,
+          margin: '0',
+          marginTop: 'auto',
+          // Extend beyond container padding to match Your Guess footer
+          marginLeft: '-15px', // Compensate for container padding
+          marginRight: '-15px', // Compensate for container padding
+          marginBottom: '-15px', // Extend to bottom edge of card (no bottom padding)
+          width: 'calc(100% + 30px)' // Extend beyond container padding
         }}
       >
         Tap to auto-fill or drag to specific guess positions
