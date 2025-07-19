@@ -112,7 +112,8 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
         position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
         flex: '0 0 auto !important', // Override CSS flex: 1 1 auto
-        display: 'block !important' // Override CSS display: flex
+        display: 'block !important', // Override CSS display: flex
+        overflow: 'visible' // Allow footer to extend beyond card boundaries
         // Use natural flow - no flexbox
       }}
     >
@@ -156,19 +157,23 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: '8px' // Small gap above footer
+        paddingBottom: '40px' // Increased padding to make room for absolute positioned footer
       }}>
         <SelectionArea />
       </div>
 
       {/* Footer as separate element in content stack */}
       <div className="block-footer" style={{
-        padding: '8px 0',
-        marginTop: '8px',
+        position: 'absolute',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        padding: '8px 5px', // Reduced horizontal padding to 5px from sides
         textAlign: 'center',
         fontSize: '0.875rem',
         color: '#6b7280',
-        fontWeight: 500
+        fontWeight: 500,
+        borderRadius: '0 0 12px 12px' // Rounded corners only on bottom to match card
       }}>
         Tap numbers to auto-fill or drag to specific positions
       </div>

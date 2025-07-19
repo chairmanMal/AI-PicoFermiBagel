@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import TargetDisplay from './TargetDisplay';
 import YourGuessBlock from './blocks/YourGuessBlock';
@@ -11,8 +11,14 @@ interface PortraitLayoutProps {
 
 const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
   const { settings } = useGameStore();
+  const [isIPhone, setIsIPhone] = useState(false);
 
-
+  useEffect(() => {
+    // Detect iPhone
+    const userAgent = navigator.userAgent;
+    const isIPhoneDevice = /iPhone/.test(userAgent) && !/iPad/.test(userAgent);
+    setIsIPhone(isIPhoneDevice);
+  }, []);
 
   return (
     <div 
@@ -22,9 +28,9 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         flexDirection: 'column',
         height: '100vh',
         width: '100vw',
-        padding: '20px 20px 20px 20px',
+        padding: '20px 10px 20px 10px', // Reduced horizontal padding from 20px to 10px (50% reduction)
         boxSizing: 'border-box',
-        gap: '15px',
+        gap: isIPhone ? '3.75px' : '15px', // Reduce gap by 75% for iPhone (from 15px to 3.75px)
         overflow: 'hidden'
       }}
     >
@@ -32,7 +38,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       <div className="title-section" style={{
         textAlign: 'center',
         flexShrink: 0,
-        marginBottom: '10px'
+        marginBottom: isIPhone ? '1px' : '10px', // Add 4px padding beneath subtitle for iPhone (from -5px to 1px)
+        marginTop: isIPhone ? '35px' : '0' // Move title down 35px for iPhone (increased from 30px to 35px)
       }}>
         <h1 className="game-title" style={{
           margin: '0 0 5px 0',
@@ -45,6 +52,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         </h1>
         <p className="game-subtitle" style={{
           margin: '0',
+          paddingBottom: isIPhone ? '4px' : '0', // Add 4px padding beneath subtitle for iPhone
           fontSize: '1.1rem',
           color: 'rgba(255, 255, 255, 0.9)',
           textShadow: '0 1px 2px rgba(0,0,0,0.5)'
@@ -58,24 +66,30 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         display: 'flex',
         flexDirection: 'column',
         flex: '1',
-        gap: '12.5px',
+        gap: isIPhone ? '0px' : '12.5px', // No gap for iPhone, normal for iPad
         minHeight: 0,
         overflow: 'hidden'
       }}>
         {/* Target Display - Only render when enabled */}
         {settings.showTarget && (
-          <div style={{ flexShrink: 0 }}>
+          <div style={{ 
+            flexShrink: 0
+          }}>
             <TargetDisplay />
           </div>
         )}
         
         {/* Guess Area */}
-        <div className="guess-section" style={{ flexShrink: 0 }}>
+        <div className="guess-section" style={{ 
+          flexShrink: 0
+        }}>
           <YourGuessBlock guessElementRef={guessElementRef} />
         </div>
         
         {/* Number Selection */}
-        <div className="selection-section" style={{ flexShrink: 0 }}>
+        <div className="selection-section" style={{ 
+          flexShrink: 0
+        }}>
           <NumberSelectionBlock />
         </div>
         

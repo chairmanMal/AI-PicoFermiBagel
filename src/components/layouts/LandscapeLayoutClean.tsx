@@ -332,12 +332,13 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             
             {/* Footer as separate element in content stack */}
             <div className="block-footer" style={{
-              padding: '8px 0',
+              padding: '8px 5px', // Reduced horizontal padding to 5px from sides
               marginTop: '8px',
               textAlign: 'center',
               fontSize: '0.875rem',
               color: '#6b7280',
-              fontWeight: 500
+              fontWeight: 500,
+              borderRadius: '6px' // Rounded corners to match card style
             }}>
               Tap numbers to auto-fill or drag to specific positions
             </div>
