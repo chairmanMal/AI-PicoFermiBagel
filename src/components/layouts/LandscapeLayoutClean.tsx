@@ -324,6 +324,16 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             >
               <HelpCircle size={27} />
             </button>
+
+            {/* Title centered at the top */}
+            <h3 className="selection-title" style={{
+              margin: '10px 0 10px 0', // 10px above and below title
+              fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+              color: '#1f2937',
+              fontWeight: 600,
+              textAlign: 'center',
+              width: '100%'
+            }}>Number Selection</h3>
             
             {/* Main content area */}
             <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -340,7 +350,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
               fontWeight: 500,
               borderRadius: '6px' // Rounded corners to match card style
             }}>
-              Tap numbers to auto-fill or drag to specific positions
+              Tap # to autofill or drag it to a specific position
             </div>
           </div>
         </div>

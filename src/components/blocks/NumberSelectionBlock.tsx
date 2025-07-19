@@ -104,13 +104,14 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
       style={{
         background: 'white', // EXACTLY like YourGuessBlock
         borderRadius: '12px', // Add rounded corners
-        padding: '15px 15px 0px 15px', // Match Your Guess card padding - footer extends beyond
+        padding: '8px 15px 0px 15px', // Reduced top padding from 15px to 8px to reduce gaps
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // EXACTLY like YourGuessBlock
         width: '100%',
         height: 'auto !important', // Override CSS height: 100%
         boxSizing: 'border-box',
         position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
+        marginTop: '-10px', // Reduce gap by 50% (assuming ~20px gap, reduce by 10px)
         flex: '0 0 auto !important', // Override CSS flex: 1 1 auto
         display: 'block !important', // Override CSS display: flex
         overflow: 'visible' // Allow footer to extend beyond card boundaries
@@ -144,7 +145,7 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
 
       {/* Title centered at the top */}
       <h3 className="selection-title" style={{
-        margin: '10px 0 10px 0', // 10px above and below title
+        margin: '5px 0 10px 0', // Reduced top margin from 10px to 5px to reduce gaps
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
@@ -168,14 +169,14 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
         bottom: '0',
         left: '0',
         right: '0',
-        padding: '8px 5px', // Reduced horizontal padding to 5px from sides
+        padding: '8px 3px', // Reduced horizontal padding to 3px from sides
         textAlign: 'center',
         fontSize: '0.875rem',
         color: '#6b7280',
         fontWeight: 500,
         borderRadius: '0 0 12px 12px' // Rounded corners only on bottom to match card
       }}>
-        Tap numbers to auto-fill or drag to specific positions
+        Tap # to autofill or drag it to a specific position
       </div>
     </div>
   );

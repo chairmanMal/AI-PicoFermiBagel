@@ -104,7 +104,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           backdropFilter: 'blur(10px)',
           overflow: 'auto',
           touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          marginTop: '-10px' // Reduce gap by 50% for all portrait mode devices
         }}>
           <RecentGuessHistory />
         </div>

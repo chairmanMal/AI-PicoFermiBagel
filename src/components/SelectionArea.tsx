@@ -483,8 +483,11 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
           alignItems: 'center',
           justifyContent: 'center',
           paddingTop: '8px', // RESTORED top padding
-          paddingBottom: '8px', // Match YourGuessBlock's content padding approach
-          minHeight: '0'
+          paddingBottom: '8px', // Back to normal padding
+          paddingLeft: '10px', // Reduced side padding by 5px (from default 15px to 10px)
+          paddingRight: '10px', // Reduced side padding by 5px (from default 15px to 10px)
+          minHeight: '0',
+          height: 'calc(100% - 30px)' // Reserve 30px for the footer (20px footer + 10px gap)
         }}>
           <div className="numbers-grid">
             {availableNumbers.map((digit) => (
