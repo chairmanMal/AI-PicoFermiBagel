@@ -471,17 +471,6 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
       width: '100%',
       minHeight: '0'
     }}>
-      {/* Title centered at the top */}
-      <h3 className="selection-title" style={{
-        margin: '0 0 clamp(8px, 2vw, 12px) 0', // RESTORED spacing between title and array
-        fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
-        color: '#1f2937',
-        fontWeight: 600,
-        textAlign: 'center',
-        width: '100%',
-        flexShrink: 0
-      }}>Number Selection</h3>
-      
       {/* Main content area - natural sizing */}
       <div style={{ 
         display: 'flex', 

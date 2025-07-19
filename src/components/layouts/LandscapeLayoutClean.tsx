@@ -286,7 +286,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             flex: '1',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-start', // Changed back to flex-start since footer is now positioned with marginTop: auto
+            justifyContent: 'space-between', // Changed to space-between to push footer to bottom
             alignItems: 'center',
             overflow: 'visible',
             minHeight: 0,
@@ -324,29 +324,22 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             >
               <HelpCircle size={27} />
             </button>
-            <SelectionArea />
-            {/* Footer positioned at bottom of card - moved outside SelectionArea */}
-            <div 
-              className="block-footer" 
-              style={{
-                position: 'relative',
-                fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-                color: '#6b7280',
-                fontWeight: 400,
-                textAlign: 'center',
-                padding: '8px 0',
-                zIndex: 5,
-                boxSizing: 'border-box',
-                flexShrink: 0,
-                margin: '0',
-                marginTop: 'auto', // Push to bottom of container
-                // Extend beyond container padding to match Your Guess footer
-                marginLeft: '-15px', // Compensate for container padding
-                marginRight: '-15px', // Compensate for container padding
-                width: 'calc(100% + 30px)' // Extend beyond container padding
-              }}
-            >
-              Tap to auto-fill or drag to specific guess positions
+            
+            {/* Main content area */}
+            <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SelectionArea />
+            </div>
+            
+            {/* Footer as separate element in content stack */}
+            <div className="block-footer" style={{
+              padding: '8px 0',
+              marginTop: '8px',
+              textAlign: 'center',
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              fontWeight: 500
+            }}>
+              Tap numbers to auto-fill or drag to specific positions
             </div>
           </div>
         </div>

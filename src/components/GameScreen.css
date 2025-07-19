@@ -286,11 +286,23 @@
     box-shadow: none !important; /* Remove shadow since YourGuessBlock has its own */
     backdrop-filter: none !important; /* Remove backdrop filter since YourGuessBlock has its own */
   }
+  
+  .selection-section {
+    padding: 0 !important; /* Remove padding to eliminate visual inset */
+    background: transparent !important; /* Remove background since NumberSelectionBlock has its own */
+    border-radius: 0 !important; /* Remove border radius since NumberSelectionBlock has its own */
+    box-shadow: none !important; /* Remove shadow since NumberSelectionBlock has its own */
+    backdrop-filter: none !important; /* Remove backdrop filter since NumberSelectionBlock has its own */
+  }
 }
 
 /* Override the iPad portrait mode padding rule that's causing the visual inset */
 @media (orientation: portrait) and (min-width: 375px) {
   .guess-section {
+    padding: 0 !important; /* Override the clamp(8px, 1.5vw, 12px) rule */
+  }
+  
+  .selection-section {
     padding: 0 !important; /* Override the clamp(8px, 1.5vw, 12px) rule */
   }
 }
@@ -569,9 +581,18 @@
   }
   
   .guess-section,
-  .submit-section,
-  .selection-section {
+  .submit-section {
     padding: clamp(12px, 2.5vw, 20px);
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
+  }
+  
+  .selection-section {
+    padding: 0 !important; /* Remove padding to eliminate visual inset */
+    background: transparent !important; /* Remove background since NumberSelectionBlock has its own */
+    border-radius: 0 !important; /* Remove border radius since NumberSelectionBlock has its own */
+    box-shadow: none !important; /* Remove shadow since NumberSelectionBlock has its own */
+    backdrop-filter: none !important; /* Remove backdrop filter since NumberSelectionBlock has its own */
     width: 100%; /* Use full available width from parent container */
     max-width: none; /* Remove all width constraints */
   }
@@ -621,8 +642,17 @@
   }
   
   .guess-section,
-  .submit-section,
+  .submit-section {
+    width: 100%; /* Use full available width from parent container */
+    max-width: none; /* Remove all width constraints */
+  }
+  
   .selection-section {
+    padding: 0 !important; /* Remove padding to eliminate visual inset */
+    background: transparent !important; /* Remove background since NumberSelectionBlock has its own */
+    border-radius: 0 !important; /* Remove border radius since NumberSelectionBlock has its own */
+    box-shadow: none !important; /* Remove shadow since NumberSelectionBlock has its own */
+    backdrop-filter: none !important; /* Remove backdrop filter since NumberSelectionBlock has its own */
     width: 100%; /* Use full available width from parent container */
     max-width: none; /* Remove all width constraints */
   }
@@ -729,9 +759,13 @@
   
   /* Reduce internal padding of white sections for iPad portrait mode to extend closer to screen edges */
   .guess-section,
-  .submit-section,
-  .selection-section {
+  .submit-section {
     padding: clamp(8px, 1.5vw, 12px) !important; /* Reverted back - this was fine */
+  }
+  
+  /* Remove padding from selection-section to let inline styles control it */
+  .selection-section {
+    padding: 0 !important; /* Let inline styles control padding */
   }
   
   /* Let JavaScript fully control settings drawer height - no CSS interference */

@@ -183,29 +183,16 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         <GuessArea />
       </div>
 
-      {/* Footer positioned at bottom */}
-      <div 
-        className="block-footer" 
-        style={{
-          position: 'relative', // Use relative positioning
-          fontSize: 'clamp(0.85rem, 2vw, 1rem)', // Match Number Selection footer font
-          color: '#6b7280',
-          fontWeight: 400, // Match Number Selection footer weight
-          textAlign: 'center',
-          padding: '8px 0',
-          // borderTop: '1px solid #e5e7eb', // REMOVED: Faint line above footer
-          zIndex: 5,
-          boxSizing: 'border-box', // Ensure padding is included in width calculation
-          // Override any CSS that might interfere
-          margin: '0', // Override the CSS margin-top: 8px
-          // Ensure full width by removing any container padding
-          marginLeft: '-15px', // Compensate for container padding
-          marginRight: '-15px', // Compensate for container padding
-          width: 'calc(100% + 30px)' // Extend beyond container padding
-        }}
-
-      >
-        Tap a box to select, drag to swap, long-press to lock
+      {/* Footer as separate element in content stack */}
+      <div className="block-footer" style={{
+        padding: '8px 0',
+        marginTop: '8px',
+        textAlign: 'center',
+        fontSize: '0.875rem',
+        color: '#6b7280',
+        fontWeight: 500
+      }}>
+        Drag numbers or tap to fill positions
       </div>
     </div>
   );

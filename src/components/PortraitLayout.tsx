@@ -1,9 +1,8 @@
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import TargetDisplay from './TargetDisplay';
 import YourGuessBlock from './blocks/YourGuessBlock';
-import SelectionArea from './SelectionArea';
+import NumberSelectionBlock from './blocks/NumberSelectionBlock';
 import RecentGuessHistory from './RecentGuessHistory';
 
 interface PortraitLayoutProps {
@@ -13,62 +12,7 @@ interface PortraitLayoutProps {
 const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
   const { settings } = useGameStore();
 
-  // Show help toast for Number Selection
-  const showNumberSelectionHelp = () => {
-    console.log(`🔍 Number Selection Help clicked - showing toast`);
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 2147483647;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 20px;
-      padding-top: 80px;
-    `;
-    overlay.innerHTML = `
-      <div style="
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        max-width: 400px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      ">
-        <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px;">Number Selection Help</h3>
-        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
-          <strong>Tap</strong> any number to automatically fill the next available position in your guess.
-        </p>
-        <p style="margin: 0 0 10px 0; color: #374151; line-height: 1.5;">
-          <strong>Drag</strong> a number to place it in a specific position in your guess.
-        </p>
-        <p style="margin: 0; color: #6b7280; font-size: 14px;">
-          Numbers 0-${settings.digitRange} are available for this game mode.
-        </p>
-        <button onclick="this.parentElement.parentElement.remove()" style="
-          margin-top: 15px;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-        ">Got it!</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-      }
-    });
-  };
+
 
   return (
     <div 
@@ -131,73 +75,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         </div>
         
         {/* Number Selection */}
-        <div className="selection-section" style={{ 
-          flexShrink: 0,
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '12px',
-          padding: '15px 15px 0px 15px', // No bottom padding - footer will extend to edge
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          backdropFilter: 'blur(10px)',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Help icon */}
-          <button
-            className="help-button"
-            onClick={showNumberSelectionHelp}
-            aria-label="Show help"
-            style={{
-              position: 'absolute',
-              top: '2px',
-              left: '2px',
-              background: 'none',
-              border: 'none',
-              color: '#6b7280',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '6px',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 11
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
-              e.currentTarget.style.color = '#374151';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'none';
-              e.currentTarget.style.color = '#6b7280';
-            }}
-          >
-            <HelpCircle size={27} />
-          </button>
-          <SelectionArea />
-          {/* Footer positioned at bottom of card - moved outside SelectionArea */}
-          <div 
-            className="block-footer" 
-            style={{
-              position: 'relative',
-              fontSize: 'clamp(0.85rem, 2vw, 1rem)',
-              color: '#6b7280',
-              fontWeight: 400,
-              textAlign: 'center',
-              padding: '8px 0',
-              zIndex: 5,
-              boxSizing: 'border-box',
-              flexShrink: 0,
-              margin: '0',
-              marginTop: 'auto', // Push to bottom of container
-              // Extend beyond container padding to match Your Guess footer
-              marginLeft: '-15px', // Compensate for container padding
-              marginRight: '-15px', // Compensate for container padding
-              width: 'calc(100% + 30px)' // Extend beyond container padding
-            }}
-          >
-            Tap to auto-fill or drag to specific guess positions
-          </div>
+        <div className="selection-section" style={{ flexShrink: 0 }}>
+          <NumberSelectionBlock />
         </div>
         
         {/* Recent Guesses - Takes remaining space */}
