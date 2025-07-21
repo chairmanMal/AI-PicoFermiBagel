@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
 import { soundUtils } from '@/utils/soundUtils';
+import { registerDragIndicator, unregisterDragIndicator } from '@/utils/dragCleanup';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -66,6 +67,10 @@ const GuessBox: React.FC<GuessBoxProps> = ({
     indicator.textContent = value.toString();
     document.body.appendChild(indicator);
     setDragIndicatorElement(indicator);
+    
+    // Register with cleanup manager
+    registerDragIndicator(indicator);
+    
     return indicator;
   }, [value]);
 
@@ -80,6 +85,9 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   // Remove drag indicator with safety checks
   const removeDragIndicator = useCallback(() => {
     if (dragIndicatorElement) {
+      // Unregister from cleanup manager first
+      unregisterDragIndicator(dragIndicatorElement);
+      
       try {
         if (document.body.contains(dragIndicatorElement)) {
           document.body.removeChild(dragIndicatorElement);
@@ -204,94 +212,116 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 
   // Handle drag end for swapping
   const handleDragEnd = useCallback((clientX: number, clientY: number) => {
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-    }
+    try {
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = null;
+      }
 
-    let dropSuccessful = false;
+      let dropSuccessful = false;
 
-    if (isDragging) {
-      // Find the element under the drop point
-      const elementBelow = document.elementFromPoint(clientX, clientY);
-      const targetGuessBox = elementBelow?.closest('.guess-box');
-      
-      if (targetGuessBox) {
-        const targetPosition = parseInt(targetGuessBox.getAttribute('data-position') || '0');
-        const targetIsLocked = targetGuessBox.classList.contains('locked');
+      if (isDragging) {
+        // Find the element under the drop point
+        const elementBelow = document.elementFromPoint(clientX, clientY);
+        const targetGuessBox = elementBelow?.closest('.guess-box');
         
-        // Only swap if target is different position and not locked
-        if (targetPosition !== position && !targetIsLocked) {
-          dispatch({ type: 'MOVE_DIGIT', fromPosition: position, toPosition: targetPosition });
-          dropSuccessful = true;
+        if (targetGuessBox) {
+          const targetPosition = parseInt(targetGuessBox.getAttribute('data-position') || '0');
+          const targetIsLocked = targetGuessBox.classList.contains('locked');
           
-          // Play drip sound for successful swap
-          setTimeout(() => {
-            try {
-              soundUtils.playDripSound();
-            } catch (error) {
-              console.warn('🎵 Failed to play drip sound:', error);
-            }
-          }, 10);
+          // Only swap if target is different position and not locked
+          if (targetPosition !== position && !targetIsLocked) {
+            dispatch({ type: 'MOVE_DIGIT', fromPosition: position, toPosition: targetPosition });
+            dropSuccessful = true;
+            
+            // Play drip sound for successful swap
+            setTimeout(() => {
+              try {
+                soundUtils.playDripSound();
+              } catch (error) {
+                console.warn('🎵 Failed to play drip sound:', error);
+              }
+            }, 10);
+          }
         }
       }
-    }
 
-    // Always reset drag states and remove indicator
-    setIsDragging(false);
-    setDragStart(null);
-    removeDragIndicator();
-
-    // Log the drop result for debugging
-    if (isDragging && !dropSuccessful) {
-      console.log(`🎯 GuessArea: Drag ended without valid drop target for position ${position}`);
+      // Log the drop result for debugging
+      if (isDragging && !dropSuccessful) {
+        console.log(`🎯 GuessArea: Drag ended without valid drop target for position ${position}`);
+      }
+    } catch (error) {
+      console.warn('🎯 GuessArea: Error in handleDragEnd:', error);
+    } finally {
+      // Always reset drag states and remove indicator, even if there was an error
+      setIsDragging(false);
+      setDragStart(null);
+      removeDragIndicator();
     }
   }, [isDragging, position, dispatch, removeDragIndicator]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-    
-    // Always clear long-pressing state on mouse up
-    setIsLongPressing(false);
-    
-    if (isDragging) {
-      handleDragEnd(e.clientX, e.clientY);
-    } else if (!longPressCompleted.current) {
-      // This was a regular click, not a long press - allow clicking on any unlocked position
-      if (!isLocked) {
-        onBoxClick(position);
+    try {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
       }
-    } else if (longPressCompleted.current) {
-      // Reset the flag for next interaction
-      longPressCompleted.current = false;
+      
+      // Always clear long-pressing state on mouse up
+      setIsLongPressing(false);
+      
+      if (isDragging) {
+        handleDragEnd(e.clientX, e.clientY);
+      } else if (!longPressCompleted.current) {
+        // This was a regular click, not a long press - allow clicking on any unlocked position
+        if (!isLocked) {
+          onBoxClick(position);
+        }
+      } else if (longPressCompleted.current) {
+        // Reset the flag for next interaction
+        longPressCompleted.current = false;
+      }
+    } catch (error) {
+      console.warn('🎯 GuessArea: Error in handleMouseUp:', error);
+      // Ensure cleanup even on error
+      setIsLongPressing(false);
+      setIsDragging(false);
+      setDragStart(null);
+      removeDragIndicator();
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-    
-    // Always clear long-pressing state on touch end
-    setIsLongPressing(false);
-    
-    if (isDragging) {
-      const touch = e.changedTouches[0];
-      handleDragEnd(touch.clientX, touch.clientY);
-    } else if (!longPressCompleted.current) {
-      // This was a regular tap, not a long press - allow tapping on any unlocked position
-      if (!isLocked) {
-        onBoxClick(position);
+    try {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
       }
-    } else if (longPressCompleted.current) {
-      // Reset the flag for next interaction
-      longPressCompleted.current = false;
+      
+      // Always clear long-pressing state on touch end
+      setIsLongPressing(false);
+      
+      if (isDragging) {
+        const touch = e.changedTouches[0];
+        handleDragEnd(touch.clientX, touch.clientY);
+      } else if (!longPressCompleted.current) {
+        // This was a regular tap, not a long press - allow tapping on any unlocked position
+        if (!isLocked) {
+          onBoxClick(position);
+        }
+      } else if (longPressCompleted.current) {
+        // Reset the flag for next interaction
+        longPressCompleted.current = false;
+      }
+    } catch (error) {
+      console.warn('🎯 GuessArea: Error in handleTouchEnd:', error);
+      // Ensure cleanup even on error
+      setIsLongPressing(false);
+      setIsDragging(false);
+      setDragStart(null);
+      removeDragIndicator();
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked]);
+  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator]);
 
   const handleDoubleClick = () => {
     if (value !== null && !isLocked) {
@@ -366,52 +396,23 @@ const GuessBox: React.FC<GuessBoxProps> = ({
     }
   }, [dragStart, handleMouseMove, handleTouchMove]);
 
-  // Global cleanup for orphaned drag indicators
-  React.useEffect(() => {
-    const handleGlobalTouchEnd = () => {
-      // Always clean up any orphaned indicators, regardless of drag state
-      if (dragIndicatorElement) {
-        console.log(`🎯 GuessArea: Global cleanup - removing orphaned drag indicator for position ${position}`);
-        removeDragIndicator();
-      }
-    };
-
-    const handleGlobalMouseUp = () => {
-      // Always clean up any orphaned indicators, regardless of drag state
-      if (dragIndicatorElement) {
-        console.log(`🎯 GuessArea: Global cleanup - removing orphaned drag indicator for position ${position}`);
-        removeDragIndicator();
-      }
-    };
-
-    // Add global touch/click listeners for cleanup
-    document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
-    document.addEventListener('mouseup', handleGlobalMouseUp, { passive: true });
-
-    // Add a timeout-based cleanup as fallback
-    const timeoutCleanup = setTimeout(() => {
-      if (dragIndicatorElement) {
-        console.log(`🎯 GuessArea: Timeout cleanup - removing orphaned drag indicator for position ${position}`);
-        removeDragIndicator();
-      }
-    }, 5000); // 5 second fallback
-
-    return () => {
-      document.removeEventListener('touchend', handleGlobalTouchEnd);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      clearTimeout(timeoutCleanup);
-    };
-  }, [dragIndicatorElement, position, removeDragIndicator]);
+  // Cleanup is now handled by the centralized dragCleanupManager
+  // No need for component-specific global cleanup logic
 
   // Cleanup drag indicator on unmount
   React.useEffect(() => {
     return () => {
-      if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
-        try {
-          document.body.removeChild(dragIndicatorElement);
-          console.log(`🎯 GuessArea: Cleanup on unmount - removed drag indicator for position ${position}`);
-        } catch (error) {
-          console.warn(`🎯 GuessArea: Cleanup on unmount - failed to remove drag indicator for position ${position}:`, error);
+      if (dragIndicatorElement) {
+        // Unregister from cleanup manager
+        unregisterDragIndicator(dragIndicatorElement);
+        
+        if (document.body.contains(dragIndicatorElement)) {
+          try {
+            document.body.removeChild(dragIndicatorElement);
+            console.log(`🎯 GuessArea: Cleanup on unmount - removed drag indicator for position ${position}`);
+          } catch (error) {
+            console.warn(`🎯 GuessArea: Cleanup on unmount - failed to remove drag indicator for position ${position}:`, error);
+          }
         }
       }
       if (dragTimeoutRef.current) {

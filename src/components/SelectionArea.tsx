@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { isNumberUsedInGuess } from '@/utils/gameLogic';
 import { soundUtils } from '@/utils/soundUtils';
+import { registerDragIndicator, unregisterDragIndicator } from '@/utils/dragCleanup';
 import './SelectionArea.css';
 
 interface NumberButtonProps {
@@ -56,6 +57,10 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     indicator.textContent = digit.toString();
     document.body.appendChild(indicator);
     setDragIndicatorElement(indicator);
+    
+    // Register with cleanup manager
+    registerDragIndicator(indicator);
+    
     // console.log(`🎯 Created global drag indicator for digit ${digit} at ${x}, ${y}`);
     return indicator;
   }, [digit]);
@@ -72,13 +77,16 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   // Remove drag indicator with safety checks
   const removeDragIndicator = useCallback(() => {
     if (dragIndicatorElement) {
-              try {
-          if (document.body.contains(dragIndicatorElement)) {
-            document.body.removeChild(dragIndicatorElement);
-          }
-        } catch (error) {
-          // Silently handle error
+      // Unregister from cleanup manager first
+      unregisterDragIndicator(dragIndicatorElement);
+      
+      try {
+        if (document.body.contains(dragIndicatorElement)) {
+          document.body.removeChild(dragIndicatorElement);
         }
+      } catch (error) {
+        // Silently handle error
+      }
       setDragIndicatorElement(null);
     }
   }, [dragIndicatorElement, digit]);
@@ -146,94 +154,98 @@ const NumberButton: React.FC<NumberButtonProps> = ({
   }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
-    const touch = e.changedTouches[0];
-    
-    // Clear the drag timeout immediately
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-    }
-    
-
-    
-    // Handle tap - if we were long pressing but never started dragging, it's a tap
-    if (isLongPressing && !isDragging) {
-      onNumberClick(digit);
-    } else if (isDragging) {
-      // Handle drag end
-      const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-      const guessBox = elementBelow?.closest('.guess-box');
+    try {
+      const touch = e.changedTouches[0];
       
-      if (guessBox) {
-        const position = parseInt(guessBox.getAttribute('data-position') || '0');
-        const isLocked = guessBox.classList.contains('locked');
-        
-        if (!isLocked) {
-          dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
-          
-          // Play drip sound for drag and drop placement with delay to ensure audio context is ready
-          setTimeout(() => {
-            try {
-              soundUtils.playDripSound();
-            } catch (error) {
-              console.warn('🎵 Failed to play drip sound:', error);
-            }
-          }, 10);
-        }
+      // Clear the drag timeout immediately
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = null;
       }
-    } else {
-      // Fallback - if somehow we get here without proper state, treat as tap
-      onNumberClick(digit);
+      
+      // Handle tap - if we were long pressing but never started dragging, it's a tap
+      if (isLongPressing && !isDragging) {
+        onNumberClick(digit);
+      } else if (isDragging) {
+        // Handle drag end
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const guessBox = elementBelow?.closest('.guess-box');
+        
+        if (guessBox) {
+          const position = parseInt(guessBox.getAttribute('data-position') || '0');
+          const isLocked = guessBox.classList.contains('locked');
+          
+          if (!isLocked) {
+            dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+            
+            // Play drip sound for drag and drop placement with delay to ensure audio context is ready
+            setTimeout(() => {
+              try {
+                soundUtils.playDripSound();
+              } catch (error) {
+                console.warn('🎵 Failed to play drip sound:', error);
+              }
+            }, 10);
+          }
+        }
+      } else {
+        // Fallback - if somehow we get here without proper state, treat as tap
+        onNumberClick(digit);
+      }
+    } catch (error) {
+      console.warn('🎯 SelectionArea: Error in handleTouchEnd:', error);
+    } finally {
+      // Always reset states and clean up, even if there was an error
+      setIsDragging(false);
+      setIsLongPressing(false);
+      setDragStart(null);
+      removeDragIndicator();
     }
-    
-    // Always reset states and clean up
-    setIsDragging(false);
-    setIsLongPressing(false);
-    setDragStart(null);
-    removeDragIndicator();
   }, [isLongPressing, isDragging, digit, onNumberClick, dispatch, removeDragIndicator]);
 
   const handleMouseUp = useCallback((e: MouseEvent) => {
-    // Clear the drag timeout immediately
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current);
-      dragTimeoutRef.current = null;
-    }
-    
-
-    
-    // If we were not dragging, it's a click
-    if (!isDragging) {
-      onNumberClick(digit);
-    } else {
-      // Handle drag end
-      const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
-      const guessBox = elementBelow?.closest('.guess-box');
+    try {
+      // Clear the drag timeout immediately
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = null;
+      }
       
-      if (guessBox) {
-        const position = parseInt(guessBox.getAttribute('data-position') || '0');
-        const isLocked = guessBox.classList.contains('locked');
+      // If we were not dragging, it's a click
+      if (!isDragging) {
+        onNumberClick(digit);
+      } else {
+        // Handle drag end
+        const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+        const guessBox = elementBelow?.closest('.guess-box');
         
-        if (!isLocked) {
-          dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+        if (guessBox) {
+          const position = parseInt(guessBox.getAttribute('data-position') || '0');
+          const isLocked = guessBox.classList.contains('locked');
           
-          // Play drip sound for drag and drop placement with delay to ensure audio context is ready
-          setTimeout(() => {
-            try {
-              soundUtils.playDripSound();
-            } catch (error) {
-              console.warn('🎵 Failed to play drip sound:', error);
-            }
-          }, 10);
+          if (!isLocked) {
+            dispatch({ type: 'SET_GUESS_DIGIT_NO_ADVANCE', position, digit });
+            
+            // Play drip sound for drag and drop placement with delay to ensure audio context is ready
+            setTimeout(() => {
+              try {
+                soundUtils.playDripSound();
+              } catch (error) {
+                console.warn('🎵 Failed to play drip sound:', error);
+              }
+            }, 10);
+          }
         }
       }
+    } catch (error) {
+      console.warn('🎯 SelectionArea: Error in handleMouseUp:', error);
+    } finally {
+      // Always reset states and clean up, even if there was an error
+      setIsDragging(false);
+      setIsLongPressing(false);
+      setDragStart(null);
+      removeDragIndicator();
     }
-    
-    // Always reset states and clean up
-    setIsDragging(false);
-    setIsLongPressing(false);
-    setDragStart(null);
-    removeDragIndicator();
   }, [isDragging, digit, onNumberClick, dispatch, removeDragIndicator]);
 
   // Add a simple click handler for mouse users
@@ -271,57 +283,22 @@ const NumberButton: React.FC<NumberButtonProps> = ({
     }
   }, [dragStart, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-  // Global cleanup for orphaned drag indicators - more aggressive
-  React.useEffect(() => {
-    const handleGlobalTouchEnd = () => {
-      // Always clean up any orphaned indicators, regardless of drag state
-      if (dragIndicatorElement) {
-        console.log(`🎯 SelectionArea: Global cleanup - removing orphaned drag indicator for digit ${digit}`);
-        removeDragIndicator();
-      }
-    };
-
-    const handleGlobalMouseUp = () => {
-      // Always clean up any orphaned indicators, regardless of drag state
-      if (dragIndicatorElement) {
-        console.log(`🎯 SelectionArea: Global mouse cleanup - removing orphaned drag indicator for digit ${digit}`);
-        removeDragIndicator();
-      }
-    };
-
-    // Add global listeners with passive: true for better performance
-    // Use a slight delay to avoid interfering with the component's own handlers
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
-      document.addEventListener('mouseup', handleGlobalMouseUp, { passive: true });
-      document.addEventListener('touchcancel', handleGlobalTouchEnd, { passive: true });
-    }, 50);
-
-    // Add a timeout-based cleanup as fallback
-    const fallbackCleanup = setTimeout(() => {
-      if (dragIndicatorElement) {
-        console.log(`🎯 SelectionArea: Fallback cleanup - removing orphaned drag indicator for digit ${digit}`);
-        removeDragIndicator();
-      }
-    }, 5000); // 5 second fallback
-
-    return () => {
-      clearTimeout(timeoutId);
-      clearTimeout(fallbackCleanup);
-      document.removeEventListener('touchend', handleGlobalTouchEnd);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('touchcancel', handleGlobalTouchEnd);
-    };
-  }, [dragIndicatorElement, digit, removeDragIndicator]);
+  // Cleanup is now handled by the centralized dragCleanupManager
+  // No need for component-specific global cleanup logic
 
   // Cleanup drag indicator on unmount or when digit changes
   React.useEffect(() => {
     return () => {
-      if (dragIndicatorElement && document.body.contains(dragIndicatorElement)) {
-        try {
-          document.body.removeChild(dragIndicatorElement);
-        } catch (error) {
-          // Silently handle error
+      if (dragIndicatorElement) {
+        // Unregister from cleanup manager
+        unregisterDragIndicator(dragIndicatorElement);
+        
+        if (document.body.contains(dragIndicatorElement)) {
+          try {
+            document.body.removeChild(dragIndicatorElement);
+          } catch (error) {
+            // Silently handle error
+          }
         }
       }
       if (dragTimeoutRef.current) {
@@ -373,44 +350,8 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
   const { gameState, hintState, scratchpadState, settings, dispatch } = useGameStore();
   const { currentGuess, guesses } = gameState;
 
-  // Clean up any orphaned drag indicators on mount/unmount
-  React.useEffect(() => {
-    const cleanupOrphanedIndicators = () => {
-      // Look for any elements with the drag indicator styling
-      const indicators = document.querySelectorAll('[style*="z-index: 2147483647"][style*="position: fixed"]');
-      indicators.forEach(indicator => {
-        // Check if it looks like a drag indicator (has text content that's a number)
-        if (indicator.textContent && /^\d$/.test(indicator.textContent.trim())) {
-          try {
-            document.body.removeChild(indicator);
-          } catch (error) {
-            // Silently handle error
-          }
-        }
-      });
-    };
-
-    // Clean up on mount
-    cleanupOrphanedIndicators();
-    
-    // Also clean up on window focus/blur events as a safety net
-    const handleWindowFocus = () => {
-      setTimeout(cleanupOrphanedIndicators, 100);
-    };
-    
-    const handleWindowBlur = () => {
-      cleanupOrphanedIndicators();
-    };
-    
-    window.addEventListener('focus', handleWindowFocus);
-    window.addEventListener('blur', handleWindowBlur);
-    
-    return () => {
-      cleanupOrphanedIndicators();
-      window.removeEventListener('focus', handleWindowFocus);
-      window.removeEventListener('blur', handleWindowBlur);
-    };
-  }, []);
+  // Cleanup is now handled by the centralized dragCleanupManager
+  // No need for component-specific cleanup logic
 
 
 
