@@ -747,35 +747,33 @@ const GameScreen: React.FC = () => {
         <div
           className="settings-drawer-overlay open"
           onClick={(e) => {
-            console.log('🎯 Settings overlay clicked - closing drawer');
             e.preventDefault();
             e.stopPropagation();
             handleSettingsDrawerClose();
           }}
           onTouchStart={(e) => {
-            console.log('🎯 Settings overlay touched - closing drawer');
             e.preventDefault();
             e.stopPropagation();
             handleSettingsDrawerClose();
           }}
           style={{
             position: 'fixed',
-            top: '0',
-            left: '0',
-            right: '0',
-            bottom: '0',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             width: '100vw',
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'rgba(0,0,0,0.5)', // RESTORED: Darkened background to cover orange-bordered area
+            background: 'rgba(0,0,0,0.5)',
             zIndex: 3999,
             pointerEvents: 'auto',
             touchAction: 'none',
             cursor: 'pointer',
             WebkitTouchCallout: 'none',
             WebkitUserSelect: 'none',
-            userSelect: 'none'
+            userSelect: 'none',
           }}
         />
       )}
