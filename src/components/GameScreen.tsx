@@ -742,38 +742,7 @@ const GameScreen: React.FC = () => {
 
 
       
-      {/* Settings drawer overlay - covers entire screen except settings area, but respects orange boundary */}
-      {isSettingsDrawerOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 'calc(0px + env(safe-area-inset-top) + 40px + 10px)', // Start at drawer top, not screen top
-          left: '0',
-          right: '0',
-          bottom: '0',
-          width: '100vw',
-          height: 'calc(100vh - env(safe-area-inset-top) - 40px - 10px)', // Adjust height to match top offset
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 1000, // Above main content but below settings drawer content (5000)
-          pointerEvents: 'none', // Don't interfere with interactions
-          // Create cutout for settings drawer area
-          clipPath: `polygon(
-            0% 0%, 
-            0% 100%, 
-            20px 100%, 
-            20px 0%, 
-            300px 0%, 
-            300px 650px, 
-            20px 650px, 
-            20px 100%, 
-            100% 100%, 
-            100% 0%
-          )`
-        }} />
-      )}
-
-
-
-      {/* Drawer Overlays - MAXIMUM COVERAGE - Enhanced with better debugging and coverage */}
+      {/* Settings Drawer Overlay - Simple, reliable full-screen coverage */}
       {isSettingsDrawerOpen && (
         <div
           className="settings-drawer-overlay open"
@@ -810,6 +779,7 @@ const GameScreen: React.FC = () => {
           }}
         />
       )}
+      {/* Menu Drawer Overlay - Simple, reliable full-screen coverage */}
       {isMenuDrawerOpen && currentLayout.orientation === 'portrait' && (
         <div
           className="mobile-drawer-overlay open"
@@ -835,7 +805,7 @@ const GameScreen: React.FC = () => {
             height: '100vh',
             minWidth: '100vw',
             minHeight: '100vh',
-            background: 'rgba(0,0,0,0.5)', // RESTORED: Darkened background like settings drawer
+            background: 'rgba(0,0,0,0.5)',
             zIndex: 999,
             pointerEvents: 'auto',
             touchAction: 'none',
