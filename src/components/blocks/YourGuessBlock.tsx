@@ -27,7 +27,8 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
       .portrait-content .guess-section .your-guess-block {
         height: auto !important;
         flex: 0 0 auto !important;
-        display: block !important;
+        display: flex !important;
+        flex-direction: column !important;
         min-height: 0 !important;
         max-height: none !important;
       }
@@ -116,7 +117,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
       style={{
         background: 'white', // Add white background for portrait mode
         borderRadius: '12px', // Add rounded corners
-        padding: '8px 15px 0px 15px', // Reduced top padding from 15px to 8px to reduce gaps
+        padding: '2px 15px 0px 15px', // Minimal top padding to match landscape mode
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // Add subtle shadow
         width: '100%',
         height: 'auto !important', // Override CSS height: 100%
@@ -124,8 +125,8 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
         flex: '0 0 auto !important', // Override CSS flex: 1 1 auto
-        display: 'block !important' // Override CSS display: flex
-        // Use natural flow - no flexbox
+        display: 'flex !important', // Use flexbox for proper footer positioning
+        flexDirection: 'column' // Stack content vertically
       }}
     >
       {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -165,7 +166,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
 
       {/* Title centered at the top */}
       <h3 className="guess-title" style={{
-        margin: '5px 0 10px 0', // Reduced top margin from 10px to 5px to reduce gaps
+        margin: '2px 0 2px 0', // Minimal margins to match landscape mode
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
@@ -178,15 +179,15 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: '8px' // Small gap above footer
+        paddingBottom: '0' // No padding to allow gap to control spacing
       }}>
         <GuessArea />
       </div>
 
       {/* Footer as separate element in content stack */}
       <div className="block-footer" style={{
-        padding: '8px 3px', // Reduced horizontal padding to 3px from sides
-        marginTop: '8px',
+        padding: '2px 3px', // Minimal padding to match landscape mode
+        marginTop: '0', // Removed margin to eliminate gap
         textAlign: 'center',
         fontSize: '0.875rem',
         color: '#6b7280',

@@ -25,9 +25,10 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
       .portrait-content .selection-section .number-selection-block {
         height: auto !important;
         flex: 0 0 auto !important;
-        display: block !important;
+        display: flex !important;
         min-height: 0 !important;
         max-height: none !important;
+        flex-direction: column !important;
       }
       
       .portrait-content .target-display {
@@ -104,18 +105,17 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
       style={{
         background: 'white', // EXACTLY like YourGuessBlock
         borderRadius: '12px', // Add rounded corners
-        padding: '8px 15px 0px 15px', // Reduced top padding from 15px to 8px to reduce gaps
+        padding: '2px 15px 0px 15px', // Minimal top padding to match landscape mode
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)', // EXACTLY like YourGuessBlock
         width: '100%',
-        height: 'auto !important', // Override CSS height: 100%
+        minHeight: '200px', // Set minimum height for flexbox to work
         boxSizing: 'border-box',
         position: 'relative', // CRITICAL: This makes absolute positioning work relative to this container
         margin: '0',
-        marginTop: '-10px', // Reduce gap by 50% (assuming ~20px gap, reduce by 10px)
         flex: '0 0 auto !important', // Override CSS flex: 1 1 auto
-        display: 'block !important', // Override CSS display: flex
+        display: 'flex !important', // Use flexbox for proper footer positioning
+        flexDirection: 'column', // Stack content vertically
         overflow: 'visible' // Allow footer to extend beyond card boundaries
-        // Use natural flow - no flexbox
       }}
     >
       {/* Help icon absolutely positioned in upper left - relative to card boundaries */}
@@ -145,7 +145,7 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
 
       {/* Title centered at the top */}
       <h3 className="selection-title" style={{
-        margin: '5px 0 10px 0', // Reduced top margin from 10px to 5px to reduce gaps
+        margin: '2px 0 2px 0', // Minimal margins to match landscape mode
         fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
         color: '#1f2937',
         fontWeight: 600,
@@ -158,18 +158,14 @@ const NumberSelectionBlock: React.FC<NumberSelectionBlockProps> = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: '40px' // Increased padding to make room for absolute positioned footer
+        flex: 1 // Take up available space
       }}>
         <SelectionArea />
       </div>
 
-      {/* Footer as separate element in content stack */}
+      {/* Footer as normal element in content stack */}
       <div className="block-footer" style={{
-        position: 'absolute',
-        bottom: '0',
-        left: '0',
-        right: '0',
-        padding: '8px 3px', // Reduced horizontal padding to 3px from sides
+        padding: '2px 3px', // Minimal padding to match landscape mode
         textAlign: 'center',
         fontSize: '0.875rem',
         color: '#6b7280',

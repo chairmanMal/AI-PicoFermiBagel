@@ -30,7 +30,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         width: '100vw',
         padding: '20px 10px 20px 10px', // Reduced horizontal padding from 20px to 10px (50% reduction)
         boxSizing: 'border-box',
-        gap: isIPhone ? '3.75px' : '15px', // Reduce gap by 75% for iPhone (from 15px to 3.75px)
+        gap: '5px', // Minimal gap to match landscape mode's spacing
         overflow: 'hidden'
       }}
     >
@@ -38,7 +38,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
       <div className="title-section" style={{
         textAlign: 'center',
         flexShrink: 0,
-        marginBottom: isIPhone ? '1px' : '10px', // Add 4px padding beneath subtitle for iPhone (from -5px to 1px)
+        marginBottom: '0', // No margin to allow gap to control spacing
         marginTop: isIPhone ? '35px' : '0' // Move title down 35px for iPhone (increased from 30px to 35px)
       }}>
         <h1 className="game-title" style={{
@@ -66,7 +66,7 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         display: 'flex',
         flexDirection: 'column',
         flex: '1',
-        gap: isIPhone ? '0px' : '12.5px', // No gap for iPhone, normal for iPad
+        gap: '5px', // Minimal gap to match landscape mode's spacing
         minHeight: 0,
         overflow: 'hidden'
       }}>
@@ -99,13 +99,13 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
           minHeight: 0,
           background: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '12px',
-          padding: '15px',
+          padding: '5px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           backdropFilter: 'blur(10px)',
           overflow: 'auto',
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
-          marginTop: '-10px' // Reduce gap by 50% for all portrait mode devices
+          marginTop: '0' // No margin to allow gap to control spacing
         }}>
           <RecentGuessHistory />
         </div>

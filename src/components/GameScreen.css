@@ -279,6 +279,10 @@
 
 /* Portrait mode override - remove padding from guess-section to eliminate double-padding */
 @media (orientation: portrait) {
+  .main-content {
+    gap: 5px !important; /* Minimal gap to match landscape mode spacing */
+  }
+  
   .guess-section {
     padding: 0 !important; /* Remove padding to eliminate visual inset */
     background: transparent !important; /* Remove background since YourGuessBlock has its own */
@@ -317,7 +321,7 @@
     height: auto !important; /* Allow dynamic sizing based on content */
     padding: 0 !important;
     margin: 0 !important;
-    gap: 12.5px !important;
+    gap: 5px !important;
     box-sizing: border-box !important;
   }
   
@@ -354,7 +358,7 @@
     min-height: 0 !important;
     max-height: none !important;
     flex: 0 0 auto !important;
-    display: block !important;
+    display: flex !important;
     position: relative !important;
     top: 0 !important;
     left: 0 !important;

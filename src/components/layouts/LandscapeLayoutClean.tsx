@@ -336,14 +336,14 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             }}>Number Selection</h3>
             
             {/* Main content area */}
-            <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '0' }}>
               <SelectionArea />
             </div>
             
             {/* Footer as separate element in content stack */}
             <div className="block-footer" style={{
-              padding: '8px 5px', // Reduced horizontal padding to 5px from sides
-              marginTop: '8px',
+              padding: '4px 5px', // Reduced vertical padding from 8px to 4px
+              marginTop: '0', // Removed margin to eliminate gap
               textAlign: 'center',
               fontSize: '0.875rem',
               color: '#6b7280',
