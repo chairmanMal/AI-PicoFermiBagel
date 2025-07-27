@@ -3,6 +3,7 @@ import { Settings, Menu } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 // Audio system is available via soundUtils when needed
 import { soundUtils } from '../utils/soundUtils';
+import { getBuildString } from '../config/version';
 
 // Layout Components
 import LandscapeLayoutClean from './layouts/LandscapeLayoutClean';
@@ -87,7 +88,7 @@ const GameScreen: React.FC = () => {
   // CORE RESPONSIBILITY 3: AUDIO SYSTEM
   // ==========================================
   useEffect(() => {
-    console.log('🎵 Audio system initialized');
+    console.log(`🎵 Audio system initialized - ${getBuildString()}`);
     
     // Auto-activate audio if sound is enabled by default
     const { settings } = useGameStore.getState();

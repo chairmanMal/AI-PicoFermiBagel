@@ -358,16 +358,12 @@ const SelectionArea: React.FC<SelectionAreaProps> = () => {
   const handleNumberClick = (digit: number) => {
     if (!gameState.isGameActive) return;
     
-
-    
-    // Ensure audio is activated on first interaction (fallback)
+    // OPTIMIZED: Remove audio activation delay for immediate response
     if (settings.soundEnabled) {
-      // Small delay to avoid interfering with immediate number placement
-      setTimeout(() => {
-        soundUtils.activateAudio().catch(() => {
-          // Silently handle error
-        });
-      }, 10);
+      // Trigger audio activation immediately without delay
+      soundUtils.activateAudio().catch(() => {
+        // Silently handle error
+      });
     }
     
     dispatch({ type: 'ADD_DIGIT_SEQUENTIAL', digit });

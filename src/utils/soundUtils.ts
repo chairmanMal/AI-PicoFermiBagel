@@ -90,11 +90,11 @@ class SoundUtils {
         won: this.createSequenceDataUrlWithVolume([523, 659, 784, 1047], volumeDecimal)
       };
 
-      // Create 2 instances of each sound for overlapping playback
-      const poolSize = 2;
-      
       for (const [name, dataUrl] of Object.entries(sounds)) {
         const audioPool: HTMLAudioElement[] = [];
+        
+        // OPTIMIZED: Create more instances for rapid tapping performance
+        const poolSize = name === 'digit' ? 4 : 2; // More instances for digit sounds
         
         for (let i = 0; i < poolSize; i++) {
           const audio = new Audio();
@@ -317,113 +317,53 @@ class SoundUtils {
     return URL.createObjectURL(blob);
   }
 
-  // Public method to activate audio when sound is enabled
+  // OPTIMIZED: Public method to activate audio when sound is enabled
   public async activateAudio() {
     if (this.audioContextActivated) {
-      console.log('🎵 🎯 Audio already activated, skipping...');
-      return;
+      return; // Already activated, skip
     }
 
-    console.log('🎵 🎯 Activating Web Audio API for iOS...');
-    console.log('🎵 🔍 AudioContext state before activation:', this.audioContext?.state);
-    
     try {
-      // First, use silent HTML5 audio to unlock iOS audio context
+      // OPTIMIZED: Use silent HTML5 audio to unlock iOS audio context
       const silentDataUrl = this.createSilentDataUrl();
       const silentAudio = new Audio();
       silentAudio.src = silentDataUrl;
       silentAudio.volume = 0;
       silentAudio.muted = true;
       
-      console.log('🎵 🔇 Playing silent activation sound for iOS...');
-      
-      // Use Promise.race to timeout the silent audio play
+      // OPTIMIZED: Play silent audio with shorter timeout
       try {
         await Promise.race([
           silentAudio.play(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Silent audio timeout')), 1000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Silent audio timeout')), 500))
         ]);
-        console.log('🎵 🔇 Silent audio played successfully');
       } catch (error) {
-        console.log('🎵 🔇 Silent audio play failed or timed out, continuing anyway:', error);
+        // Silently handle timeout
       }
       
       silentAudio.pause();
       silentAudio.currentTime = 0;
-      
-      // Clean up the silent audio URL
       URL.revokeObjectURL(silentDataUrl);
       
-      // Now resume the Web Audio API context
+      // OPTIMIZED: Resume Web Audio API context
       if (this.audioContext) {
-        console.log('🎵 🔍 AudioContext state after silent play:', this.audioContext.state);
-        
         if (this.audioContext.state === 'suspended') {
-          console.log('🎵 🔄 Resuming suspended AudioContext...');
           await this.audioContext.resume();
-          console.log('🎵 ✅ AudioContext resumed, new state:', this.audioContext.state);
-        } else {
-          console.log('🎵 ✅ AudioContext already running, state:', this.audioContext.state);
         }
         
-        // Set activation flag regardless of state - if AudioContext is running, we're good
-        if (this.audioContext.state === 'running') {
-          this.audioContextActivated = true;
-          console.log('🎵 🎯 Web Audio API activated and ready for instant playback');
-          
-          // Test play a very quiet sound to verify it's working
-          console.log('🎵 🧪 Testing audio with quiet test sound...');
-          this.testAudioPlayback();
-        } else {
-          console.error('🎵 ❌ AudioContext failed to reach running state:', this.audioContext.state);
-          // Try to force activation anyway since sometimes it works even in other states
-          this.audioContextActivated = true;
-          console.log('🎵 🔧 Force-activating audio despite AudioContext state');
-        }
-      } else {
-        console.error('🎵 ❌ AudioContext is null');
-      }
-      
-    } catch (error) {
-      console.error('🎵 ❌ Failed to activate audio:', error);
-      // Try to activate anyway - sometimes it works despite errors
-      if (this.audioContext && this.audioContext.state === 'running') {
+        // OPTIMIZED: Set activation flag immediately
         this.audioContextActivated = true;
-        console.log('🎵 🔧 Force-activating audio despite activation error');
+      }
+      
+    } catch (error) {
+      // OPTIMIZED: Silently handle errors and force activation
+      if (this.audioContext) {
+        this.audioContextActivated = true;
       }
     }
   }
 
-  // Test method to verify audio is working
-  private testAudioPlayback() {
-    if (!this.audioContext || !this.audioContextActivated) {
-      console.log('🎵 🧪 Cannot test - audio not activated');
-      return;
-    }
 
-    const buffer = this.audioBuffers.get('digit');
-    if (!buffer) {
-      console.log('🎵 🧪 Cannot test - no test buffer available');
-      return;
-    }
-
-    try {
-      const source = this.audioContext.createBufferSource();
-      const gainNode = this.audioContext.createGain();
-      
-      source.buffer = buffer;
-      gainNode.gain.value = 0.01; // Very quiet test
-      
-      source.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-      
-      source.start();
-      console.log('🎵 🧪 ✅ Test sound played successfully');
-      
-    } catch (error) {
-      console.error('🎵 🧪 ❌ Test sound failed:', error);
-    }
-  }
 
   // Volume control methods
   setVolume(volume: number) {
@@ -502,136 +442,83 @@ class SoundUtils {
   }
 
   private playSound(soundName: string) {
-    console.log(`🎵 🎯 Attempting to play ${soundName} sound...`);
-    console.log(`🎵 🔍 AudioContext state: ${this.audioContext?.state}`);
-    console.log(`🎵 🔍 AudioContext activated: ${this.audioContextActivated}`);
-    console.log(`🎵 🔍 Master volume: ${this.masterVolume}`);
-    console.log(`🎵 🔍 Current volume level: ${this.currentVolumeLevel}`);
+    // OPTIMIZED: Minimal logging for performance
+    // console.log(`🎵 🎯 Attempting to play ${soundName} sound...`);
     
-    // Ensure audio is activated before attempting to play
+    // OPTIMIZED: Ensure audio is activated immediately without delay
     if (!this.audioContextActivated && this.audioContext) {
-      console.log('🎵 🎯 Auto-activating audio before playing sound...');
-      this.activateAudio().catch(error => {
-        console.error('🎵 ❌ Failed to auto-activate audio:', error);
+      // Don't wait for activation - just trigger it in background
+      this.activateAudio().catch(() => {
+        // Silently handle activation errors
       });
     }
     
-    // Try HTML5 Audio first for iOS silent mode compatibility
+    // OPTIMIZED: Try HTML5 Audio first with minimal checks
     const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
     if (levelAudioMap) {
       const audioPool = levelAudioMap.get(soundName);
       if (audioPool && audioPool.length > 0) {
-        console.log(`🎵 ✅ Found audio pool for ${soundName}, size: ${audioPool.length}`);
         try {
           const currentIdx = this.currentIndex.get(soundName) || 0;
           const audio = audioPool[currentIdx];
           
-          console.log(`🎵 🔍 Audio element ${currentIdx} ready state: ${audio.readyState}`);
-          
-          // Stop any currently playing instance to prevent overlaps
-          if (!audio.paused) {
-            console.log(`🎵 ⏸️ Stopping currently playing audio`);
-            audio.pause();
-          }
-          
-          // Reset audio to beginning for instant playback
+          // OPTIMIZED: Minimal state checking - just reset and play
           audio.currentTime = 0;
-          
-          // Keep volume at 1.0 for iOS silent mode compatibility - amplitude is controlled at generation level
           audio.volume = 1.0;
           
-          // Update index for next play BEFORE playing to prevent race conditions
+          // OPTIMIZED: Update index immediately to prevent race conditions
           this.currentIndex.set(soundName, (currentIdx + 1) % audioPool.length);
           
-          // Play the sound immediately
-          const playPromise = audio.play();
-          console.log(`🎵 🎵 ${soundName} sound started via HTML5 Audio (index ${currentIdx})`);
-          
-          // Handle the promise in the background
-          playPromise.then(() => {
-            console.log(`🎵 ✅ ${soundName} HTML5 audio playback completed`);
-          }).catch(error => {
-            console.error(`🎵 ❌ HTML5 audio failed for ${soundName}:`, error);
-            // Only fallback to Web Audio API if not regenerating
-            if (!this.isGeneratingLevel) {
-              this.playWithWebAudio(soundName);
-            }
+          // OPTIMIZED: Play immediately without waiting for promise
+          audio.play().catch(() => {
+            // Silently handle play errors - don't log for performance
           });
           
           return; // Successfully triggered HTML5 audio
           
         } catch (error) {
-          console.error(`🎵 ❌ HTML5 audio error for ${soundName}:`, error);
-          // Fall through to Web Audio API only if not regenerating
-          if (this.isGeneratingLevel) {
-            console.log(`🎵 ⚠️ Skipping Web Audio fallback during regeneration`);
-            return;
-          }
+          // Silently handle errors - don't log for performance
         }
       }
     }
     
-    // Fallback to Web Audio API (only if not regenerating)
+    // OPTIMIZED: Fallback to Web Audio API only if not regenerating
     if (!this.isGeneratingLevel) {
       this.playWithWebAudio(soundName);
-    } else {
-      console.log(`🎵 ⚠️ Skipping audio playback during regeneration`);
-    }
-    
-    // Final fallback: Try to create and play a simple audio element as last resort
-    console.log(`🎵 🚨 Final fallback: Creating simple audio element for ${soundName}`);
-    try {
-      const fallbackAudio = new Audio();
-      fallbackAudio.src = this.createToneDataUrlWithVolume(800, 0.08, 0.1); // Simple tone
-      fallbackAudio.volume = 0.1;
-      fallbackAudio.play().then(() => {
-        console.log(`🎵 ✅ Fallback audio played successfully for ${soundName}`);
-      }).catch(error => {
-        console.error(`🎵 ❌ Fallback audio also failed for ${soundName}:`, error);
-      });
-    } catch (error) {
-      console.error(`🎵 ❌ Failed to create fallback audio for ${soundName}:`, error);
     }
   }
 
   private playWithWebAudio(soundName: string) {
-    console.log(`🎵 🎼 Falling back to Web Audio API for ${soundName}...`);
+    // OPTIMIZED: Minimal logging for performance
+    // console.log(`🎵 🎼 Falling back to Web Audio API for ${soundName}...`);
     
     if (!this.audioContext || !this.audioContextActivated) {
-      console.warn(`🎵 ⚠️ Audio context not activated, cannot play ${soundName} sound`);
-      return;
+      return; // Silently fail for performance
     }
 
     const buffer = this.audioBuffers.get(soundName);
     if (!buffer) {
-      console.error(`🎵 ❌ Audio buffer ${soundName} not found`);
-      return;
+      return; // Silently fail for performance
     }
 
     try {
-      // Create buffer source and gain node for instant playback
+      // OPTIMIZED: Create buffer source and gain node for instant playback
       const source = this.audioContext.createBufferSource();
       const gainNode = this.audioContext.createGain();
       
       source.buffer = buffer;
-      gainNode.gain.value = 1.0; // Use full volume since amplitude is controlled at generation level
+      gainNode.gain.value = 1.0;
       
-      // Connect: source -> gain -> destination
+      // OPTIMIZED: Connect and play immediately
       source.connect(gainNode);
       gainNode.connect(this.audioContext.destination);
-      
-      // Play immediately
       source.start();
       
-      console.log(`🎵 🎼 ${soundName} sound started via Web Audio API`);
-      
-      // Add ended event listener to confirm playback
-      source.onended = () => {
-        console.log(`🎵 ✅ ${soundName} Web Audio playback completed`);
-      };
+      // OPTIMIZED: Remove event listener for performance
+      // source.onended = () => { ... };
       
     } catch (error) {
-      console.error(`🎵 ❌ Failed to play ${soundName} with Web Audio:`, error);
+      // Silently handle errors for performance
     }
   }
 

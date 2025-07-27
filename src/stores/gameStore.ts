@@ -126,6 +126,13 @@ export const useGameStore = create<GameStore>()(
               hintState: newHintState,
               scratchpadState: newScratchpadState,
             });
+            
+            // OPTIMIZED: Pre-activate audio for immediate response on first interaction
+            if (resetSettings.soundEnabled) {
+              soundUtils.activateAudio().catch(() => {
+                // Silently handle activation errors
+              });
+            }
             break;
           }
 
@@ -295,14 +302,19 @@ export const useGameStore = create<GameStore>()(
             const maxGuesses = 20; // Maximum number of guesses before game ends
             const gameEnded = gameWon || newGuesses.length >= maxGuesses;
             
+            // Create new guess array that preserves locked positions when clearing after submit
+            const newCurrentGuess = gameEnded 
+              ? state.gameState.currentGuess 
+              : state.settings.clearGuessAfterSubmit 
+                ? state.gameState.currentGuess.map((digit, index) => 
+                    state.gameState.lockedPositions.has(index) ? digit : null
+                  )
+                : state.gameState.currentGuess;
+
             const newGameState: GameState = {
               ...state.gameState,
               guesses: newGuesses,
-              currentGuess: gameEnded 
-                ? state.gameState.currentGuess 
-                : state.settings.clearGuessAfterSubmit 
-                  ? Array(state.settings.targetLength).fill(null)
-                  : state.gameState.currentGuess,
+              currentGuess: newCurrentGuess,
               score: newScore,
               isGameWon: gameWon,
               isGameActive: !gameEnded,

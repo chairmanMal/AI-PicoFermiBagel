@@ -94,8 +94,8 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Blue Outline:</strong> This is considered the active position. A tapped number in the selection grid will be assigned to this guess location. After autofill-ing, the active position will automatically advance</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Manual Selection:</strong> Click any unlocked box to make it the active position for autofill</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Drag & Drop:</strong> Drag numbers directly onto any unlocked box from the selection area, or drag numbers between guess positions to swap them</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Long-press any filled guess position to lock/unlock it from changing values. Locking also causes the autofill advancing to skip that position</p>
-          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Clear Numbers:</strong> Double-click any unlocked filled box to clear it</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Locking:</strong> Double-tap any filled guess position to lock/unlock it from changing values. Locking also causes the autofill advancing to skip that position</p>
+          <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Clear Numbers:</strong> Right-click on any unlocked filled box to clear it</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Red Border:</strong> Indicates duplicate numbers (not allowed)</p>
           <p style="margin: 12px 0; color: #374151; line-height: 1.5;"><strong>Yellow Highlight:</strong> Shows a filled box selected for replacement</p>
         </div>
@@ -193,7 +193,7 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         fontWeight: 500,
         borderRadius: '6px' // Rounded corners to match card style
       }}>
-        Drag numbers or tap to fill positions
+        Drag # to swap or tap to set fill position. Dbl tap to lock/unlock
       </div>
     </div>
   );

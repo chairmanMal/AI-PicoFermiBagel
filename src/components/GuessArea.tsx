@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
 import { soundUtils } from '@/utils/soundUtils';
 import { registerDragIndicator, unregisterDragIndicator } from '@/utils/dragCleanup';
+import { getBuildString } from '@/config/version';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -25,16 +26,14 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   onBoxClick, 
   onLockToggle 
 }) => {
-  const [isLongPressing, setIsLongPressing] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const longPressCompleted = useRef(false);
   
   // New state for dragging guess box numbers
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [dragIndicatorElement, setDragIndicatorElement] = useState<HTMLDivElement | null>(null);
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dragTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isDoubleClickRef = useRef(false);
   const { dispatch } = useGameStore();
 
   // Create drag indicator for guess box numbers
@@ -101,121 +100,114 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   }, [dragIndicatorElement, position]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    longPressCompleted.current = false;
-    // Allow long press on any position with a value (locked or unlocked)
-    if (value !== null) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-      
-      // Delay showing the long-press indicator to avoid visual noise
-      setTimeout(() => {
-        if (longPressTimer.current) { // Only show if timer is still active
-          setIsLongPressing(true);
-        }
-      }, 200); // 200ms delay before showing orange indicator
-      
-      // Set up long press timer for locking/unlocking
-      longPressTimer.current = setTimeout(() => {
-        onLockToggle(position);
-        longPressCompleted.current = true;
-        setDragStart(null); // Cancel any potential drag
-        // Note: setIsLongPressing(false) is handled in mouse/touch up events
-      }, 700); // 700ms for more deliberate long press
+    console.log(`🎯 GuessArea: Mouse down on position ${position}, value: ${value}, type: ${typeof value}`);
+    console.log(`🎯 GuessArea: TEST - Mouse down event received on position ${position}`);
+    
+    // Clear any existing drag state first
+    if (dragTimerRef.current) {
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
     }
-  }, [value, position, onLockToggle]);
+    setIsDragging(false);
+    setDragStart(null);
+    removeDragIndicator();
+    
+    // ONLY set up drag timer if there's a value (filled position) AND it's not locked
+    if (value !== null && value !== undefined && !isLocked) {
+      console.log(`🎯 GuessArea: Setting up drag timer for position ${position} with value ${value} (unlocked)`);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const startPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      
+      // Start 300ms timer for drag detection (much more responsive)
+      dragTimerRef.current = setTimeout(() => {
+        if (!isDoubleClickRef.current) {
+          console.log(`🎯 GuessArea: Drag timer completed for position ${position}, starting drag`);
+          setDragStart(startPos);
+          setIsDragging(true);
+          createDragIndicator(e.clientX, e.clientY);
+        } else {
+          console.log(`🎯 GuessArea: Drag timer cancelled due to double-click for position ${position}`);
+        }
+      }, 300); // 300ms to start drag
+    } else if (value !== null && value !== undefined && isLocked) {
+      console.log(`🎯 GuessArea: No drag timer for position ${position} - locked position`);
+    } else {
+      console.log(`🎯 GuessArea: No drag timer for position ${position} - empty position`);
+    }
+  }, [position, value, createDragIndicator, removeDragIndicator]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
-    longPressCompleted.current = false;
-    // Allow long press on any position with a value (locked or unlocked)
-    if (value !== null) {
+    console.log(`🎯 GuessArea: Touch start on position ${position}, value: ${value}, type: ${typeof value}`);
+    
+    // Clear any existing drag state first
+    if (dragTimerRef.current) {
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+    setIsDragging(false);
+    setDragStart(null);
+    removeDragIndicator();
+    
+    // ONLY set up drag timer if there's a value (filled position) AND it's not locked
+    if (value !== null && value !== undefined && !isLocked) {
+      console.log(`🎯 GuessArea: Setting up touch drag timer for position ${position} with value ${value} (unlocked)`);
       const touch = e.touches[0];
       const rect = e.currentTarget.getBoundingClientRect();
-      setDragStart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+      const startPos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
       
-      // Delay showing the long-press indicator to avoid visual noise
-      setTimeout(() => {
-        if (longPressTimer.current) { // Only show if timer is still active
-          setIsLongPressing(true);
+      // Start 300ms timer for drag detection (much more responsive)
+      dragTimerRef.current = setTimeout(() => {
+        if (!isDoubleClickRef.current) {
+          console.log(`🎯 GuessArea: Touch drag timer completed for position ${position}, starting drag`);
+          console.log(`🎯 GuessArea: Setting drag state - startPos:`, startPos, `clientX: ${touch.clientX}, clientY: ${touch.clientY}`);
+          setDragStart(startPos);
+          setIsDragging(true);
+          const indicator = createDragIndicator(touch.clientX, touch.clientY);
+          console.log(`🎯 GuessArea: Drag indicator created:`, indicator ? 'success' : 'failed');
+        } else {
+          console.log(`🎯 GuessArea: Touch drag timer cancelled due to double-click for position ${position}`);
         }
-      }, 200); // 200ms delay before showing orange indicator
-      
-      // Set up long press timer for locking/unlocking
-      longPressTimer.current = setTimeout(() => {
-        onLockToggle(position);
-        longPressCompleted.current = true;
-        setDragStart(null); // Cancel any potential drag
-        // Note: setIsLongPressing(false) is handled in mouse/touch up events
-      }, 700); // 700ms for more deliberate long press
+      }, 300); // 300ms to start drag
+    } else if (value !== null && value !== undefined && isLocked) {
+      console.log(`🎯 GuessArea: No touch drag timer for position ${position} - locked position`);
+    } else {
+      console.log(`🎯 GuessArea: No touch drag timer for position ${position} - empty position`);
     }
-  }, [value, position, onLockToggle]);
+  }, [position, value, createDragIndicator, removeDragIndicator]);
 
   // Mouse move handler for dragging
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (dragStart && !isDragging && !longPressCompleted.current && e.target) {
-      const target = e.target as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      
-      // Start dragging if we've moved enough
-      const distance = Math.sqrt(
-        Math.pow(e.clientX - (dragStart.x + rect.left), 2) +
-        Math.pow(e.clientY - (dragStart.y + rect.top), 2)
-      );
-      
-      if (distance > 10) { // 10px threshold to start drag
-        // Cancel long press timer
-        if (longPressTimer.current) {
-          clearTimeout(longPressTimer.current);
-          longPressTimer.current = null;
-        }
-        setIsLongPressing(false);
-        setIsDragging(true);
-        createDragIndicator(e.clientX, e.clientY);
-      }
-    }
+    // Only track movement if already dragging
     if (isDragging) {
       updateDragIndicator(e.clientX, e.clientY);
+    } else {
+      // If not dragging but we have drag state, force cleanup
+      if (dragStart || dragIndicatorElement) {
+        console.log('🎯 GuessArea: Force cleanup on mouse move - not dragging but have drag state');
+        setIsDragging(false);
+        setDragStart(null);
+        removeDragIndicator();
+      }
     }
-  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
+  }, [isDragging, dragStart, dragIndicatorElement, updateDragIndicator, removeDragIndicator]);
 
   // Touch move handler for dragging
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (dragStart && !isDragging && !longPressCompleted.current && e.target) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const target = e.target as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      
-      // Start dragging if we've moved enough
-      const distance = Math.sqrt(
-        Math.pow(touch.clientX - (dragStart.x + rect.left), 2) +
-        Math.pow(touch.clientY - (dragStart.y + rect.top), 2)
-      );
-      
-      if (distance > 10) { // 10px threshold to start drag
-        // Cancel long press timer
-        if (longPressTimer.current) {
-          clearTimeout(longPressTimer.current);
-          longPressTimer.current = null;
-        }
-        setIsLongPressing(false);
-        setIsDragging(true);
-        createDragIndicator(touch.clientX, touch.clientY);
-      }
-    }
+    // Only track movement if already dragging
     if (isDragging) {
       e.preventDefault();
       const touch = e.touches[0];
       updateDragIndicator(touch.clientX, touch.clientY);
     }
-  }, [dragStart, isDragging, createDragIndicator, updateDragIndicator]);
+  }, [isDragging, updateDragIndicator]);
 
   // Handle drag end for swapping
   const handleDragEnd = useCallback((clientX: number, clientY: number) => {
     try {
-      if (dragTimeoutRef.current) {
-        clearTimeout(dragTimeoutRef.current);
-        dragTimeoutRef.current = null;
+      if (dragTimerRef.current) {
+        clearTimeout(dragTimerRef.current);
+        dragTimerRef.current = null;
       }
 
       let dropSuccessful = false;
@@ -229,8 +221,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
           const targetPosition = parseInt(targetGuessBox.getAttribute('data-position') || '0');
           const targetIsLocked = targetGuessBox.classList.contains('locked');
           
-          // Only swap if target is different position and not locked
-          if (targetPosition !== position && !targetIsLocked) {
+          // Only swap if target is different position, target is not locked, and source is not locked
+          if (targetPosition !== position && !targetIsLocked && !isLocked) {
             dispatch({ type: 'MOVE_DIGIT', fromPosition: position, toPosition: targetPosition });
             dropSuccessful = true;
             
@@ -261,70 +253,121 @@ const GuessBox: React.FC<GuessBoxProps> = ({
   }, [isDragging, position, dispatch, removeDragIndicator]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    console.log(`🎯 GuessArea: Mouse up on position ${position}, isDragging: ${isDragging}, value: ${value}`);
+    
+    // ALWAYS clear the drag timer first - this prevents any drag logic from starting
+    if (dragTimerRef.current) {
+      console.log(`🎯 GuessArea: Clearing drag timer for position ${position}`);
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+    
     try {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-      
-      // Always clear long-pressing state on mouse up
-      setIsLongPressing(false);
-      
       if (isDragging) {
+        console.log(`🎯 GuessArea: Handling drag end for position ${position}`);
         handleDragEnd(e.clientX, e.clientY);
-      } else if (!longPressCompleted.current) {
-        // This was a regular click, not a long press - allow clicking on any unlocked position
+      } else {
+        // Single click - only move selection target if not locked
         if (!isLocked) {
+          console.log(`🎯 GuessArea: Single click - moving selection to position ${position}`);
           onBoxClick(position);
+        } else {
+          console.log(`🎯 GuessArea: Single click on locked position ${position} - no action`);
         }
-      } else if (longPressCompleted.current) {
-        // Reset the flag for next interaction
-        longPressCompleted.current = false;
       }
     } catch (error) {
       console.warn('🎯 GuessArea: Error in handleMouseUp:', error);
-      // Ensure cleanup even on error
-      setIsLongPressing(false);
+    } finally {
+      // Always ensure cleanup, even if not dragging
+      console.log(`🎯 GuessArea: Final cleanup for position ${position}`);
       setIsDragging(false);
       setDragStart(null);
       removeDragIndicator();
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator]);
+  }, [position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator, value]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    console.log(`🎯 GuessArea: Touch end on position ${position}, isDragging: ${isDragging}, value: ${value}`);
+    
+    // ALWAYS clear the drag timer first - this prevents any drag logic from starting
+    if (dragTimerRef.current) {
+      console.log(`🎯 GuessArea: Clearing drag timer for position ${position}`);
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+    
     try {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
-      }
-      
-      // Always clear long-pressing state on touch end
-      setIsLongPressing(false);
-      
       if (isDragging) {
+        console.log(`🎯 GuessArea: Handling touch drag end for position ${position}`);
         const touch = e.changedTouches[0];
         handleDragEnd(touch.clientX, touch.clientY);
-      } else if (!longPressCompleted.current) {
-        // This was a regular tap, not a long press - allow tapping on any unlocked position
+      } else {
+        // Single tap - only move selection target if not locked
         if (!isLocked) {
+          console.log(`🎯 GuessArea: Single tap - moving selection to position ${position}`);
           onBoxClick(position);
+        } else {
+          console.log(`🎯 GuessArea: Single tap on locked position ${position} - no action`);
         }
-      } else if (longPressCompleted.current) {
-        // Reset the flag for next interaction
-        longPressCompleted.current = false;
       }
     } catch (error) {
       console.warn('🎯 GuessArea: Error in handleTouchEnd:', error);
-      // Ensure cleanup even on error
-      setIsLongPressing(false);
+    } finally {
+      // Always ensure cleanup, even if not dragging
+      console.log(`🎯 GuessArea: Final cleanup for position ${position}`);
       setIsDragging(false);
       setDragStart(null);
       removeDragIndicator();
     }
-  }, [isLongPressing, position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator]);
+  }, [position, onBoxClick, isDragging, handleDragEnd, isLocked, removeDragIndicator, value]);
 
   const handleDoubleClick = () => {
+    console.log(`🎯 GuessArea: Double-click detected on position ${position}, value: ${value}, type: ${typeof value}`);
+    
+    // Set flag to prevent drag detection
+    isDoubleClickRef.current = true;
+    console.log(`🎯 GuessArea: Set isDoubleClickRef to true for position ${position}`);
+    
+    // Clear any pending drag timer
+    if (dragTimerRef.current) {
+      console.log(`🎯 GuessArea: Clearing drag timer due to double-click for position ${position}`);
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+    
+    // ONLY handle double-click for filled positions
+    if (value !== null && value !== undefined) {
+      // Double click on filled position toggles lock state
+      console.log(`🎯 GuessArea: Calling onLockToggle for position ${position}`);
+      onLockToggle(position);
+    } else {
+      // Double click on empty position does nothing
+      console.log(`🎯 GuessArea: Double-click on empty position ${position} - doing nothing`);
+    }
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isDoubleClickRef.current = false;
+      console.log(`🎯 GuessArea: Reset isDoubleClickRef to false for position ${position}`);
+    }, 100);
+  };
+
+  // Add a simple test to see if double-click events are being received at all
+  React.useEffect(() => {
+    const element = document.querySelector(`[data-position="${position}"]`);
+    if (element) {
+      const testDoubleClick = () => {
+        console.log(`🎯 GuessArea: TEST - Double-click event received on position ${position}`);
+      };
+      element.addEventListener('dblclick', testDoubleClick);
+      return () => element.removeEventListener('dblclick', testDoubleClick);
+    }
+  }, [position]);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default context menu
     if (value !== null && !isLocked) {
+      // Right-click on unlocked filled position clears it
       useGameStore.getState().dispatch({
         type: 'SET_GUESS_DIGIT',
         position,
@@ -385,7 +428,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
 
   // Add event listeners for drag functionality
   React.useEffect(() => {
-    if (dragStart) {
+    if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
 
@@ -394,7 +437,7 @@ const GuessBox: React.FC<GuessBoxProps> = ({
         document.removeEventListener('touchmove', handleTouchMove);
       };
     }
-  }, [dragStart, handleMouseMove, handleTouchMove]);
+  }, [isDragging, handleMouseMove, handleTouchMove]);
 
   // Cleanup is now handled by the centralized dragCleanupManager
   // No need for component-specific global cleanup logic
@@ -415,15 +458,43 @@ const GuessBox: React.FC<GuessBoxProps> = ({
           }
         }
       }
-      if (dragTimeoutRef.current) {
-        clearTimeout(dragTimeoutRef.current);
+      if (dragTimerRef.current) {
+        clearTimeout(dragTimerRef.current);
       }
     };
   }, [dragIndicatorElement, position]);
 
+  // Cleanup drag state when position changes (user clicks different position)
+  React.useEffect(() => {
+    // Only clear drag state if we're not currently in a drag operation
+    if (!isDragging) {
+      if (dragTimerRef.current) {
+        clearTimeout(dragTimerRef.current);
+        dragTimerRef.current = null;
+      }
+      setDragStart(null);
+      removeDragIndicator();
+    }
+  }, [position, removeDragIndicator, isDragging]);
+
+  // Additional cleanup when value changes (prevents drag on empty positions)
+  React.useEffect(() => {
+    if (value === null || value === undefined) {
+      // Clear drag state if position becomes empty and we're not currently dragging
+      if (!isDragging) {
+        if (dragTimerRef.current) {
+          clearTimeout(dragTimerRef.current);
+          dragTimerRef.current = null;
+        }
+        setDragStart(null);
+        removeDragIndicator();
+      }
+    }
+  }, [value, removeDragIndicator, isDragging]);
+
   return (
     <div
-      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isLongPressing ? 'long-pressing' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`guess-box ${isActive ? 'active' : ''} ${isRepeated ? 'repeated' : ''} ${isDragOver ? 'drag-over' : ''} ${isLocked ? 'locked' : ''} ${isDragging ? 'dragging' : ''}`}
       data-position={position}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -435,7 +506,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       onDrop={handleDrop}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      title={value !== null && !isLocked ? "Click to select, double-click to clear, long-press to lock, or drag to swap with another position" : isLocked ? "Long-press to unlock" : "Click to select this position"}
+      onContextMenu={handleContextMenu}
+      title={value !== null && !isLocked ? "Click to select, double-click to lock/unlock, right-click to clear, or drag to swap with another position" : value !== null ? "Click to select, double-click to lock/unlock, or drag to swap with another position" : "Click to select this position"}
     >
       <div className="guess-content">
         {value !== null && value !== undefined ? (
@@ -452,10 +524,6 @@ const GuessBox: React.FC<GuessBoxProps> = ({
           <Lock size={12} />
         </div>
       )}
-      
-      {isLongPressing && (
-        <div className="long-press-indicator" />
-      )}
     </div>
   );
 };
@@ -465,10 +533,11 @@ interface GuessAreaProps {
 }
 
 const GuessArea: React.FC<GuessAreaProps> = () => {
-
-
   const { settings, gameState, hintState, dispatch } = useGameStore();
   
+  // Log build number for debugging
+  console.log(`🎯 GuessArea: Component initialized - ${getBuildString()}`);
+
   // Calculate row sums if any have been purchased
   const targetRowSums = hintState.purchasedHints.revealedRowSums.size > 0
     ? calculateTargetRowSums(gameState.target, settings.gridRows, settings.gridColumns, hintState.purchasedHints.revealedRowSums)
