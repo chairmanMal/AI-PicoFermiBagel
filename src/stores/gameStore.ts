@@ -541,7 +541,7 @@ export const useGameStore = create<GameStore>()(
               }
 
               // Start new game if game-affecting settings changed
-              const gameAffectingSettings = ['difficulty', 'targetLength']; // Removed digitRange, gridRows, gridColumns
+              const gameAffectingSettings = ['difficulty', 'targetLength', 'digitRange', 'gridRows', 'gridColumns'];
               const gameAffectingChanged = gameAffectingSettings.some(
                 key => {
                   if (key === 'difficulty') {
