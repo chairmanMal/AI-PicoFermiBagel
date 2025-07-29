@@ -143,8 +143,6 @@
   display: flex;
   flex-direction: column;
   overflow: visible; /* CHANGED: Allow content to determine size */
-  /* Prevent iOS swipe gestures on drawer background */
-  touch-action: none;
 }
 
 .settings-drawer.open {
@@ -467,8 +465,6 @@
   display: flex;
   flex-direction: column;
   overflow: visible; /* CHANGED: Allow content to determine size */
-  /* Prevent iOS swipe gestures on drawer background */
-  touch-action: none;
   /* DEBUG: Orange border for mobile drawer container - REMOVED */
   /* border: 3px solid orange !important; */
 }

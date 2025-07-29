@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getBuildString } from '../config/version';
+import { soundUtils } from '../utils/soundUtils';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -10,6 +11,13 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   useEffect(() => {
     console.log(`🎨 SplashScreen: Starting splash screen (Build ${getBuildString()})`);
+    
+    // Activate audio system during splash screen
+    soundUtils.activateAudio().then(() => {
+      // Audio system activated successfully
+    }).catch((error) => {
+      console.error('🎵 SplashScreen: Failed to activate audio system:', error);
+    });
     
     const timer = setTimeout(() => {
       console.log('🎨 SplashScreen: Splash screen duration complete, transitioning to main app');

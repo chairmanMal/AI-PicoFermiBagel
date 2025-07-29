@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './WinBanner.css';
-import tadaaSound from '../assets/tadaa-victory.mp3';
 import { useGameStore } from '../stores/gameStore';
+import { soundUtils } from '../utils/soundUtils';
 
 interface WinBannerProps {
   isVisible: boolean;
@@ -59,18 +59,12 @@ const WinBanner: React.FC<WinBannerProps> = ({ isVisible, onDismiss, gameStats }
 
   const playVictorySound = () => {
     if (!settings.soundEnabled) {
-      console.log('Victory sound skipped - sound disabled');
+      console.log('🎉 WinBanner: Victory sound skipped - sound disabled');
       return;
     }
     
-    try {
-      const audio = new Audio(tadaaSound);
-      audio.volume = (settings.soundVolume || 0.1) * 0.3; // Reduce victory sound to 30% of game volume
-      console.log(`Playing victory sound at volume: ${audio.volume}`);
-      audio.play().catch(e => console.log('Audio play failed:', e));
-    } catch (error) {
-      console.log('Audio creation failed:', error);
-    }
+    console.log('🎉 WinBanner: Playing victory sound via soundUtils');
+    soundUtils.playGameWonSound();
   };
 
   // Launch confetti and sound only once per win

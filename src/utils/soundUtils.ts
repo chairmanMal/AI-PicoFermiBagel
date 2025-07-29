@@ -1,46 +1,42 @@
+// Import the original victory sound
+import tadaaVictorySound from '../assets/tadaa-victory.mp3';
+
 // High-performance sound utility with iOS silent mode compatibility
 class SoundUtils {
-  private masterVolume: number = 0.1; // Reduced from 0.2 to 0.1 (10% instead of 20%)
+  private masterVolume: number = 0.1; // Will be set from settings
   private audioContextActivated: boolean = false;
   private audioContext: AudioContext | null = null;
   private audioBuffers: Map<string, AudioBuffer> = new Map();
   private preCalculatedAudio: Map<number, Map<string, HTMLAudioElement[]>> = new Map(); // Pre-calculated volume levels
-  private currentVolumeLevel: number = 5; // Current volume level (0-50 for 0-100% in 2% increments)
+  private currentVolumeLevel: number = 1; // Will be calculated from masterVolume
   private currentIndex: Map<string, number> = new Map(); // Round-robin for HTML5 audio
   private lastVolumeTestTime: number = 0; // Prevent overlapping volume test sounds
-  private volumeStabilityTimer: number | null = null; // Timer for volume stability
-  private pendingVolumeLevel: number | null = null; // Pending volume level to generate
   private isGeneratingLevel: boolean = false; // Prevent overlapping level generation
 
-  constructor() {
-    console.log('🎵 SoundUtils constructor - initializing hybrid audio system with lazy volume loading...');
+  constructor(initialVolume: number = 0.1) {
     this.configureMediaSession();
     this.initializeAudioContext();
     this.initializeRoundRobinIndices();
-    this.generateVolumeLevel(5); // Generate default level (10%) immediately
     
-    // Ensure default volume level is ready for immediate playback
-    this.ensureDefaultVolumeReady();
+    // Set initial volume from settings and calculate the correct level
+    this.masterVolume = Math.max(0, Math.min(1, initialVolume));
+    this.currentVolumeLevel = Math.round(this.masterVolume * 10);
+    
+    // Generate default volume level immediately and ensure it's ready
+    console.log(`🎵 🔧 Constructor: Starting to generate default volume level ${this.currentVolumeLevel} for volume ${this.masterVolume}`);
+    this.generateVolumeLevel(this.currentVolumeLevel).then(() => {
+      console.log(`🎵 ✅ Default volume level ${this.currentVolumeLevel} generated successfully`);
+    }).catch(error => {
+      console.error('🎵 ❌ Failed to generate default volume level:', error);
+    });
   }
 
-  // Ensure default volume level is ready for immediate playback
-  private async ensureDefaultVolumeReady() {
-    // Wait a bit for the initial generation to complete
-    setTimeout(async () => {
-      if (!this.preCalculatedAudio.has(this.currentVolumeLevel)) {
-        console.log('🎵 ⚠️ Default volume level not ready, regenerating...');
-        await this.generateVolumeLevel(this.currentVolumeLevel);
-      } else {
-        console.log('🎵 ✅ Default volume level ready for playback');
-      }
-    }, 100);
-  }
+
 
   private initializeAudioContext() {
     try {
       // Create AudioContext (will be suspended on iOS until activated)
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('🎵 🎼 AudioContext created, state:', this.audioContext.state);
       
       // Pre-generate all audio buffers
       this.generateAudioBuffers();
@@ -58,24 +54,23 @@ class SoundUtils {
   }
 
   private async generateVolumeLevel(level: number) {
+    console.log(`🎵 🔧 generateVolumeLevel(${level}): Starting generation`);
+    
     if (this.preCalculatedAudio.has(level)) {
-      console.log(`🎵 📊 Volume level ${level} already exists, skipping generation`);
+      console.log(`🎵 🔧 generateVolumeLevel(${level}): Level already exists, skipping`);
       return;
     }
 
     if (this.isGeneratingLevel) {
-      console.log(`🎵 ⚠️ Already generating a volume level, skipping...`);
+      console.log(`🎵 🔧 generateVolumeLevel(${level}): Already generating, skipping`);
       return;
     }
 
     this.isGeneratingLevel = true;
-    const volumePercent = level * 10; // 0%, 10%, 20%, etc.
-    
+    console.log(`🎵 🔧 generateVolumeLevel(${level}): Set isGeneratingLevel = true`);
     // Use exponential curve for much better volume progression
     // Level 0 = 0%, Level 1 = ~1%, Level 5 = ~16%, Level 10 = 100%
     const volumeDecimal = level === 0 ? 0 : Math.pow(level / 10, 2.5);
-    
-    console.log(`🎵 📊 Generating volume level ${level} (${volumePercent}% slider) with amplitude ${(volumeDecimal * 100).toFixed(1)}%...`);
     
     try {
       // Create audio elements for this specific volume level
@@ -127,11 +122,10 @@ class SoundUtils {
               resolve();
             };
             
-            const onError = (e: Event) => {
+            const onError = () => {
               clearTimeout(timeout);
               audio.removeEventListener('canplaythrough', onReady);
               audio.removeEventListener('error', onError);
-              console.error(`🎵 ❌ Audio element ${i} for ${name} failed to load:`, e);
               resolve(); // Continue anyway
             };
             
@@ -151,23 +145,21 @@ class SoundUtils {
       
       // Store this volume level
       this.preCalculatedAudio.set(level, levelAudioMap);
+      console.log(`🎵 🔧 generateVolumeLevel(${level}): Level stored successfully`);
       
       // Clean up data URLs to prevent memory leaks
       Object.values(sounds).forEach(url => URL.revokeObjectURL(url));
-      
-      console.log(`🎵 ✅ Volume level ${level} (${volumePercent}% slider) generated with ${(volumeDecimal * 100).toFixed(1)}% amplitude`);
       
     } catch (error) {
       console.error(`🎵 ❌ Failed to generate volume level ${level}:`, error);
     } finally {
       this.isGeneratingLevel = false;
+      console.log(`🎵 🔧 generateVolumeLevel(${level}): Set isGeneratingLevel = false`);
     }
   }
 
   private generateAudioBuffers() {
     if (!this.audioContext) return;
-
-    console.log('🎵 🎼 Generating audio buffers...');
     
     const sounds = {
       digit: () => this.createToneBuffer(800, 0.08),
@@ -182,13 +174,10 @@ class SoundUtils {
       try {
         const buffer = generator();
         this.audioBuffers.set(name, buffer);
-        console.log(`🎵 🎼 Generated buffer for ${name}`);
       } catch (error) {
         console.error(`🎵 ❌ Failed to generate buffer for ${name}:`, error);
       }
     }
-    
-    console.log('🎵 ✅ All audio buffers generated and ready');
   }
 
   private createToneBuffer(frequency: number, duration: number): AudioBuffer {
@@ -256,8 +245,6 @@ class SoundUtils {
   }
 
   private configureMediaSession() {
-    console.log('🎵 📱 Configuring Media Session for iOS compatibility...');
-    
     try {
       // Configure Media Session API to indicate this is media content
       if ('mediaSession' in navigator) {
@@ -269,10 +256,6 @@ class SoundUtils {
         
         // Set playback state to indicate active media
         navigator.mediaSession.playbackState = 'playing';
-        
-        console.log('🎵 📱 ✅ Media Session configured for iOS');
-      } else {
-        console.log('🎵 📱 ⚠️ Media Session API not available');
       }
     } catch (error) {
       console.error('🎵 📱 ❌ Failed to configure Media Session:', error);
@@ -381,43 +364,17 @@ class SoundUtils {
     const clampedVolumeLevel = Math.max(0, Math.min(10, newVolumeLevel));
     
     if (clampedVolumeLevel !== oldVolumeLevel) {
-      console.log(`🎵 🔊 Volume level target: ${clampedVolumeLevel} (${clampedVolumeLevel * 10}%)`);
-      
       // If the target level already exists, switch immediately
       if (this.preCalculatedAudio.has(clampedVolumeLevel)) {
         this.currentVolumeLevel = clampedVolumeLevel;
-        console.log(`🎵 ⚡ Instant switch to existing level ${clampedVolumeLevel}`);
       } else {
-        // Set pending level and start stability timer
-        this.pendingVolumeLevel = clampedVolumeLevel;
-        
-        // Clear existing timer
-        if (this.volumeStabilityTimer !== null) {
-          clearTimeout(this.volumeStabilityTimer);
-        }
-        
-        // Set timer to generate level after 1 second of stability
-        this.volumeStabilityTimer = window.setTimeout(() => {
-          if (this.pendingVolumeLevel !== null) {
-            const levelToGenerate = this.pendingVolumeLevel;
-            console.log(`🎵 ⏱️ Volume stable for 1s, generating level ${levelToGenerate}...`);
-            
-            this.generateVolumeLevel(levelToGenerate).then(() => {
-              // Switch to the newly generated level
-              if (this.preCalculatedAudio.has(levelToGenerate)) {
-                this.currentVolumeLevel = levelToGenerate;
-                console.log(`🎵 ✅ Switched to newly generated level ${levelToGenerate}`);
-              }
-            });
-            
-            this.pendingVolumeLevel = null;
+        // Generate the level immediately for immediate response
+        this.generateVolumeLevel(clampedVolumeLevel).then(() => {
+          if (this.preCalculatedAudio.has(clampedVolumeLevel)) {
+            this.currentVolumeLevel = clampedVolumeLevel;
           }
-        }, 1000);
-        
-        console.log(`🎵 ⏱️ Starting 1s stability timer for level ${clampedVolumeLevel}`);
+        });
       }
-    } else {
-      console.log(`🎵 🔊 Volume level unchanged at ${clampedVolumeLevel} (${clampedVolumeLevel * 10}%)`);
     }
   }
 
@@ -430,21 +387,17 @@ class SoundUtils {
     }
     this.lastVolumeTestTime = now;
     
-    // Calculate actual amplitude for logging
-    const actualAmplitude = this.currentVolumeLevel === 0 ? 0 : Math.pow(this.currentVolumeLevel / 10, 2.5);
-    
-    console.log(`🎵 🔊 Playing volume test sound at level ${this.currentVolumeLevel} (${this.currentVolumeLevel * 10}% slider, ${(actualAmplitude * 100).toFixed(1)}% amplitude)`);
+    // Play immediately - volume level should already be set
     this.playSound('digit');
   }
+  
+
 
   getVolume(): number {
     return this.masterVolume;
   }
 
   private playSound(soundName: string) {
-    // OPTIMIZED: Minimal logging for performance
-    // console.log(`🎵 🎯 Attempting to play ${soundName} sound...`);
-    
     // OPTIMIZED: Ensure audio is activated immediately without delay
     if (!this.audioContextActivated && this.audioContext) {
       // Don't wait for activation - just trigger it in background
@@ -453,8 +406,20 @@ class SoundUtils {
       });
     }
     
+    // Debug: Track volume level usage
+    console.log(`🎵 🎯 Playing ${soundName} at level ${this.currentVolumeLevel}, available levels: ${Array.from(this.preCalculatedAudio.keys()).join(', ')}`);
+    
     // OPTIMIZED: Try HTML5 Audio first with minimal checks
-    const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
+    let levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
+    console.log(`🎵 🎯 Level ${this.currentVolumeLevel} audio map:`, levelAudioMap ? 'exists' : 'missing');
+    
+    // Fallback: If current level isn't ready, try level 1 (default)
+    if (!levelAudioMap && this.currentVolumeLevel !== 1) {
+      console.log(`🎵 🎯 Falling back to level 1 for ${soundName}`);
+      levelAudioMap = this.preCalculatedAudio.get(1);
+      console.log(`🎵 🎯 Level 1 audio map:`, levelAudioMap ? 'exists' : 'missing');
+    }
+    
     if (levelAudioMap) {
       const audioPool = levelAudioMap.get(soundName);
       if (audioPool && audioPool.length > 0) {
@@ -484,7 +449,10 @@ class SoundUtils {
     
     // OPTIMIZED: Fallback to Web Audio API only if not regenerating
     if (!this.isGeneratingLevel) {
+      console.log(`🎵 🎯 Falling back to Web Audio API for ${soundName}`);
       this.playWithWebAudio(soundName);
+    } else {
+      console.log(`🎵 🎯 Skipping Web Audio fallback for ${soundName} - level is being generated`);
     }
   }
 
@@ -549,7 +517,7 @@ class SoundUtils {
 
   // Play a celebration sound for game win
   playGameWonSound() {
-    this.playCelebrationSound();
+    this.playOriginalVictorySound();
   }
 
   // Play simple celebration sound for game win
@@ -573,9 +541,45 @@ class SoundUtils {
       gainNode.connect(this.audioContext.destination);
       
       source.start();
-      console.log('🎵 🎉 Playing celebration sound for game win');
     } catch (error) {
       console.error('🎵 Failed to play celebration sound:', error);
+    }
+  }
+
+  // Play original victory sound with volume control using Web Audio API
+  async playOriginalVictorySound() {
+    if (!this.audioContext) {
+      console.warn('🎵 AudioContext not available for original victory sound');
+      return;
+    }
+
+    try {
+      // Calculate volume based on current volume level (same as other sounds)
+      const volumeDecimal = this.currentVolumeLevel === 0 ? 0 : Math.pow(this.currentVolumeLevel / 10, 2.5);
+      
+
+      
+      // Fetch the MP3 file and decode it with Web Audio API for proper volume control
+      const response = await fetch(tadaaVictorySound);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      // Create buffer source and gain node for proper volume control
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+      
+      source.buffer = audioBuffer;
+      gainNode.gain.value = volumeDecimal; // Apply volume using Web Audio API gain
+      
+      // Connect and play
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      source.start();
+      
+    } catch (error) {
+      console.error('🎵 Failed to play original victory sound via Web Audio API:', error);
+      // Fallback to synthesized sound
+      this.playCelebrationSound();
     }
   }
 
@@ -752,20 +756,16 @@ class SoundUtils {
 
   // Public test method for debugging
   testSoundSystem() {
-    console.log('🎵 🧪 Testing sound system...');
     this.debugSoundSystem();
     
     // Try to play a test sound
-    console.log('🎵 🧪 Attempting to play test sound...');
     this.playDigitPlaceSound();
     
     // Check if audio context is ready
     if (this.audioContext) {
-      console.log(`🎵 🧪 AudioContext state: ${this.audioContext.state}`);
       if (this.audioContext.state === 'suspended') {
-        console.log('🎵 🧪 AudioContext is suspended, attempting to resume...');
         this.audioContext.resume().then(() => {
-          console.log('🎵 🧪 AudioContext resumed successfully');
+          // AudioContext resumed successfully
         }).catch(error => {
           console.error('🎵 🧪 Failed to resume AudioContext:', error);
         });
@@ -775,32 +775,19 @@ class SoundUtils {
 
   // Debug method to test sound system
   debugSoundSystem() {
-    console.log('🎵 🔍 Sound System Debug Info:');
-    console.log(`🎵   AudioContext state: ${this.audioContext?.state}`);
-    console.log(`🎵   AudioContext activated: ${this.audioContextActivated}`);
-    console.log(`🎵   Master volume: ${this.masterVolume}`);
-    console.log(`🎵   Current volume level: ${this.currentVolumeLevel}`);
-    console.log(`🎵   Pre-calculated audio levels: ${Array.from(this.preCalculatedAudio.keys()).join(', ')}`);
-    
-    const levelAudioMap = this.preCalculatedAudio.get(this.currentVolumeLevel);
-    if (levelAudioMap) {
-      console.log(`🎵   Available sounds for level ${this.currentVolumeLevel}: ${Array.from(levelAudioMap.keys()).join(', ')}`);
-      const digitPool = levelAudioMap.get('digit');
-      if (digitPool) {
-        console.log(`🎵   Digit sound pool size: ${digitPool.length}`);
-        console.log(`🎵   Digit sound ready states: ${digitPool.map(audio => audio.readyState).join(', ')}`);
-      }
-    } else {
-      console.log(`🎵   ⚠️ No audio available for level ${this.currentVolumeLevel}`);
-    }
+    // Debug info available but not logged to reduce console noise
   }
 }
 
 // Create a singleton instance
 export const soundUtils = new SoundUtils();
 
+// Method to initialize volume from settings after they're loaded
+export const initializeSoundVolume = (volume: number) => {
+  soundUtils.setVolume(volume);
+};
+
 // Expose to global scope for debugging
 if (typeof window !== 'undefined') {
   (window as any).soundUtils = soundUtils;
-  console.log('🎵 SoundUtils exposed to global scope as window.soundUtils');
 }

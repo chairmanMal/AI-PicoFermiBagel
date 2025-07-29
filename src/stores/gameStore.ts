@@ -212,7 +212,7 @@ export const useGameStore = create<GameStore>()(
             const lockedPositions = new Set(state.gameState.lockedPositions);
             const activePosition = state.gameState.activeGuessPosition;
             
-            console.log(`🎵 ADD_DIGIT_SEQUENTIAL: digit=${digit}, activePosition=${activePosition}, soundEnabled=${state.settings.soundEnabled}`);
+        
             
             // console.log('🔢 AUTOFILL DEBUG: Placing digit', digit, 'at position', activePosition);
             // console.log('🔢 AUTOFILL DEBUG: Guess length:', currentGuess.length, 'Locked positions:', Array.from(lockedPositions));
@@ -225,14 +225,11 @@ export const useGameStore = create<GameStore>()(
             
             // Play sound if sound is enabled
             if (state.settings.soundEnabled) {
-              console.log(`🎵 Playing sound for digit ${digit}, redundant=${isRedundant}`);
               if (isRedundant) {
                 soundUtils.playDudSound();
               } else {
                 soundUtils.playDigitPlaceSound();
               }
-            } else {
-              console.log(`🎵 Sound disabled, skipping sound for digit ${digit}`);
             }
             
             // Auto-advance to next unlocked position
@@ -534,7 +531,7 @@ export const useGameStore = create<GameStore>()(
 
               // Activate audio if sound is being enabled
               if (action.settings.soundEnabled === true && state.settings.soundEnabled === false) {
-                console.log('🎵 🎯 Sound enabled - activating audio automatically...');
+        
                 soundUtils.activateAudio().catch(error => {
                   console.error('🎵 ❌ Failed to activate audio on sound enable:', error);
                 });

@@ -3,7 +3,7 @@ import { Settings, Menu } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 // Audio system is available via soundUtils when needed
 import { soundUtils } from '../utils/soundUtils';
-import { getBuildString } from '../config/version';
+
 
 // Layout Components
 import LandscapeLayoutClean from './layouts/LandscapeLayoutClean';
@@ -88,13 +88,9 @@ const GameScreen: React.FC = () => {
   // CORE RESPONSIBILITY 3: AUDIO SYSTEM
   // ==========================================
   useEffect(() => {
-    console.log(`🎵 Audio system initialized - ${getBuildString()}`);
-    
     // Auto-activate audio if sound is enabled by default
     const { settings } = useGameStore.getState();
     if (settings.soundEnabled) {
-      console.log('🎵 🎯 Auto-activating audio on app start (sound enabled by default)');
-      
       // Set the volume level to match user settings
       soundUtils.setVolume(settings.soundVolume || 0.1);
       
@@ -169,146 +165,105 @@ const GameScreen: React.FC = () => {
   }, [isMenuDrawerOpen, isSettingsDrawerOpen, currentLayout]);
 
   // ==========================================
+  // SHARED SWIPE-TO-CLOSE UTILITY
+  // ==========================================
+  const createSwipeToClose = (
+    drawerElement: HTMLElement,
+    onClose: () => void,
+    swipeDirection: 'left' | 'right'
+  ) => {
+    let startX = 0;
+    let startY = 0;
+    let isTrackingSwipe = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      startX = touch.clientX;
+      startY = touch.clientY;
+      isTrackingSwipe = false;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+
+      const currentX = touch.clientX;
+      const currentY = touch.clientY;
+      const deltaX = currentX - startX;
+      const deltaY = Math.abs(currentY - startY);
+
+      // Only track horizontal swipes if they're more horizontal than vertical
+      if (!isTrackingSwipe && Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 10) {
+        isTrackingSwipe = true;
+      }
+
+      // Prevent default for swipes in the close direction
+      const shouldPreventDefault = swipeDirection === 'left' ? deltaX < 0 : deltaX > 0;
+      if (isTrackingSwipe && shouldPreventDefault) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      if (!touch || !isTrackingSwipe) return;
+
+      const endX = touch.clientX;
+      const deltaX = endX - startX;
+      const swipeDistance = Math.abs(deltaX);
+      
+      // For menu drawer, use the visible content width instead of container width
+      let drawerWidth = drawerElement.getBoundingClientRect().width;
+      if (swipeDirection === 'right') {
+        // Menu drawer: find the actual visible content
+        const visibleContent = drawerElement.querySelector('.drawer-content') as HTMLElement;
+        if (visibleContent) {
+          drawerWidth = visibleContent.getBoundingClientRect().width;
+        }
+      }
+      
+      // Check if swipe is in the correct direction and covers 40% of drawer width
+      const isCorrectDirection = swipeDirection === 'left' ? deltaX < 0 : deltaX > 0;
+      const threshold = drawerWidth * 0.4; // 40% threshold for swipe-to-close
+      if (isCorrectDirection && swipeDistance >= threshold) {
+        onClose();
+      }
+
+      isTrackingSwipe = false;
+    };
+
+    drawerElement.addEventListener('touchstart', handleTouchStart);
+    drawerElement.addEventListener('touchmove', handleTouchMove);
+    drawerElement.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      drawerElement.removeEventListener('touchstart', handleTouchStart);
+      drawerElement.removeEventListener('touchmove', handleTouchMove);
+      drawerElement.removeEventListener('touchend', handleTouchEnd);
+    };
+  };
+
+  // ==========================================
   // SETTINGS DRAWER SWIPE-TO-CLOSE
   // ==========================================
   useEffect(() => {
     if (!isSettingsDrawerOpen) return;
 
     const settingsDrawer = document.querySelector('.settings-drawer') as HTMLElement;
-    if (!settingsDrawer) return;
-
-    const handleSwipeLeft = (e: TouchEvent) => {
-    const touch = e.touches[0];
-      if (!touch) return;
-
-      const startX = touch.clientX;
-      const drawerRect = settingsDrawer.getBoundingClientRect();
-      
-      // Only handle swipes that start within the drawer area
-      if (startX < drawerRect.left || startX > drawerRect.right) {
+    if (!settingsDrawer) {
       return;
     }
-    
-      const drawerContent = settingsDrawer.querySelector('.drawer-content') as HTMLElement;
-      if (!drawerContent) return;
 
-      const handleTouchMove = (moveEvent: TouchEvent) => {
-        const moveTouch = moveEvent.changedTouches[0];
-        if (!moveTouch) return;
-
-        const currentX = moveTouch.clientX;
-        const deltaX = currentX - startX;
-        
-        // Only apply visual feedback for leftward swipes
-        if (deltaX < 0) {
-          drawerContent.style.transform = `translateX(${deltaX}px)`;
-          drawerContent.style.transition = 'none'; // Disable transition during drag
-        }
-      };
-
-      const handleTouchEnd = (endEvent: TouchEvent) => {
-        const endTouch = endEvent.changedTouches[0];
-        if (!endTouch) return;
-
-        const endX = endTouch.clientX;
-        const deltaX = endX - startX;
-        const swipeDistance = Math.abs(deltaX);
-        const drawerWidth = drawerRect.width;
-        
-        // Reset visual feedback
-        drawerContent.style.transform = '';
-        drawerContent.style.transition = '';
-        
-        // Require swipe to traverse at least 50% of drawer width AND be leftward
-        if (deltaX < 0 && swipeDistance >= (drawerWidth * 0.5)) {
-          setIsSettingsDrawerOpen(false);
-        }
-
-        settingsDrawer.removeEventListener('touchend', handleTouchEnd);
-        settingsDrawer.removeEventListener('touchmove', handleTouchMove);
-      };
-
-      settingsDrawer.addEventListener('touchend', handleTouchEnd);
-      settingsDrawer.addEventListener('touchmove', handleTouchMove);
-    };
-
-    settingsDrawer.addEventListener('touchstart', handleSwipeLeft);
-
-    return () => {
-      settingsDrawer.removeEventListener('touchstart', handleSwipeLeft);
-    };
+    return createSwipeToClose(settingsDrawer, () => setIsSettingsDrawerOpen(false), 'left');
   }, [isSettingsDrawerOpen]);
 
   // ==========================================
-  // MENU DRAWER SWIPE-TO-CLOSE
+  // MENU DRAWER SWIPE-TO-CLOSE (SET UP FROM HAMBURGER BUTTON CLICK)
   // ==========================================
-  useEffect(() => {
-    if (!isMenuDrawerOpen) return;
-
-    const menuDrawer = document.querySelector('.mobile-drawer') as HTMLElement;
-    if (!menuDrawer) return;
-
-    const handleSwipeRight = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      if (!touch) return;
-
-      const startX = touch.clientX;
-      const drawerRect = menuDrawer.getBoundingClientRect();
-      
-      // Only handle swipes that start within the drawer area
-      if (startX < drawerRect.left || startX > drawerRect.right) {
-        return;
-      }
-      
-      const drawerContent = menuDrawer.querySelector('.drawer-content') as HTMLElement;
-      if (!drawerContent) return;
-
-      const handleTouchMove = (moveEvent: TouchEvent) => {
-        const moveTouch = moveEvent.changedTouches[0];
-        if (!moveTouch) return;
-
-        const currentX = moveTouch.clientX;
-        const deltaX = currentX - startX;
-        
-        // Only apply visual feedback for rightward swipes
-        if (deltaX > 0) {
-          drawerContent.style.transform = `translateX(${deltaX}px)`;
-          drawerContent.style.transition = 'none'; // Disable transition during drag
-        }
-      };
-
-      const handleTouchEnd = (endEvent: TouchEvent) => {
-        const endTouch = endEvent.changedTouches[0];
-        if (!endTouch) return;
-
-        const endX = endTouch.clientX;
-        const deltaX = endX - startX;
-        const swipeDistance = Math.abs(deltaX);
-        const drawerWidth = drawerRect.width;
-        
-        // Reset visual feedback
-        drawerContent.style.transform = '';
-        drawerContent.style.transition = '';
-        
-        // Require swipe to traverse at least 50% of drawer width AND be rightward
-        if (deltaX > 0 && swipeDistance >= (drawerWidth * 0.5)) {
-          setIsMenuDrawerOpen(false);
-        }
-
-        menuDrawer.removeEventListener('touchend', handleTouchEnd);
-        menuDrawer.removeEventListener('touchmove', handleTouchMove);
-      };
-
-      menuDrawer.addEventListener('touchend', handleTouchEnd);
-      menuDrawer.addEventListener('touchmove', handleTouchMove);
-    };
-
-    menuDrawer.addEventListener('touchstart', handleSwipeRight);
-    
-    return () => {
-      menuDrawer.removeEventListener('touchstart', handleSwipeRight);
-    };
-  }, [isMenuDrawerOpen]);
+  // Note: Swipe-to-close is now set up when the hamburger button is clicked,
+  // ensuring the drawer is fully rendered before attaching event listeners.
 
   // ==========================================
   // TOUCH OUTSIDE TO CLOSE DRAWERS - SIMPLE DARK AREA DETECTION
@@ -736,7 +691,10 @@ const GameScreen: React.FC = () => {
               });
             }
           }}>
-            <MenuDrawerContent />
+            <MenuDrawerContent 
+              onClose={() => setIsMenuDrawerOpen(false)}
+              isPortraitMode={currentLayout.orientation === 'portrait'}
+            />
           </div>
         </div>
       )}

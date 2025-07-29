@@ -401,7 +401,9 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <MenuDrawerContent />
+            <MenuDrawerContent 
+              isPortraitMode={false}
+            />
           </div>
         </div>
       </div>

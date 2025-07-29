@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Scratchpad from './Scratchpad';
 import HintPurchasing from './HintPurchasing';
 import ScoreArea from './ScoreArea';
@@ -20,18 +20,95 @@ import ScoreArea from './ScoreArea';
 interface MenuDrawerContentProps {
   /** Optional callback when close is requested (not used in landscape column) */
   onClose?: () => void;
+  /** Whether this is in portrait mode (for swipe-to-close) */
+  isPortraitMode?: boolean;
 }
 
-const MenuDrawerContent: React.FC<MenuDrawerContentProps> = () => {
+const MenuDrawerContent: React.FC<MenuDrawerContentProps> = ({ onClose, isPortraitMode = false }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Simple cleanup on component unmount
-  React.useEffect(() => {
-    return () => {
-      console.log('🍔 MenuDrawerContent: Component unmounting - cleaning up');
-      // Component is being unmounted, no need to reset state as it will be destroyed
+  // Set up swipe-to-close when component mounts (portrait mode only)
+  useEffect(() => {
+    if (!isPortraitMode || !onClose) {
+      return;
+    }
+    
+    const createSwipeToClose = (drawerElement: HTMLElement) => {
+      let startX = 0;
+      let startY = 0;
+      let isTrackingSwipe = false;
+
+      const handleTouchStart = (e: TouchEvent) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isTrackingSwipe = false;
+      };
+
+      const handleTouchMove = (e: TouchEvent) => {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        const currentX = touch.clientX;
+        const currentY = touch.clientY;
+        const deltaX = currentX - startX;
+        const deltaY = Math.abs(currentY - startY);
+        if (!isTrackingSwipe && Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 10) {
+          isTrackingSwipe = true;
+        }
+        if (isTrackingSwipe && deltaX > 0) {
+          e.preventDefault();
+        }
+      };
+
+      const handleTouchEnd = (e: TouchEvent) => {
+        const touch = e.changedTouches[0];
+        if (!touch || !isTrackingSwipe) return;
+        const endX = touch.clientX;
+        const deltaX = endX - startX;
+        const swipeDistance = Math.abs(deltaX);
+        
+                         // Use the visible content width for threshold calculation
+        const drawerWidth = drawerElement.getBoundingClientRect().width;
+        const threshold = drawerWidth * 0.4; // 40% threshold for swipe-to-close
+        const isCorrectDirection = deltaX > 0;
+        if (isCorrectDirection && swipeDistance >= threshold) {
+          onClose();
+        }
+        isTrackingSwipe = false;
+      };
+
+      drawerElement.addEventListener('touchstart', handleTouchStart);
+      drawerElement.addEventListener('touchmove', handleTouchMove);
+      drawerElement.addEventListener('touchend', handleTouchEnd);
+
+      return () => {
+        drawerElement.removeEventListener('touchstart', handleTouchStart);
+        drawerElement.removeEventListener('touchmove', handleTouchMove);
+        drawerElement.removeEventListener('touchend', handleTouchEnd);
+      };
     };
-  }, []);
+
+    // Wait for the component to be fully rendered
+    const setupSwipeToClose = () => {
+      if (scrollContainerRef.current) {
+        const rect = scrollContainerRef.current.getBoundingClientRect();
+        
+        if (rect.width > 0 && rect.height > 0) {
+          return createSwipeToClose(scrollContainerRef.current);
+        } else {
+          setTimeout(setupSwipeToClose, 50);
+        }
+      }
+    };
+
+    // Start setup after a short delay
+    setTimeout(setupSwipeToClose, 100);
+
+    return () => {
+      // Component cleanup
+    };
+  }, [isPortraitMode, onClose]);
 
   return (
     <div style={{

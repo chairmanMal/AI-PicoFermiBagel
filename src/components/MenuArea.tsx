@@ -53,7 +53,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     // Snap to nearest 10% increment (0.0, 0.1, 0.2, ..., 1.0)
     const snappedVolume = Math.round(rawVolume * 10) / 10;
     
-    console.log(`🎵 Volume slider: raw=${rawVolume.toFixed(2)}, snapped=${snappedVolume.toFixed(1)}`);
+    
     
     updateSettings({ soundVolume: snappedVolume });
     

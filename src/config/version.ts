@@ -4,8 +4,8 @@ export const VERSION_CONFIG = {
   MAJOR: 1,
   MINOR: 0,
   PATCH: 0,
-      BUILD_REVISION: 1521,
-  BUILD_DATE: '2025-07-28', // YYYY-MM-DD format
+      BUILD_REVISION: 1571,
+  BUILD_DATE: '2025-07-29', // YYYY-MM-DD format
 };
 
 export const getVersionString = () => {

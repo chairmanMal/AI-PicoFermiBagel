@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import GameScreen from './components/GameScreen';
 import SplashScreen from './components/SplashScreen';
 import { forceCleanupDragIndicators } from '@/utils/dragCleanup';
-import { soundUtils } from '@/utils/soundUtils';
+import { soundUtils, initializeSoundVolume } from '@/utils/soundUtils';
 import { useGameStore } from '@/stores/gameStore';
 import { getBuildString } from '@/config/version';
 import './App.css';
@@ -18,6 +18,9 @@ const App: React.FC = () => {
     // Force cleanup on app mount to ensure no orphaned indicators
     forceCleanupDragIndicators();
     
+    // Initialize sound volume from settings
+    initializeSoundVolume(settings.soundVolume);
+    
     // OPTIMIZED: Pre-activate audio on app startup for immediate response
     if (settings.soundEnabled) {
       soundUtils.activateAudio().catch(() => {
@@ -29,7 +32,7 @@ const App: React.FC = () => {
       // Force cleanup on app unmount
       forceCleanupDragIndicators();
     };
-  }, [settings.soundEnabled]);
+  }, [settings.soundEnabled, settings.soundVolume]);
 
   const handleSplashComplete = () => {
     console.log('🚀 App: Splash screen completed, showing main app');
