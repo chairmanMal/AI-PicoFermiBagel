@@ -36,6 +36,7 @@ const defaultSettings: GameSettings = {
   gridColumns: 3,
   clearGuessAfterSubmit: true,
   multiRowGuessFeedback: true, // Default to enabled
+  backgroundColor: 'purple', // Default to original purple theme
 };
 
 const createInitialGameState = (settings: GameSettings): GameState => {

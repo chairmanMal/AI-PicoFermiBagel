@@ -10,6 +10,7 @@ export interface GameSettings {
   gridColumns: number; // Number of columns in guess grid (1-4)
   clearGuessAfterSubmit: boolean; // Whether to clear the guess after submission
   multiRowGuessFeedback: boolean; // Whether to show individual row feedback for multi-row games
+  backgroundColor: 'purple' | 'red' | 'green' | 'blue' | 'orange'; // Background color theme
 }
 
 export interface Guess {

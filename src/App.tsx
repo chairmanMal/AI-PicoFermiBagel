@@ -5,6 +5,7 @@ import { forceCleanupDragIndicators } from '@/utils/dragCleanup';
 import { soundUtils, initializeSoundVolume } from '@/utils/soundUtils';
 import { useGameStore } from '@/stores/gameStore';
 import { getBuildString } from '@/config/version';
+import { getBackgroundGradient } from '@/utils/gameLogic';
 import './App.css';
 
 const App: React.FC = () => {
@@ -33,6 +34,12 @@ const App: React.FC = () => {
       forceCleanupDragIndicators();
     };
   }, [settings.soundEnabled, settings.soundVolume]);
+
+  // Update CSS variable for background color
+  useEffect(() => {
+    const gradient = getBackgroundGradient(settings.backgroundColor);
+    document.documentElement.style.setProperty('--app-background-gradient', gradient);
+  }, [settings.backgroundColor]);
 
   const handleSplashComplete = () => {
     console.log('🚀 App: Splash screen completed, showing main app');

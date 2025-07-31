@@ -409,3 +409,52 @@ export function formatGameTime(startTime: Date, endTime?: Date): string {
 export function formatScoreData(scoreData: ScoreData): string {
   return `Score: ${scoreData.score} | Guesses: ${scoreData.guesses} | Time: ${scoreData.timeMinutes}m`;
 } 
+
+export function getBackgroundGradient(backgroundColor: 'purple' | 'red' | 'green' | 'blue' | 'orange'): string {
+  const gradients = {
+    purple: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Original purple
+    red: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)', // Pastel red
+    green: 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)', // Pastel green
+    blue: 'linear-gradient(135deg, #74c0fc 0%, #4dabf7 100%)', // Pastel blue
+    orange: 'linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%)', // More orange, less yellow
+  };
+  
+  return gradients[backgroundColor];
+}
+
+export function getScratchpadTheme(backgroundColor: 'purple' | 'red' | 'green' | 'blue' | 'orange') {
+  const themes = {
+    purple: {
+      background: 'linear-gradient(135deg, #f3e5f5, #e1bee7)',
+      headerColor: '#4a148c',
+      descriptionColor: '#6a1b9a',
+      borderColor: '#4a148c'
+    },
+    red: {
+      background: 'linear-gradient(135deg, #ffe5e5, #ffcdd2)',
+      headerColor: '#c62828',
+      descriptionColor: '#d32f2f',
+      borderColor: '#c62828'
+    },
+    green: {
+      background: 'linear-gradient(135deg, #e8f5e8, #c8e6c9)',
+      headerColor: '#2e7d32',
+      descriptionColor: '#388e3c',
+      borderColor: '#2e7d32'
+    },
+    blue: {
+      background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
+      headerColor: '#1565c0',
+      descriptionColor: '#1976d2',
+      borderColor: '#1565c0'
+    },
+    orange: {
+      background: 'linear-gradient(135deg, #fff3e0, #ffe0b2)',
+      headerColor: '#ef6c00',
+      descriptionColor: '#f57c00',
+      borderColor: '#ef6c00'
+    }
+  };
+  
+  return themes[backgroundColor];
+} 

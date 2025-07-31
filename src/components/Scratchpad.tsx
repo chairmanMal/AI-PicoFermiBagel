@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { getScratchpadTheme } from '@/utils/gameLogic';
 import type { ScratchpadColor } from '@/types/game';
 import './Scratchpad.css';
 
@@ -158,20 +159,31 @@ const Scratchpad: React.FC = () => {
   // Using flexbox wrap - no need for column calculations
   // Flexbox will automatically wrap and center partial rows
 
+  const theme = getScratchpadTheme(settings.backgroundColor);
+
   return (
-    <div className="scratchpad">
+    <div 
+      className="scratchpad"
+      style={{
+        background: theme.background
+      }}
+    >
       <button 
         className="info-button info-button-corner"
         onClick={showToast}
         title="Show color meanings and tips"
+        style={{
+          borderColor: theme.borderColor,
+          color: theme.borderColor
+        }}
       >
         <HelpCircle size={20} />
       </button>
       <div className="scratchpad-header">
         <div className="header-content">
-          <h3>Scratchpad</h3>
+          <h3 style={{ color: theme.headerColor }}>Scratchpad</h3>
         </div>
-        <p className="scratchpad-description">
+        <p className="scratchpad-description" style={{ color: theme.descriptionColor }}>
           Click numbers to track your thinking
         </p>
       </div>

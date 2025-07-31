@@ -149,6 +149,12 @@
   transform: translateX(0);
 }
 
+/* Fix settings drawer content height - override menu drawer min-height */
+.menu-drawer-container .drawer-content {
+  min-height: auto !important; /* Remove the 100vh - 80px min-height */
+  max-height: calc(100vh - env(safe-area-inset-top) - 40px - 20px - 20px) !important; /* Account for top positioning and bottom margin */
+}
+
 .settings-drawer-overlay {
   position: fixed;
   top: 0;

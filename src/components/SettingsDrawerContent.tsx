@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 import { getFullVersionString } from '../config/version';
+import { getBackgroundGradient } from '../utils/gameLogic';
 // Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach
 
 /**
@@ -64,6 +65,10 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
 
   const toggleMultiRowGuessFeedback = () => {
     updateSettings({ multiRowGuessFeedback: !settings.multiRowGuessFeedback });
+  };
+
+  const handleBackgroundColorChange = (color: 'purple' | 'red' | 'green' | 'blue' | 'orange') => {
+    updateSettings({ backgroundColor: color });
   };
 
   const handleDifficultyChange = (difficulty: string) => {
@@ -387,9 +392,20 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
 
           {settings.soundEnabled && (
             <div 
-              style={{ marginBottom: '16px' }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: '8px',
+                padding: '8px 11px',
+                background: 'none',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '8px',
+                marginBottom: '8px'
+              }}
             >
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#374151', fontSize: '0.9rem', fontWeight: '500' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#374151', fontSize: '0.9rem', fontWeight: '500' }}>
                 <Volume2 size={16} />
                 Volume: {Math.round((settings.soundVolume || 0.1) * 100)}% 
                 <span style={{ fontSize: '0.8em', opacity: 0.7 }}>
@@ -478,6 +494,59 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
               width: '100%'
             }}>
               When enabled, provide feedback for the #s on each row vs the full answer
+            </div>
+          </button>
+
+          {/* Background Color Picker */}
+          <button
+            onClick={() => {}} // No action needed, just for styling
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '8px',
+              padding: '8px 11px',
+              background: 'none',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: '8px',
+              cursor: 'default',
+              color: '#374151',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: getBackgroundGradient(settings.backgroundColor) }} />
+              Background Color
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              width: '100%'
+            }}>
+              {(['purple', 'red', 'green', 'blue', 'orange'] as const).map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleBackgroundColorChange(color)}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: settings.backgroundColor === color ? '3px solid #374151' : '2px solid rgba(0, 0, 0, 0.2)',
+                    background: getBackgroundGradient(color),
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: settings.backgroundColor === color ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    transform: settings.backgroundColor === color ? 'scale(1.1)' : 'scale(1)',
+                  }}
+                  title={`${color.charAt(0).toUpperCase() + color.slice(1)} theme`}
+                />
+              ))}
             </div>
           </button>
         </div>

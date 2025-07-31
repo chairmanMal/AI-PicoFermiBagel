@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { getBackgroundGradient } from '@/utils/gameLogic';
 import YourGuessBlock from '../blocks/YourGuessBlock';
 import SelectionArea from '../SelectionArea';
 import MenuDrawerContent from '../MenuDrawerContent';
@@ -201,7 +202,7 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
         width: '100vw',
         height: '100vh',
         zIndex: 50,
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: getBackgroundGradient(settings.backgroundColor),
         pointerEvents: 'auto',
         boxSizing: 'border-box',
         display: 'flex',

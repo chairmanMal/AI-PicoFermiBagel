@@ -2,10 +2,10 @@
 // Increment BUILD_REVISION for each new build/deployment
 export const VERSION_CONFIG = {
   MAJOR: 1,
-  MINOR: 0,
+  MINOR: 1,
   PATCH: 0,
-      BUILD_REVISION: 1597,
-  BUILD_DATE: '2025-07-30', // YYYY-MM-DD format
+      BUILD_REVISION: 1,
+  BUILD_DATE: '2025-07-31', // YYYY-MM-DD format
 };
 
 export const getVersionString = () => {

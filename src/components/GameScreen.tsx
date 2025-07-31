@@ -15,6 +15,7 @@ import WinBanner from './WinBanner';
 // Utility Functions
 import { DeviceDetection } from '../utils/deviceDetection';
 import { DrawerManager } from '../utils/drawerManager';
+import { getBackgroundGradient } from '../utils/gameLogic';
 
 import './GameScreen.css';
 
@@ -22,7 +23,7 @@ const GameScreen: React.FC = () => {
   // ==========================================
   // CORE RESPONSIBILITY 1: GAME STATE INTEGRATION
   // ==========================================
-  const { resetAllSettings, gameState } = useGameStore();
+  const { resetAllSettings, gameState, settings } = useGameStore();
 
   // ==========================================
   // CORE RESPONSIBILITY 2: LAYOUT DETECTION & MANAGEMENT
@@ -309,6 +310,9 @@ const GameScreen: React.FC = () => {
       ref={gameScreenRef}
       className="game-screen"
       data-layout={`${currentLayout.device}-${currentLayout.orientation}`}
+      style={{
+        background: getBackgroundGradient(settings.backgroundColor)
+      }}
     >
       {/* Settings Button - Always visible */}
         <button
@@ -425,30 +429,33 @@ const GameScreen: React.FC = () => {
       />
 
       {/* Settings Drawer - Enhanced styling for better portrait mode experience */}
-      <div className={`settings-drawer ${isSettingsDrawerOpen ? 'open' : ''}`}>
-        <div className="menu-drawer-container">
+      {isSettingsDrawerOpen && (
+        <div className="menu-drawer-container" style={{
+          height: 'auto', // Override CSS height: 100% to allow content-based sizing
+          minHeight: '0' // Override any min-height to allow shrinking
+        }}>
           <div className="drawer-header">
-        <button
+            <button
               className="drawer-close"
               onClick={handleSettingsDrawerClose}
               aria-label="Close Settings"
-          style={{ 
+              style={{ 
                 position: 'fixed',
                 top: currentLayout.isIpadPortrait 
                   ? 'calc(10px + env(safe-area-inset-top))' // Move down 10px for iPad portrait only
                   : 'calc(0px + env(safe-area-inset-top))', // Normal position for iPhone
                 left: 'calc(10px + env(safe-area-inset-left))', // Keep same horizontal position
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: 'none',
-            borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '8px',
                 padding: '10px', // MATCH settings button: 10px not 12px
                 width: '40px', // MATCH settings button: 40px not 48px
                 height: '40px', // MATCH settings button: 40px not 48px
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 transition: 'all 0.2s ease',
                 touchAction: 'manipulation',
                 zIndex: 6000,
@@ -469,24 +476,24 @@ const GameScreen: React.FC = () => {
               }}
             >
               ‹
-        </button>
-        </div>
-
-                    
-                    <div className="drawer-content" style={{
+            </button>
+          </div>
+          
+          <div className="drawer-content" style={{
             position: 'fixed',
             top: 'calc(0px + env(safe-area-inset-top) + 40px + 20px)', // Icon top + icon height + 20px gap
             left: 'calc(10px + env(safe-area-inset-left) + 20px)', // Settings icon left + icon width/2 (center line)
             width: '280px', // Reduced width for iPhone
-            height: '650px', // Set to 650px height
-                            background: 'white',
-                borderRadius: '12px',
-                // border: '3px solid #ff0000', // RED BORDER for visual debugging - DISABLED
-                padding: '0', // Remove all padding to align borders perfectly
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              overflow: 'auto',
+            height: 'auto', // Dynamic height like menu drawer
+            maxHeight: 'calc(100vh - 120px)', // Prevent extending off screen
+            background: 'white',
+            borderRadius: '12px',
+            // border: '3px solid #ff0000', // RED BORDER for visual debugging - DISABLED
+            padding: '0', // Remove all padding to align borders perfectly
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            overflow: 'auto',
             zIndex: 5000,
-                    display: 'flex',
+            display: 'flex',
             flexDirection: 'column'
           }}
           ref={(el) => {
@@ -523,9 +530,9 @@ const GameScreen: React.FC = () => {
               key={isSettingsDrawerOpen ? 'open' : 'closed'} 
               onClose={handleSettingsDrawerClose} 
             />
-                    </div>
-                  </div>
-                  </div>
+          </div>
+        </div>
+      )}
 
       {/* Menu Drawer - Only show in portrait mode (landscape has it in Column 3) */}
       {currentLayout.orientation === 'portrait' && isMenuDrawerOpen && (
