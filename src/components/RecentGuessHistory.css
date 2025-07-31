@@ -33,13 +33,14 @@
 .history-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 8px 12px;
   margin-bottom: 4px;
   background: white;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+  min-height: 36px;
 }
 
 .history-item:hover {
@@ -70,12 +71,17 @@
   font-size: 0.95rem;
   color: #1f2937;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
+  min-width: 60px;
 }
 
 .feedback-display {
   font-weight: 600;
   font-size: 0.9rem;
   color: #374151;
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 80px;
 }
 
 .history-item.winner .feedback-display {

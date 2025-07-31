@@ -260,8 +260,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       console.log(`🎯 GuessArea: Clearing drag timer for position ${position}`);
       clearTimeout(dragTimerRef.current);
       dragTimerRef.current = null;
-    }
-    
+      }
+      
     try {
       if (isDragging) {
         console.log(`🎯 GuessArea: Handling drag end for position ${position}`);
@@ -294,8 +294,8 @@ const GuessBox: React.FC<GuessBoxProps> = ({
       console.log(`🎯 GuessArea: Clearing drag timer for position ${position}`);
       clearTimeout(dragTimerRef.current);
       dragTimerRef.current = null;
-    }
-    
+      }
+      
     try {
       if (isDragging) {
         console.log(`🎯 GuessArea: Handling touch drag end for position ${position}`);
@@ -537,7 +537,7 @@ const GuessArea: React.FC<GuessAreaProps> = () => {
   
   // Log build number for debugging
   console.log(`🎯 GuessArea: Component initialized - ${getBuildString()}`);
-
+  
   // Calculate row sums if any have been purchased
   const targetRowSums = hintState.purchasedHints.revealedRowSums.size > 0
     ? calculateTargetRowSums(gameState.target, settings.gridRows, settings.gridColumns, hintState.purchasedHints.revealedRowSums)

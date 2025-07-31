@@ -35,6 +35,7 @@ const defaultSettings: GameSettings = {
   gridRows: 1,
   gridColumns: 3,
   clearGuessAfterSubmit: true,
+  multiRowGuessFeedback: true, // Default to enabled
 };
 
 const createInitialGameState = (settings: GameSettings): GameState => {
@@ -296,8 +297,8 @@ export const useGameStore = create<GameStore>()(
             const newScore = calculateScore(newGuesses.length, timeMinutes, hintCost);
 
             const gameWon = feedback.isWinner;
-            const maxGuesses = 20; // Maximum number of guesses before game ends
-            const gameEnded = gameWon || newGuesses.length >= maxGuesses;
+            const maxGuesses = 100; // Maximum number of guesses (effectively unlimited due to score-based ending)
+            const gameEnded = gameWon || newScore <= 0 || newGuesses.length >= maxGuesses;
             
             // Create new guess array that preserves locked positions when clearing after submit
             const newCurrentGuess = gameEnded 

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
+import { evaluateRowGuess } from '@/utils/gameLogic';
 import './RecentGuessHistory.css';
 
 const RecentGuessHistory: React.FC = () => {
-  const { gameState } = useGameStore();
+  const { gameState, settings } = useGameStore();
   const historyListRef = useRef<HTMLDivElement>(null);
 
 
@@ -61,6 +62,75 @@ const RecentGuessHistory: React.FC = () => {
     return 'Pico-' + feedback.picos + ', Fermi-' + feedback.fermis;
   };
 
+  const formatGuessDisplay = (guess: any) => {
+    // Always show guesses in row format for multi-row games
+    if (settings.gridRows <= 1) {
+      return guess.digits.join('-');
+    }
+
+    const rowGuesses = [];
+    const digitsPerRow = settings.gridColumns;
+    
+    for (let row = 0; row < settings.gridRows; row++) {
+      const startIndex = row * digitsPerRow;
+      const endIndex = startIndex + digitsPerRow;
+      const rowDigits = guess.digits.slice(startIndex, endIndex);
+      rowGuesses.push(rowDigits.join('-'));
+    }
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {rowGuesses.map((rowGuess, index) => (
+          <div key={index} style={{ 
+            fontSize: '0.9rem', 
+            color: '#1f2937',
+            fontWeight: '600',
+            fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
+            letterSpacing: '0.5px'
+          }}>
+            {rowGuess}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const formatMultiRowFeedback = (guess: any) => {
+    if (!settings.multiRowGuessFeedback || settings.gridRows <= 1) {
+      return formatFeedback(guess.feedback);
+    }
+
+    // For multi-row games with the setting enabled, show individual row feedback
+    const rowFeedback = [];
+    const digitsPerRow = settings.gridColumns;
+    
+    for (let row = 0; row < settings.gridRows; row++) {
+      const startIndex = row * digitsPerRow;
+      const endIndex = startIndex + digitsPerRow;
+      const rowDigits = guess.digits.slice(startIndex, endIndex);
+      
+      // Calculate actual row-specific feedback
+      const rowResult = evaluateRowGuess(rowDigits, gameState.target, startIndex);
+      const rowFeedbackText = formatFeedback(rowResult);
+      rowFeedback.push({ row: row + 1, feedback: rowFeedbackText });
+    }
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {rowFeedback.map(({ feedback }, index) => (
+          <div key={index} style={{ 
+            fontSize: '0.9rem', 
+            color: '#374151',
+            fontWeight: '500',
+            padding: '0'
+          }}>
+            {feedback}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="recent-guess-history">
       <h4 className="history-title">Recent Guesses ({gameState.guesses.length})</h4>
@@ -77,10 +147,10 @@ const RecentGuessHistory: React.FC = () => {
             data-guess-id={guess.id}
           >
             <span className="guess-display">
-              {guess.digits.join('-')}
+              {formatGuessDisplay(guess)}
             </span>
             <span className="feedback-display">
-              {guess.feedback.isWinner ? 'WINNER!' : formatFeedback(guess.feedback)}
+              {guess.feedback.isWinner ? 'WINNER!' : formatMultiRowFeedback(guess)}
             </span>
           </motion.div>
         ))}

@@ -492,6 +492,7 @@ class SoundUtils {
 
   // Play a simple beep sound for digit placement
   playDigitPlaceSound() {
+    console.log(`🎵 🔊 Playing digit place sound - audio activated: ${this.audioContextActivated}, context state: ${this.audioContext?.state}`);
     this.playSound('digit');
   }
 

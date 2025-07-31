@@ -122,6 +122,42 @@ export function evaluateGuess(guess: number[], target: number[]): GuessResult {
 }
 
 /**
+ * Evaluates a specific row of a guess against the target and returns row-specific feedback
+ */
+export function evaluateRowGuess(
+  rowGuess: number[], 
+  target: number[], 
+  rowStartIndex: number
+): GuessResult {
+  let picos = 0;
+  let fermis = 0;
+  let bagels = 0;
+
+  for (let i = 0; i < rowGuess.length; i++) {
+    const guessDigit = rowGuess[i];
+    const targetIndex = rowStartIndex + i;
+    
+    if (targetIndex < target.length && guessDigit === target[targetIndex]) {
+      // Correct digit in correct position
+      fermis++;
+    } else if (target.includes(guessDigit)) {
+      // Correct digit in wrong position
+      picos++;
+    } else {
+      // Digit not in target
+      bagels++;
+    }
+  }
+
+  return {
+    picos,
+    fermis,
+    bagels,
+    isWinner: fermis === rowGuess.length && picos === 0 && bagels === 0
+  };
+}
+
+/**
  * Validates if a guess is valid (no repeated digits, all positions filled, within range)
  */
 export function isValidGuess(guess: (number | null)[], digitRange?: number): boolean {

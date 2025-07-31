@@ -36,6 +36,10 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     updateSettings({ clearGuessAfterSubmit: !settings.clearGuessAfterSubmit });
   };
 
+  const toggleMultiRowGuessFeedback = () => {
+    updateSettings({ multiRowGuessFeedback: !settings.multiRowGuessFeedback });
+  };
+
   const handleDifficultyChange = (difficulty: string) => {
     updateSettings({ difficulty: difficulty as any });
     setShowCustomSettings(false);
@@ -230,7 +234,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             onClick={toggleSound}
           >
             {settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            {settings.soundEnabled ? '🔊 Sound Enabled' : '🔇 Sound Disabled'}
+            {settings.soundEnabled ? 'Sound: ON' : 'Sound: OFF'}
           </button>
 
           {settings.soundEnabled && (
@@ -283,7 +287,15 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
             onClick={toggleClearGuess}
           >
             <RotateCcw size={18} />
-            {settings.clearGuessAfterSubmit ? 'Clear Guess After Submit' : 'Keep Guess After Submit'}
+            {settings.clearGuessAfterSubmit ? 'Clear Guess After Submit: ON' : 'Clear Guess After Submit: OFF'}
+          </button>
+
+          <button
+            className="menu-item toggle"
+            onClick={toggleMultiRowGuessFeedback}
+          >
+            <Grid3X3 size={18} />
+            {settings.multiRowGuessFeedback ? 'Multi-row Guess Feedback: ON' : 'Multi-row Guess Feedback: OFF'}
           </button>
         </div>
 

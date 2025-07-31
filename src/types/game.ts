@@ -9,6 +9,7 @@ export interface GameSettings {
   gridRows: number; // Number of rows in guess grid (1-4)
   gridColumns: number; // Number of columns in guess grid (1-4)
   clearGuessAfterSubmit: boolean; // Whether to clear the guess after submission
+  multiRowGuessFeedback: boolean; // Whether to show individual row feedback for multi-row games
 }
 
 export interface Guess {
