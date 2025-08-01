@@ -63,9 +63,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
     updateSettings({ clearGuessAfterSubmit: !settings.clearGuessAfterSubmit });
   };
 
-  const toggleMultiRowGuessFeedback = () => {
-    updateSettings({ multiRowGuessFeedback: !settings.multiRowGuessFeedback });
-  };
+
 
   const handleBackgroundColorChange = (color: 'purple' | 'red' | 'green' | 'blue' | 'orange') => {
     updateSettings({ backgroundColor: color });
@@ -106,8 +104,8 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
     { key: 'classic', label: 'Classic', desc: '1×3, 0-9' },
     { key: 'medium', label: 'Medium', desc: '2×3, 0-12' },
     { key: 'hard1', label: 'Hard', desc: '2×3, 0-16' },
-    { key: 'hard2', label: 'Hard', desc: '2×4, 0-19' },
-    { key: 'expert', label: 'Expert', desc: '3×3, 0-19' }
+    { key: 'hard2', label: 'Harder', desc: '2×4, 0-19' },
+    { key: 'expert', label: 'Hardest', desc: '3×3, 0-19' }
   ];
 
   return (
@@ -463,39 +461,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
             {settings.clearGuessAfterSubmit ? 'Clear Guess After Submit: ON' : 'Clear Guess After Submit: OFF'}
           </button>
 
-          <button
-            onClick={toggleMultiRowGuessFeedback}
-            style={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '8px',
-              padding: '8px 11px',
-              background: 'none',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              color: '#374151',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              marginBottom: '0',
-              textAlign: 'left'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
-              <Grid3X3 size={18} />
-              {settings.multiRowGuessFeedback ? 'Multi-row Guess Feedback: ON' : 'Multi-row Guess Feedback: OFF'}
-            </div>
-            <div style={{
-              fontSize: '0.8rem',
-              color: '#6b7280',
-              fontStyle: 'italic',
-              width: '100%'
-            }}>
-              When enabled, provide feedback for the #s on each row vs the full answer
-            </div>
-          </button>
+
 
           {/* Background Color Picker */}
           <button

@@ -11,6 +11,7 @@ import PortraitLayout from './PortraitLayout';
 import SettingsDrawerContent from './SettingsDrawerContent';
 import MenuDrawerContent from './MenuDrawerContent';
 import WinBanner from './WinBanner';
+import LoseBanner from './LoseBanner';
 
 // Utility Functions
 import { DeviceDetection } from '../utils/deviceDetection';
@@ -37,6 +38,10 @@ const GameScreen: React.FC = () => {
   // Win banner state
   const [showWinBanner, setShowWinBanner] = useState(false);
   const [winBannerDismissed, setWinBannerDismissed] = useState(false);
+
+  // Lose banner state
+  const [showLoseBanner, setShowLoseBanner] = useState(false);
+  const [loseBannerDismissed, setLoseBannerDismissed] = useState(false);
 
   // Settings drawer close handler
   const handleSettingsDrawerClose = () => {
@@ -67,6 +72,29 @@ const GameScreen: React.FC = () => {
     console.log('🎉 GameScreen: Win banner dismissed by user');
     setShowWinBanner(false);
     setWinBannerDismissed(true); // Prevent re-showing for this win
+  };
+
+  // ==========================================
+  // LOSE BANNER MANAGEMENT
+  // ==========================================
+  useEffect(() => {
+    // Check if game is lost (score <= 0 and game is not active and not won)
+    const isGameLost = gameState && !gameState.isGameActive && !gameState.isGameWon && gameState.score <= 0;
+    
+    if (isGameLost && !showLoseBanner && !loseBannerDismissed) {
+      console.log('💀 GameScreen: Game lost - showing lose banner');
+      setShowLoseBanner(true);
+    } else if (!isGameLost) {
+      console.log('💀 GameScreen: Game reset - resetting lose banner state');
+      setShowLoseBanner(false);
+      setLoseBannerDismissed(false);
+    }
+  }, [gameState?.isGameActive, gameState?.isGameWon, gameState?.score, showLoseBanner, loseBannerDismissed]);
+
+  const handleLoseBannerDismiss = () => {
+    console.log('💀 GameScreen: Lose banner dismissed by user');
+    setShowLoseBanner(false);
+    setLoseBannerDismissed(true); // Prevent re-showing for this loss
   };
 
   const getGameStats = () => {
@@ -425,6 +453,13 @@ const GameScreen: React.FC = () => {
       <WinBanner
         isVisible={showWinBanner}
         onDismiss={handleWinBannerDismiss}
+        gameStats={getGameStats()}
+      />
+
+      {/* Lose Banner - Shows when game is lost (score <= 0) */}
+      <LoseBanner
+        isVisible={showLoseBanner}
+        onDismiss={handleLoseBannerDismiss}
         gameStats={getGameStats()}
       />
 

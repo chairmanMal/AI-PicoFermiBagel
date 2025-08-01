@@ -240,6 +240,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Original game concept from "Family Math" by Jean Kerr Stenmark, Virginia Thompson, and Ruth Cossey
 - Sound effects from various Creative Commons contributors
+  - Losing horn sound by u_l5xum8z250 from Pixabay
 - Inspiration from classic logic puzzle games
 - React and TypeScript communities for excellent tooling
 

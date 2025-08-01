@@ -1,0 +1,164 @@
+/* LoseBanner Styles */
+.lose-banner-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.lose-banner-content {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-width: 90vw;
+  width: 400px;
+  position: relative;
+  animation: slideIn 0.4s ease-out;
+}
+
+.lose-banner-header {
+  margin-bottom: 25px;
+}
+
+.lose-banner-header h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 15px 0;
+  color: #ecf0f1;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.skull-icon {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  animation: bounce 2s infinite;
+}
+
+.tears {
+  font-size: 1.5rem;
+  margin-top: 10px;
+  opacity: 0.8;
+  animation: pulse 2s infinite;
+}
+
+.lose-banner-stats {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #bdc3c7;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ecf0f1;
+}
+
+.lose-banner-message {
+  font-size: 1.1rem;
+  margin: 20px 0;
+  color: #bdc3c7;
+  line-height: 1.5;
+}
+
+.lose-banner-dismiss {
+  font-size: 0.9rem;
+  color: #95a5a6;
+  margin-top: 20px;
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-style: italic;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .lose-banner-content {
+    padding: 20px;
+    width: 85vw;
+  }
+  
+  .lose-banner-header h2 {
+    font-size: 2rem;
+  }
+  
+  .skull-icon {
+    font-size: 3rem;
+  }
+  
+  .tears {
+    font-size: 1.2rem;
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+  
+  .stat-label,
+  .stat-value {
+    font-size: 0.9rem;
+  }
+} 

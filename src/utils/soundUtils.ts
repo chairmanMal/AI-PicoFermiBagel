@@ -1,5 +1,7 @@
 // Import the original victory sound
 import tadaaVictorySound from '../assets/tadaa-victory.mp3';
+// Import the losing horn sound
+import losingHornSound from '../assets/losing-horn-313723.mp3';
 
 // High-performance sound utility with iOS silent mode compatibility
 class SoundUtils {
@@ -511,9 +513,29 @@ class SoundUtils {
     this.playSound('dud');
   }
 
-  // Play a "blupper" sound for game loss
-  playGameLostSound() {
-    this.playSound('lost');
+  // Play losing horn sound for game loss
+  async playGameLostSound() {
+    if (!this.audioContext) {
+      console.warn('🎵 AudioContext not available for losing horn sound');
+      return;
+    }
+    try {
+      const volumeDecimal = this.currentVolumeLevel === 0 ? 0 : Math.pow(this.currentVolumeLevel / 10, 2.5);
+      const response = await fetch(losingHornSound);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      const source = this.audioContext.createBufferSource();
+      const gainNode = this.audioContext.createGain();
+      source.buffer = audioBuffer;
+      gainNode.gain.value = volumeDecimal;
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      source.start();
+    } catch (error) {
+      console.error('🎵 Failed to play losing horn sound via Web Audio API:', error);
+      // Fallback to synthesized sound
+      this.playSound('lost');
+    }
   }
 
   // Play a celebration sound for game win

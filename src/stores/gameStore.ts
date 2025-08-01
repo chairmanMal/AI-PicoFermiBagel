@@ -413,6 +413,7 @@ export const useGameStore = create<GameStore>()(
           case 'PURCHASE_HINT': {
             const { hintType, targetNumber } = action;
             const newHintState = { ...state.hintState };
+            console.log('[DEBUG] PURCHASE_HINT action:', { hintType, targetNumber, hintState: state.hintState });
 
             switch (hintType) {
               case 'bagel':
@@ -632,14 +633,21 @@ export const useGameStore = create<GameStore>()(
       getTotalHintCost: () => {
         const { hintState } = get();
         const { purchasedHints, hintCost } = hintState;
-        
-        return (
-          purchasedHints.bagelNumbers.size * hintCost.bagelHint +
-          purchasedHints.notBagelNumbers.size * hintCost.notBagelHint +
-          purchasedHints.rowDeltaHints * hintCost.rowDeltaHint +
-          purchasedHints.randomExposedNumbers.size * hintCost.randomExposeHint +
-          (purchasedHints.revealedRowSums.size * hintCost.rowSumsHint)
-        );
+        // Only count bagel/not-bagel hints that were NOT revealed by random-expose
+        const bagelCount = Array.from(purchasedHints.bagelNumbers)
+          .filter(num => !purchasedHints.randomExposedNumbers.has(num)).length;
+        const notBagelCount = Array.from(purchasedHints.notBagelNumbers)
+          .filter(num => !purchasedHints.randomExposedNumbers.has(num)).length;
+        const costBreakdown = {
+          bagel: bagelCount * hintCost.bagelHint,
+          notBagel: notBagelCount * hintCost.notBagelHint,
+          rowDelta: purchasedHints.rowDeltaHints * hintCost.rowDeltaHint,
+          randomExpose: purchasedHints.randomExposedNumbers.size * hintCost.randomExposeHint,
+          rowSums: purchasedHints.revealedRowSums.size * hintCost.rowSumsHint,
+        };
+        const total = costBreakdown.bagel + costBreakdown.notBagel + costBreakdown.rowDelta + costBreakdown.randomExpose + costBreakdown.rowSums;
+        console.log('[DEBUG] getTotalHintCost breakdown:', costBreakdown, 'total:', total);
+        return total;
       },
 
       getGameTimeMinutes: () => {

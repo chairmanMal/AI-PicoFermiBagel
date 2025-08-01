@@ -88,8 +88,8 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
     { key: 'classic', label: 'Classic', desc: '1×3, 0-9' },
     { key: 'medium', label: 'Medium', desc: '2×3, 0-12' },
     { key: 'hard1', label: 'Hard', desc: '2×3, 0-16' },
-    { key: 'hard2', label: 'Hard', desc: '2×4, 0-19' },
-    { key: 'expert', label: 'Expert', desc: '3×3, 0-19' }
+    { key: 'hard2', label: 'Harder', desc: '2×4, 0-19' },
+    { key: 'expert', label: 'Hardest', desc: '3×3, 0-19' }
   ];
 
   return (
