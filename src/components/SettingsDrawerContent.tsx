@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
+import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen, Users } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
+import { useMultiplayerStore } from '../stores/multiplayerStore';
 import { getFullVersionString } from '../config/version';
 import { getBackgroundGradient } from '../utils/gameLogic';
 // Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach
@@ -29,6 +30,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const [showCustomSettings, setShowCustomSettings] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
+  const multiplayerStore = useMultiplayerStore();
 
   // Simple cleanup on component unmount
   React.useEffect(() => {
@@ -97,6 +99,15 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const handleOpenManual = () => {
     // Show the manual in an in-app modal instead of trying to open externally
     setShowManual(true);
+  };
+
+  const handleSwitchToMultiplayer = () => {
+    console.log('🎮 Switching to multiplayer mode from settings');
+    // Close the settings drawer
+    handleCloseDrawer();
+    // Navigate to multiplayer mode (this will be handled by the parent App component)
+    // For now, we'll use a custom event that the App can listen to
+    window.dispatchEvent(new CustomEvent('switchToMultiplayer'));
   };
 
   const presetDifficulties = [
@@ -386,6 +397,31 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           >
             {settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             {settings.soundEnabled ? 'Sound: ON' : 'Sound: OFF'}
+          </button>
+
+          <button
+            onClick={handleSwitchToMultiplayer}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+              border: '1px solid #7c3aed',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Users size={18} />
+            Switch to Multiplayer
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Play with friends!</span>
           </button>
 
           {settings.soundEnabled && (

@@ -137,8 +137,8 @@ const GameScreen: React.FC = () => {
       const previousLayout = previousLayoutRef.current;
       const detection = DeviceDetection.getCurrentLayout();
       
-      console.log('📱 Layout detected:', detection);
-      console.log('📱 Previous layout:', previousLayout);
+        // console.log('📱 Layout detected:', detection);
+  // console.log('📱 Previous layout:', previousLayout);
       
       // Close menu drawer when switching from landscape to portrait
       if (previousLayout.orientation === 'landscape' && detection.orientation === 'portrait') {
@@ -307,10 +307,10 @@ const GameScreen: React.FC = () => {
     // Reset settings on startup if needed
     const shouldReset = localStorage.getItem('shouldResetOnStartup');
     if (shouldReset === 'true') {
-      console.log('🔄 RESETTING ALL SETTINGS TO DEFAULTS ON STARTUP');
+      // console.log('🔄 RESETTING ALL SETTINGS TO DEFAULTS ON STARTUP');
       resetAllSettings();
       localStorage.removeItem('shouldResetOnStartup');
-      console.log('🔄 All settings and data reset to defaults');
+      // console.log('🔄 All settings and data reset to defaults');
     }
   }, [resetAllSettings]);
 

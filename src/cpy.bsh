@@ -1,0 +1,18 @@
+
+# /bin/bsh
+mkdir graphql
+mkdir services
+
+cp -f ~/Downloads/enhanced_menu_area.ts components/MenuArea.tsx
+cp -f ~/Downloads/enhanced_main_entry.ts main.tsx
+cp -f ~/Downloads/enhanced_game_screen.ts components/GameScreen.tsx
+cp -f ~/Downloads/enhanced_app_component.ts App.tsx
+cp -f ~/Downloads/multiplayer_results_component.ts components/MultiplayerResults.tsx 
+cp -f ~/Downloads/multiplayer_game_progress.ts components/MultiplayerGameProgress.tsx
+cp -f ~/Downloads/multiplayer_lobby_component.ts components/MultiplayerLobby.tsx 
+cp -f ~/Downloads/username_registration_component.ts components/UsernameRegistration.tsx 
+cp -f ~/Downloads/multiplayer_service.ts services/multiplayerService.ts 
+cp -f ~/Downloads/graphql_operations.ts graphql/mutations.ts 
+cp -f ~/Downloads/multiplayer_package_updates.json ../package.json
+cp -f ~/Downloads/final_aws_config.ts services/awsConfig.ts
+
