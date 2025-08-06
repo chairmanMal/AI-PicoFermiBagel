@@ -606,6 +606,44 @@ class SoundUtils {
     }
   }
 
+  // Play fanfare sound for multiplayer game start
+  async playFanfareSound() {
+    console.log('🎵 🎺 Playing fanfare sound');
+    try {
+      const audio = new Audio('/fanfare.mp3');
+      audio.volume = this.masterVolume;
+      await audio.play();
+    } catch (error) {
+      console.error('🎵 ❌ Failed to play fanfare sound:', error);
+    }
+  }
+
+  // Play stopwatch sound for multiplayer countdown
+  async playStopwatchSound() {
+    console.log('🎵 ⏱️ Playing stopwatch sound');
+    try {
+      const audio = new Audio('/start-stop-stopwatch.mp3');
+      audio.volume = this.masterVolume;
+      // Skip the first second to avoid glitch
+      audio.currentTime = 1.0;
+      await audio.play();
+      return audio; // Return the audio element so it can be stopped
+    } catch (error) {
+      console.error('🎵 ❌ Failed to play stopwatch sound:', error);
+      return null;
+    }
+  }
+
+  // Stop all audio (for stopping stopwatch sound)
+  stopAllAudio() {
+    console.log('🎵 🔇 Stopping all audio');
+    // This will stop any currently playing audio
+    if (this.audioContext) {
+      this.audioContext.suspend();
+      this.audioContext.resume();
+    }
+  }
+
   // Create simple celebration buffer (ascending musical notes)
   private createCelebrationBuffer(): AudioBuffer {
     if (!this.audioContext) throw new Error('AudioContext not available');

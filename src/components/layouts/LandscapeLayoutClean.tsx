@@ -252,8 +252,8 @@ const LandscapeLayoutClean: React.FC<LandscapeLayoutCleanProps> = ({ guessElemen
           padding: '2.5px', // Reduced by 50% from 5px to 2.5px
           minHeight: 0 // Allow column to shrink
         }}>
-          {/* Target Display - Only shows if enabled */}
-          {settings.showTarget && (
+          {/* Target Display - Only shows if enabled OR developer mode is enabled */}
+          {(settings.showTarget || settings.developerMode) && (
             <div style={{
               flex: '0 0 auto',
               display: 'flex',

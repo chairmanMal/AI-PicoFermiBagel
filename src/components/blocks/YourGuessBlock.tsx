@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import GuessArea from '../GuessArea';
 import CircularSubmitButton from '../CircularSubmitButton';
 import { HelpCircle } from 'lucide-react';
+import { useGameStore } from '../../stores/gameStore';
 
 interface YourGuessBlockProps {
   guessElementRef: React.RefObject<HTMLDivElement>;
@@ -9,6 +10,13 @@ interface YourGuessBlockProps {
 }
 
 const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
+  const { isDeveloperMode, getRandomSeed } = useGameStore();
+  const isDevMode = isDeveloperMode();
+  const randomSeed = getRandomSeed();
+  
+  // Debug logging for random seed
+  console.log('🔧 YourGuessBlock Debug:', { isDevMode, randomSeed });
+  
   // isLandscape prop is used by parent components for layout decisions
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
     
@@ -172,7 +180,20 @@ const YourGuessBlock: React.FC<YourGuessBlockProps> = ({ guessElementRef }) => {
         fontWeight: 600,
         textAlign: 'center',
         width: '100%'
-      }}>Your Guess</h3>
+      }}>
+        Your Guess
+        {isDevMode && (
+          <span style={{
+            fontSize: '0.8rem',
+            color: '#ef4444',
+            fontWeight: 'normal',
+            marginLeft: '8px',
+            fontFamily: 'monospace'
+          }}>
+            (Seed: {randomSeed})
+          </span>
+        )}
+      </h3>
       
       {/* Main content - directly in card */}
       <div style={{ 

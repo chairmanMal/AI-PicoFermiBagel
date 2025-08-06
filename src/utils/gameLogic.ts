@@ -189,10 +189,18 @@ export function isValidGuess(guess: (number | null)[], digitRange?: number): boo
 export function calculateScore(
   guesses: number, 
   timeMinutes: number, 
-  hintCost: number
+  hintCost: number,
+  developerMode: boolean = false,
+  developerLoseScore: number = 0
 ): number {
   // Score formula from manual: 100 - guesses - timeMinutes - hintCost
   const score = Math.max(0, 100 - guesses - timeMinutes - hintCost);
+  
+  // In developer mode, if score is below threshold, return 0 (lose)
+  if (developerMode && score <= developerLoseScore) {
+    return 0;
+  }
+  
   return Math.round(score * 100) / 100; // Round to 2 decimal places
 }
 

@@ -8,7 +8,7 @@ import {
   HintState, 
   ScratchpadState, 
   GameStats,
-  // LeaderboardEntry, // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+  LeaderboardEntry, // Re-enabled leaderboard functionality
   Guess
 } from '@/types/game';
 import { 
@@ -37,6 +37,9 @@ const defaultSettings: GameSettings = {
   clearGuessAfterSubmit: true,
   multiRowGuessFeedback: true, // Default to enabled
   backgroundColor: 'purple', // Default to original purple theme
+  developerMode: false,
+  developerLoseScore: 80,
+  randomSeed: Math.floor(Math.random() * 1000000), // Random seed for developer mode
 };
 
 const createInitialGameState = (settings: GameSettings): GameState => {
@@ -52,7 +55,7 @@ const createInitialGameState = (settings: GameSettings): GameState => {
     currentGuess: Array(settings.targetLength).fill(null),
     guesses: [],
     gameStartTime: new Date(),
-    score: 0,
+    score: 100, // Start with 100 points
     isGameWon: false,
     isGameActive: true,
     activeGuessPosition: 0,
@@ -93,6 +96,15 @@ interface GameStore extends AppState {
   isGuessValid: () => boolean;
   canSubmitGuess: () => boolean;
   resetAllSettings: () => void;
+  isDeveloperMode: () => boolean;
+  getDeveloperLoseScore: () => number;
+  getRandomSeed: () => number;
+  submitScoreToLeaderboard: (gameId?: string) => Promise<void>;
+  
+  // Global username management
+  globalUsername: string;
+  setGlobalUsername: (username: string) => void;
+  getGlobalUsername: () => string;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -103,7 +115,7 @@ export const useGameStore = create<GameStore>()(
       hintState: null as any, // Will be initialized after settings are loaded
       scratchpadState: null as any, // Will be initialized after settings are loaded
       stats: new Map(),
-      // leaderboard: new Map(), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+      leaderboard: new Map(), // RE-ENABLED LEADERBOARD FUNCTIONALITY
 
       dispatch: (action: GameAction) => {
         const state = get();
@@ -121,6 +133,39 @@ export const useGameStore = create<GameStore>()(
               selectionAreaPosition: 'bottom' as const, // Reset to default
               // Keep difficulty and soundEnabled as they are
             };
+            
+            set({
+              settings: resetSettings,
+              gameState: newGameState,
+              hintState: newHintState,
+              scratchpadState: newScratchpadState,
+            });
+            
+            // OPTIMIZED: Pre-activate audio for immediate response on first interaction
+            if (resetSettings.soundEnabled) {
+              soundUtils.activateAudio().catch(() => {
+                // Silently handle activation errors
+              });
+            }
+            break;
+          }
+
+          case 'START_MULTIPLAYER_GAME': {
+            console.log('🎮 GameStore: Starting multiplayer game with seed:', action.randomSeed);
+            const newGameState = createInitialGameState(state.settings);
+            const newHintState = createInitialHintState();
+            const newScratchpadState = createInitialScratchpadState(state.settings.digitRange);
+            
+            // Reset UI settings to defaults while preserving difficulty and sound
+            const resetSettings: GameSettings = {
+              ...state.settings,
+              showTarget: false, // Reset to default
+              selectionAreaPosition: 'bottom' as const, // Reset to default
+              randomSeed: action.randomSeed, // Use the AWS-provided random seed
+              // Keep difficulty and soundEnabled as they are
+            };
+            
+            console.log('🎮 GameStore: Updated settings with AWS seed:', resetSettings.randomSeed);
             
             set({
               settings: resetSettings,
@@ -295,7 +340,26 @@ export const useGameStore = create<GameStore>()(
             console.log('🚀 📝 ALL GUESSES:', newGuesses);
             const timeMinutes = get().getGameTimeMinutes();
             const hintCost = get().getTotalHintCost();
-            const newScore = calculateScore(newGuesses.length, timeMinutes, hintCost);
+            const newScore = calculateScore(
+              newGuesses.length, 
+              timeMinutes, 
+              hintCost,
+              state.settings.developerMode,
+              state.settings.developerLoseScore
+            );
+            
+            // Debug developer mode
+            if (state.settings.developerMode) {
+              console.log('🔧 Developer Mode Debug:', {
+                guesses: newGuesses.length,
+                timeMinutes,
+                hintCost,
+                calculatedScore: 100 - newGuesses.length - timeMinutes - hintCost,
+                developerLoseScore: state.settings.developerLoseScore,
+                finalScore: newScore,
+                shouldLose: (100 - newGuesses.length - timeMinutes - hintCost) <= state.settings.developerLoseScore
+              });
+            }
 
             const gameWon = feedback.isWinner;
             const maxGuesses = 100; // Maximum number of guesses (effectively unlimited due to score-based ending)
@@ -607,18 +671,20 @@ export const useGameStore = create<GameStore>()(
             break;
           }
 
-          // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
-          // case 'SAVE_SCORE': {
-          //   const newLeaderboard = new Map(state.leaderboard);
-          //   const difficultyBoard = newLeaderboard.get(state.settings.difficulty) || [];
-          //   const updatedBoard = [...difficultyBoard, action.entry]
-          //     .sort((a, b) => b.score - a.score)
-          //     .slice(0, 100); // Keep top 100 scores
-          //   
-          //   newLeaderboard.set(state.settings.difficulty, updatedBoard);
-          //   set({ leaderboard: newLeaderboard });
-          //   break;
-          // }
+          // RE-ENABLED LEADERBOARD FUNCTIONALITY
+          case 'SAVE_SCORE': {
+            console.log('🏆 GameStore: Saving score to leaderboard:', action.entry);
+            const newLeaderboard = new Map(state.leaderboard);
+            const difficultyBoard = newLeaderboard.get(state.settings.difficulty) || [];
+            const updatedBoard = [...difficultyBoard, action.entry]
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 100); // Keep top 100 scores
+            
+            newLeaderboard.set(state.settings.difficulty, updatedBoard);
+            console.log('🏆 GameStore: Updated leaderboard for', state.settings.difficulty, ':', updatedBoard);
+            set({ leaderboard: newLeaderboard });
+            break;
+          }
         }
       },
 
@@ -654,7 +720,12 @@ export const useGameStore = create<GameStore>()(
         const { gameState } = get();
         const endTime = gameState.gameEndTime || new Date();
         const diffMs = endTime.getTime() - gameState.gameStartTime.getTime();
-        return Math.floor(diffMs / 60000);
+        const timeMinutes = diffMs / 60000; // Convert to minutes
+        
+        // Quantize to 0.2 second increments (0.2/60 = 0.00333... minutes)
+        const quantizedMinutes = Math.round(timeMinutes / 0.003333333) * 0.003333333;
+        
+        return Math.round(quantizedMinutes * 100) / 100; // Round to 2 decimal places
       },
 
       isGuessValid: () => {
@@ -682,13 +753,157 @@ export const useGameStore = create<GameStore>()(
         
         console.log('🔄 All settings and data reset to defaults');
       },
+
+      isDeveloperMode: () => {
+        const { settings } = get();
+        return settings.developerMode;
+      },
+
+      getDeveloperLoseScore: () => {
+        const { settings } = get();
+        return settings.developerLoseScore;
+      },
+
+      getRandomSeed: () => {
+        const { settings } = get();
+        console.log('🎮 GameStore: getRandomSeed called, returning:', settings.randomSeed);
+        return settings.randomSeed;
+      },
+
+      // Global username management
+      globalUsername: (() => {
+        // Try to get from localStorage first
+        const stored = localStorage.getItem('pfb_global_username');
+        if (stored) {
+          console.log('🌍 GameStore: Loading global username from localStorage:', stored);
+          return stored;
+        }
+        
+        // Try to get from previous usernames
+        const previous = localStorage.getItem('pfb_previous_usernames');
+        if (previous) {
+          const usernames = JSON.parse(previous);
+          if (usernames.length > 0) {
+            console.log('🌍 GameStore: Loading global username from previous usernames:', usernames[0]);
+            return usernames[0];
+          }
+        }
+        
+        return 'Player'; // Default username
+      })(),
+      
+      setGlobalUsername: (username: string) => {
+        console.log('🌍 GameStore: Setting global username:', username);
+        set({ globalUsername: username });
+        
+        // Update localStorage
+        localStorage.setItem('pfb_global_username', username);
+        
+        // Update multiplayer service
+        if (username) {
+          localStorage.setItem('pfb_username', username);
+          localStorage.setItem('pfb_user_registered', 'true');
+        }
+        
+        // Update previous usernames list
+        const stored = localStorage.getItem('pfb_previous_usernames');
+        const previousUsernames = stored ? JSON.parse(stored) : [];
+        if (username && !previousUsernames.includes(username)) {
+          const updated = [username, ...previousUsernames].slice(0, 5);
+          localStorage.setItem('pfb_previous_usernames', JSON.stringify(updated));
+        }
+      },
+      
+      getGlobalUsername: () => {
+        return get().globalUsername;
+      },
+
+      // Leaderboard functionality
+      submitScoreToLeaderboard: async (_gameId: string = '0') => {
+        const { gameState, settings } = get();
+        
+        if (!gameState.isGameWon) {
+          console.log('🎮 GameStore: Game not won, skipping leaderboard submission');
+          return;
+        }
+
+        // Check if score was already submitted for this game
+        const existingScores = get().leaderboard.get(settings.difficulty) || [];
+        const alreadySubmitted = existingScores.some(entry => 
+          entry.playerName === 'Player' && 
+          entry.guesses === gameState.guesses.length &&
+          Math.abs(entry.timestamp.getTime() - gameState.gameStartTime.getTime()) < 1000
+        );
+
+        if (alreadySubmitted) {
+          console.log('🎮 GameStore: Score already submitted for this game, skipping');
+          return;
+        }
+
+        const timeMinutes = get().getGameTimeMinutes();
+        
+        // Get username from localStorage
+        const savedUsernames = localStorage.getItem('pfb_previous_usernames');
+        const usernames = savedUsernames ? JSON.parse(savedUsernames) : [];
+        const currentUsername = usernames.length > 0 ? usernames[0] : 'Player';
+        
+        const leaderboardEntry: LeaderboardEntry = {
+          id: generateId(),
+          playerName: currentUsername,
+          score: gameState.score,
+          guesses: gameState.guesses.length,
+          timeMinutes,
+          difficulty: settings.difficulty,
+          timestamp: new Date(),
+        };
+
+        console.log('🎮 GameStore: Submitting score to leaderboard:', leaderboardEntry);
+        
+        // Save to local leaderboard
+        get().dispatch({ type: 'SAVE_SCORE', entry: leaderboardEntry });
+        
+        // Submit to AWS leaderboard via multiplayerService
+        try {
+          console.log('🎮 GameStore: Attempting AWS submission with data:', {
+            gameId: _gameId,
+            score: gameState.score,
+            guesses: gameState.guesses.length,
+            hints: get().getTotalHintCost(),
+            difficulty: settings.difficulty,
+            gameWon: true,
+            username: currentUsername
+          });
+          
+          // Ensure AWS is initialized
+          const { initializeAWS } = await import('../services/awsConfig');
+          initializeAWS();
+          
+          const { default: multiplayerService } = await import('../services/multiplayerService');
+          console.log('🎮 GameStore: Calling multiplayerService.submitGameResult...');
+          const result = await multiplayerService.submitGameResult(_gameId, {
+            score: Math.round(gameState.score),
+            guesses: gameState.guesses.length,
+            hints: get().getTotalHintCost(),
+            difficulty: settings.difficulty,
+            gameWon: true
+          }, currentUsername);
+          console.log('🎮 GameStore: AWS submission result:', result);
+        } catch (error: any) {
+          console.error('🎮 GameStore: Failed to submit to AWS:', error);
+          console.error('🎮 GameStore: Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+        }
+      },
     }),
     {
       name: 'pico-fermi-bagel-store',
       partialize: (state) => ({
         settings: state.settings,
         stats: state.stats,
-        // leaderboard: state.leaderboard, // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+        leaderboard: state.leaderboard, // RE-ENABLED LEADERBOARD FUNCTIONALITY
       }),
       storage: {
         getItem: (name) => {
@@ -733,7 +948,7 @@ export const useGameStore = create<GameStore>()(
               hintState,
               scratchpadState,
               stats,
-              // leaderboard: new Map(), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+              leaderboard: new Map(), // RE-ENABLED LEADERBOARD FUNCTIONALITY
             }
           };
         },
@@ -743,7 +958,7 @@ export const useGameStore = create<GameStore>()(
             state: {
               ...value.state,
               stats: Object.fromEntries(value.state.stats || new Map()),
-              // leaderboard: Object.fromEntries(value.state.leaderboard || new Map()), // COMMENTED OUT - LEADERBOARD FUNCTIONALITY
+              leaderboard: Object.fromEntries(value.state.leaderboard || new Map()), // RE-ENABLED LEADERBOARD FUNCTIONALITY
             }
           };
           localStorage.setItem(name, JSON.stringify(serializable));

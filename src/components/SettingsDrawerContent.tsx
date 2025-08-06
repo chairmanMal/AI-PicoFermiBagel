@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen, Users } from 'lucide-react';
+import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen, Users, Award } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
-import { useMultiplayerStore } from '../stores/multiplayerStore';
+// import { useMultiplayerStore } from '../stores/multiplayerStore';
 import { getFullVersionString } from '../config/version';
 import { getBackgroundGradient } from '../utils/gameLogic';
 // Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach
@@ -29,8 +29,12 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showCustomSettings, setShowCustomSettings] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [showDeveloperModal, setShowDeveloperModal] = useState(false);
+  const [developerPassword, setDeveloperPassword] = useState('');
+  const [developerLoseScore, setDeveloperLoseScore] = useState('80');
+  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
-  const multiplayerStore = useMultiplayerStore();
+  // const multiplayerStore = useMultiplayerStore();
 
   // Simple cleanup on component unmount
   React.useEffect(() => {
@@ -110,6 +114,103 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
     window.dispatchEvent(new CustomEvent('switchToMultiplayer'));
   };
 
+  const handleDeveloperModeToggle = () => {
+    if (isDeveloperMode) {
+      // Disable developer mode
+      setIsDeveloperMode(false);
+      localStorage.removeItem('pfb_developer_mode');
+      localStorage.removeItem('pfb_developer_lose_score');
+      
+      // Update game store settings
+      updateSettings({
+        developerMode: false,
+        developerLoseScore: 0
+      });
+    } else {
+      // Show password modal
+      setShowDeveloperModal(true);
+    }
+  };
+
+  const handleDeveloperModeEnable = () => {
+    if (developerPassword === 'pfb2024') {
+      setIsDeveloperMode(true);
+      updateSettings({ 
+        developerMode: true,
+        developerLoseScore: parseInt(developerLoseScore) || 80
+      });
+      setShowDeveloperModal(false);
+      setDeveloperPassword('');
+    } else {
+      alert('Incorrect password');
+    }
+  };
+
+  const handleDeveloperReset = () => {
+    if (window.confirm('Are you sure you want to clear all user data and reset to defaults? This action cannot be undone.')) {
+      try {
+        // Clear all localStorage data
+        localStorage.clear();
+        
+        // Reset game store to defaults
+        resetGame();
+        
+        // Reset settings to defaults
+        updateSettings({
+          difficulty: 'classic',
+          targetLength: 3,
+          digitRange: 9,
+          showTarget: false,
+          selectionAreaPosition: 'bottom',
+          soundEnabled: true,
+          soundVolume: 0.4,
+          gridRows: 1,
+          gridColumns: 3,
+          clearGuessAfterSubmit: false,
+          multiRowGuessFeedback: true,
+          backgroundColor: 'purple',
+          developerMode: false,
+          developerLoseScore: 80
+        });
+        
+        // Clear any stored usernames
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('pfb_username');
+          localStorage.removeItem('pfb_device_id');
+        }
+        
+        console.log('🔧 Developer: All user data cleared and reset to defaults');
+        alert('All user data has been cleared and reset to defaults.');
+        
+        // Close the drawer
+        handleCloseDrawer();
+        
+      } catch (error) {
+        console.error('❌ Error during developer reset:', error);
+        alert('Error during reset. Please try again.');
+      }
+    }
+  };
+
+  // Load developer mode state on mount
+  React.useEffect(() => {
+    const savedDeveloperMode = localStorage.getItem('pfb_developer_mode');
+    const savedLoseScore = localStorage.getItem('pfb_developer_lose_score');
+    
+    if (savedDeveloperMode === 'true') {
+      setIsDeveloperMode(true);
+      // Update game store with saved developer mode settings
+      updateSettings({
+        developerMode: true,
+        developerLoseScore: parseInt(savedLoseScore || '80')
+      });
+    }
+    
+    if (savedLoseScore) {
+      setDeveloperLoseScore(savedLoseScore);
+    }
+  }, [updateSettings]);
+
   const presetDifficulties = [
     { key: 'easy', label: 'Easy', desc: '1×3, 0-6' },
     { key: 'classic', label: 'Classic', desc: '1×3, 0-9' },
@@ -177,11 +278,90 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
               fontSize: '0.95rem',
               fontWeight: '600',
               transition: 'all 0.2s ease',
-              marginBottom: '0'
+              marginBottom: '8px'
             }}
           >
             <RotateCcw size={18} />
             New Game
+          </button>
+
+          <button
+            onClick={handleSwitchToMultiplayer}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+              border: '1px solid #7c3aed',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Users size={18} />
+            Switch to Multiplayer
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Play with friends!</span>
+          </button>
+
+          <button
+            onClick={() => {
+              console.log('🏆 SettingsDrawerContent: View Leaderboard clicked');
+              // Dispatch custom event to trigger navigation
+              window.dispatchEvent(new CustomEvent('viewLeaderboard'));
+            }}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+              border: '1px solid #f59e0b',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Award size={18} />
+            View Leaderboard
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Global rankings!</span>
+          </button>
+
+          <button
+            onClick={handleOpenManual}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #059669, #10b981)',
+              border: '1px solid #059669',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              marginBottom: '0',
+              textAlign: 'left'
+            }}
+          >
+            <BookOpen size={18} />
+            How to Play
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Game rules!</span>
           </button>
         </div>
 
@@ -330,29 +510,6 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           }}>Options</h4>
           
           <button
-            onClick={handleOpenManual}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              background: 'none',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              color: '#374151',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              marginBottom: '8px',
-              textAlign: 'left'
-            }}
-          >
-            <BookOpen size={18} />
-            How to Play
-          </button>
-
-          <button
             onClick={toggleShowTarget}
             style={{
               width: '100%',
@@ -373,7 +530,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           >
             {settings.showTarget ? <EyeOff size={18} /> : <Eye size={18} />}
             {settings.showTarget ? 'Hide Target' : 'Show Target'}
-            <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: 'auto' }}>(Disables scoring)</span>
+                            <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: 'auto' }}>(Disables leaderboard)</span>
           </button>
 
           <button
@@ -399,30 +556,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
             {settings.soundEnabled ? 'Sound: ON' : 'Sound: OFF'}
           </button>
 
-          <button
-            onClick={handleSwitchToMultiplayer}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-              border: '1px solid #7c3aed',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              color: 'white',
-              fontSize: '0.95rem',
-              fontWeight: '600',
-              transition: 'all 0.2s ease',
-              marginBottom: '8px',
-              textAlign: 'left'
-            }}
-          >
-            <Users size={18} />
-            Switch to Multiplayer
-            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Play with friends!</span>
-          </button>
+
 
           {settings.soundEnabled && (
             <div 
@@ -588,12 +722,41 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
 
         <div className="menu-section" style={{ padding: '16px 20px 0 0', borderBottom: 'none' }}>
           <div style={{ textAlign: 'center' }}>
-            <span style={{ 
-              fontSize: '0.8rem', 
-              color: '#374151', 
-              fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace", 
-              fontWeight: '500' 
-            }}>{getFullVersionString()}</span>
+            <span 
+              onClick={handleDeveloperModeToggle}
+              style={{ 
+                fontSize: '0.8rem', 
+                color: isDeveloperMode ? '#ef4444' : '#374151', 
+                fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace", 
+                fontWeight: '500',
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'color 0.2s ease'
+              }}
+            >
+              {getFullVersionString()}
+            </span>
+            {isDeveloperMode && (
+              <button
+                onClick={handleDeveloperReset}
+                style={{
+                  marginLeft: '10px',
+                  padding: '6px 12px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  color: '#dc2626',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+              >
+                Reset All Data
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -706,6 +869,160 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
                 zIndex: 1
               }}>
                 Click anywhere outside to close
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Developer Mode Password Modal */}
+      <AnimatePresence>
+        {showDeveloperModal && (
+          <motion.div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 20000,
+              padding: '20px',
+              boxSizing: 'border-box'
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowDeveloperModal(false)}
+          >
+            <motion.div
+              style={{
+                background: 'white',
+                borderRadius: '12px',
+                width: 'min(95vw, 400px)',
+                padding: '24px',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+                position: 'relative'
+              }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ 
+                margin: '0 0 20px 0', 
+                color: '#1f2937', 
+                fontSize: '1.2rem', 
+                fontWeight: '600',
+                textAlign: 'center'
+              }}>
+                Developer Mode
+              </h3>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  color: '#374151', 
+                  fontSize: '0.9rem', 
+                  fontWeight: '500' 
+                }}>
+                  Password:
+                </label>
+                <input
+                  type="password"
+                  value={developerPassword}
+                  onChange={(e) => setDeveloperPassword(e.target.value)}
+                  placeholder="Enter password..."
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box'
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleDeveloperModeEnable();
+                    }
+                  }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  color: '#374151', 
+                  fontSize: '0.9rem', 
+                  fontWeight: '500' 
+                }}>
+                  Lose Score Threshold:
+                </label>
+                <input
+                  type="number"
+                  value={developerLoseScore}
+                  onChange={(e) => setDeveloperLoseScore(e.target.value)}
+                  placeholder="80"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={handleDeveloperModeEnable}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#059669'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#10b981'}
+                >
+                  Enable
+                </button>
+                <button
+                  onClick={() => setShowDeveloperModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#4b5563'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#6b7280'}
+                >
+                  Cancel
+                </button>
               </div>
             </motion.div>
           </motion.div>

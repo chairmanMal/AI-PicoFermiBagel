@@ -226,7 +226,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
           >
             {settings.showTarget ? <EyeOff size={18} /> : <Eye size={18} />}
             {settings.showTarget ? 'Hide Target' : 'Show Target'}
-            <span className="toggle-note">(Disables scoring)</span>
+                            <span className="toggle-note">(Disables leaderboard)</span>
           </button>
 
           <button

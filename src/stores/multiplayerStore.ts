@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { useGameStore } from './gameStore';
-import multiplayerService, { GameStartEvent, GameEndResult, GameUpdate } from '../services/multiplayerService';
+import multiplayerService, { GameStartEvent, GameUpdate } from '../services/multiplayerService';
 import { initializeAWS } from '../services/awsConfig';
 
 interface MultiplayerState {
@@ -50,6 +50,18 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     try {
       // Initialize AWS configuration
       initializeAWS();
+      
+      // Load username from main menu if available
+      const savedUsernames = localStorage.getItem('pfb_previous_usernames');
+      if (savedUsernames) {
+        const usernames = JSON.parse(savedUsernames);
+        if (usernames.length > 0) {
+          // Set the first username as the current multiplayer username
+          localStorage.setItem('pfb_multiplayer_username', usernames[0]);
+          console.log('🎮 Loaded username from main menu:', usernames[0]);
+        }
+      }
+      
       console.log('🎮 Multiplayer initialized with AWS configuration');
       return Promise.resolve();
     } catch (error) {
@@ -90,6 +102,11 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
 
   startMultiplayerGame: (gameData: GameStartEvent) => {
     console.log('🎮 Starting multiplayer game:', gameData);
+    
+    // Initialize the game store with the multiplayer random seed
+    const gameStore = useGameStore.getState();
+    gameStore.dispatch({ type: 'START_MULTIPLAYER_GAME', randomSeed: gameData.randomSeed });
+    
     set({
       isMultiplayer: true,
       gameId: gameData.gameId,

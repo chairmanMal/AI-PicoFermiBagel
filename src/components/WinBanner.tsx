@@ -93,6 +93,11 @@ const WinBanner: React.FC<WinBannerProps> = ({ isVisible, onDismiss, gameStats }
   const handleDismiss = () => {
     console.log('🎉 WinBanner: Dismissing banner');
     setConfetti([]); // Clear confetti immediately
+    
+    // Submit score to leaderboard
+    const gameStore = useGameStore.getState();
+    gameStore.submitScoreToLeaderboard();
+    
     onDismiss();
   };
 

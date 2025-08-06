@@ -11,6 +11,9 @@ export interface GameSettings {
   clearGuessAfterSubmit: boolean; // Whether to clear the guess after submission
   multiRowGuessFeedback: boolean; // Whether to show individual row feedback for multi-row games
   backgroundColor: 'purple' | 'red' | 'green' | 'blue' | 'orange'; // Background color theme
+  developerMode: boolean; // Developer mode for special features
+  developerLoseScore: number; // Score threshold for losing in developer mode
+  randomSeed: number; // Random seed for developer mode debugging
 }
 
 export interface Guess {
@@ -79,16 +82,16 @@ export interface ScoreData {
   timestamp: Date;
 }
 
-// LEADERBOARD FUNCTIONALITY - COMMENTED OUT FOR NOW
-// export interface LeaderboardEntry {
-//   id: string;
-//   playerName: string;
-//   score: number;
-//   guesses: number;
-//   timeMinutes: number;
-//   difficulty: string;
-//   timestamp: Date;
-// }
+// LEADERBOARD FUNCTIONALITY - RE-ENABLED
+export interface LeaderboardEntry {
+  id: string;
+  playerName: string;
+  score: number;
+  guesses: number;
+  timeMinutes: number;
+  difficulty: string;
+  timestamp: Date;
+}
 
 export interface GameStats {
   gamesPlayed: number;
@@ -105,11 +108,12 @@ export interface AppState {
   hintState: HintState;
   scratchpadState: ScratchpadState;
   stats: Map<string, GameStats>; // Key is difficulty level
-  // leaderboard: Map<string, LeaderboardEntry[]>; // Key is difficulty level - COMMENTED OUT
+  leaderboard: Map<string, LeaderboardEntry[]>; // Key is difficulty level - RE-ENABLED
 }
 
 export type GameAction = 
   | { type: 'START_NEW_GAME' }
+  | { type: 'START_MULTIPLAYER_GAME'; randomSeed: number }
   | { type: 'SET_GUESS_DIGIT'; position: number; digit: number | null }
   | { type: 'SET_GUESS_DIGIT_NO_ADVANCE'; position: number; digit: number | null }
   | { type: 'ADD_DIGIT_SEQUENTIAL'; digit: number }
@@ -120,5 +124,5 @@ export type GameAction =
   | { type: 'PURCHASE_HINT'; hintType: 'bagel' | 'not-bagel' | 'row-delta' | 'random-expose' | 'row-sums'; targetNumber?: number }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<GameSettings> }
   | { type: 'SET_SCRATCHPAD_COLOR'; number: number; color: ScratchpadColor }
-  | { type: 'CLEAR_GAME_STATE' };
-  // | { type: 'SAVE_SCORE'; entry: LeaderboardEntry }; // COMMENTED OUT - LEADERBOARD FUNCTIONALITY 
+  | { type: 'CLEAR_GAME_STATE' }
+  | { type: 'SAVE_SCORE'; entry: LeaderboardEntry }; // RE-ENABLED LEADERBOARD FUNCTIONALITY 

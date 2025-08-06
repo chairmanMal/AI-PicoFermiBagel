@@ -70,8 +70,8 @@ const PortraitLayout: React.FC<PortraitLayoutProps> = ({ guessElementRef }) => {
         minHeight: 0,
         overflow: 'hidden'
       }}>
-        {/* Target Display - Only render when enabled */}
-        {settings.showTarget && (
+        {/* Target Display - Only render when enabled OR developer mode is enabled */}
+        {(settings.showTarget || settings.developerMode) && (
           <div style={{ 
             flexShrink: 0
           }}>

@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import GameScreen from './components/GameScreen';
 import SplashScreen from './components/SplashScreen';
 import { forceCleanupDragIndicators } from '@/utils/dragCleanup';
-import { soundUtils, initializeSoundVolume } from '@/utils/soundUtils';
+import { initializeSoundVolume } from '@/utils/soundUtils';
 import { useGameStore } from '@/stores/gameStore';
 import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import { getBuildString } from '@/config/version';
-import { getBackgroundGradient } from '@/utils/gameLogic';
 import './App.css';
 
 // Multiplayer components (only imported if needed)
@@ -16,6 +14,7 @@ import { MultiplayerGameProgress } from './components/MultiplayerGameProgress';
 import { MultiplayerResults } from './components/MultiplayerResults';
 import multiplayerService, { GameStartEvent, GameEndResult } from './services/multiplayerService';
 import MainMenu from './components/MainMenu';
+import LeaderboardScreen from './components/LeaderboardScreen';
 
 type AppScreen = 
   | 'splash' 
@@ -24,110 +23,134 @@ type AppScreen =
   | 'usernameRegistration' 
   | 'multiplayerLobby' 
   | 'multiplayerGame'
-  | 'multiplayerResults';
+  | 'multiplayerResults'
+  | 'leaderboard';
 
 const App: React.FC = () => {
-  const { settings } = useGameStore();
+  const { settings, globalUsername } = useGameStore();
   const multiplayerStore = useMultiplayerStore();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
+  const [navigationHistory, setNavigationHistory] = useState<AppScreen[]>([]);
   const [awsInitialized, setAwsInitialized] = useState(false);
-  const [multiplayerResults, setMultiplayerResults] = useState<GameEndResult | null>(null);
-  
+  const [isConnectingToAWS, setIsConnectingToAWS] = useState(false);
+  const [multiplayerResults] = useState<GameEndResult | null>(null);
+
+  // Initialize sound volume on app start
   useEffect(() => {
-    // Log current build number for debugging
-    console.log(`🚀 App starting - ${getBuildString()}`);
-    
-    // Force cleanup on app mount to ensure no orphaned indicators
-    forceCleanupDragIndicators();
-    
-    // Initialize sound volume from settings
     initializeSoundVolume(settings.soundVolume);
-    
-    // OPTIMIZED: Pre-activate audio on app startup for immediate response
-    if (settings.soundEnabled) {
-      soundUtils.activateAudio().catch(() => {
-        // Silently handle activation errors
-      });
-    }
+  }, [settings.soundVolume]);
 
-    // Initialize multiplayer (non-blocking)
-    initializeMultiplayer();
-    
-    return () => {
-      // Force cleanup on app unmount
-      forceCleanupDragIndicators();
-      multiplayerStore.cleanupMultiplayer();
-    };
-  }, [settings.soundEnabled, settings.soundVolume]);
-
-  // Update CSS variable for background color
+  // Cleanup drag indicators on unmount
   useEffect(() => {
-    const gradient = getBackgroundGradient(settings.backgroundColor);
-    document.documentElement.style.setProperty('--app-background-gradient', gradient);
-  }, [settings.backgroundColor]);
+    return () => {
+      forceCleanupDragIndicators();
+    };
+  }, []);
 
+  // Initialize multiplayer when needed
   const initializeMultiplayer = async () => {
+    if (awsInitialized) return;
+    
     try {
       await multiplayerStore.initializeMultiplayer();
       setAwsInitialized(true);
       console.log('✅ Multiplayer initialized successfully');
     } catch (error) {
-      console.warn('⚠️ Multiplayer not available:', error);
+      console.error('❌ Failed to initialize multiplayer:', error);
+      throw error;
+    }
+  };
+
+  // Reset multiplayer state only when in lobby
+  const resetMultiplayerStateIfInLobby = () => {
+    if (currentScreen === 'multiplayerLobby') {
+      console.log('🔄 Resetting multiplayer state due to username change in lobby');
       setAwsInitialized(false);
+      multiplayerStore.cleanupMultiplayer();
+    } else {
+      console.log('👤 Username changed but not in lobby - no reset needed');
+    }
+  };
+
+  // Navigation helper that tracks history
+  const navigateTo = (screen: AppScreen) => {
+    console.log(`🔄 Navigating from ${currentScreen} to ${screen}`);
+    setNavigationHistory(prev => [...prev, currentScreen]);
+    setCurrentScreen(screen);
+  };
+
+  // Navigation helper that goes back to previous screen
+  const navigateBack = () => {
+    if (navigationHistory.length > 0) {
+      const previousScreen = navigationHistory[navigationHistory.length - 1];
+      console.log(`🔄 Navigating back from ${currentScreen} to ${previousScreen}`);
+      setCurrentScreen(previousScreen);
+      setNavigationHistory(prev => prev.slice(0, -1));
+    } else {
+      // Fallback to menu if no history
+      console.log(`🔄 No navigation history, falling back to menu`);
+      setCurrentScreen('menu');
+      setNavigationHistory([]);
     }
   };
 
   const handleSplashComplete = () => {
-    console.log('🚀 App: Splash screen completed, showing main menu');
-    setCurrentScreen('menu');
+    console.log('🎮 App: Splash complete, navigating to menu');
+    navigateTo('menu');
   };
 
   const handleSinglePlayerStart = () => {
     console.log('🎮 Starting single player mode');
-    setCurrentScreen('singlePlayer');
+    navigateTo('singlePlayer');
   };
 
   const handleMultiplayerClick = async () => {
+    // Set connecting state
+    setIsConnectingToAWS(true);
+    
+    // Try to initialize AWS if not already initialized
     if (!awsInitialized) {
-      alert('Multiplayer features are not available. Please check your connection.');
-      return;
+      try {
+        await initializeMultiplayer();
+      } catch (error) {
+        setIsConnectingToAWS(false);
+        alert('Multiplayer features are not available. Please check your connection.');
+        return;
+      }
     }
 
     try {
       const hasUsername = await multiplayerService.hasRegisteredUsername();
+      setIsConnectingToAWS(false);
       if (hasUsername) {
-        setCurrentScreen('multiplayerLobby');
+        navigateTo('multiplayerLobby');
       } else {
-        setCurrentScreen('usernameRegistration');
+        navigateTo('usernameRegistration');
       }
     } catch (error) {
+      setIsConnectingToAWS(false);
       console.warn('Multiplayer service error:', error);
       // Fallback to username registration
-      setCurrentScreen('usernameRegistration');
+      navigateTo('usernameRegistration');
     }
   };
 
   const handleUsernameRegistration = (username: string) => {
     console.log('🎮 App: Username registered:', username);
     console.log('🎮 App: Switching to multiplayer lobby');
-    setCurrentScreen('multiplayerLobby');
+    navigateTo('multiplayerLobby');
   };
 
   const handleGameStart = (gameData: GameStartEvent) => {
     console.log('Starting multiplayer game:', gameData);
     multiplayerStore.startMultiplayerGame(gameData);
-    setCurrentScreen('multiplayerGame');
-  };
-
-  const handleMultiplayerGameEnd = (results: GameEndResult) => {
-    console.log('Multiplayer game ended:', results);
-    setMultiplayerResults(results);
-    setCurrentScreen('multiplayerResults');
+    navigateTo('multiplayerGame');
   };
 
   const handleBackToMenu = () => {
     multiplayerStore.cleanupMultiplayer();
     setCurrentScreen('menu');
+    setNavigationHistory([]);
   };
 
   // Listen for custom event from settings drawer
@@ -137,16 +160,35 @@ const App: React.FC = () => {
       handleMultiplayerClick();
     };
 
+    const handleViewLeaderboardEvent = () => {
+      console.log('🏆 App: Received view leaderboard event');
+      handleViewLeaderboard();
+    };
+
+    const handleUsernameChangeEvent = () => {
+      console.log('👤 App: Received username change event');
+      resetMultiplayerStateIfInLobby();
+    };
+
     window.addEventListener('switchToMultiplayer', handleSwitchToMultiplayer);
+    window.addEventListener('viewLeaderboard', handleViewLeaderboardEvent);
+    window.addEventListener('usernameChanged', handleUsernameChangeEvent);
     
     return () => {
       window.removeEventListener('switchToMultiplayer', handleSwitchToMultiplayer);
+      window.removeEventListener('viewLeaderboard', handleViewLeaderboardEvent);
+      window.removeEventListener('usernameChanged', handleUsernameChangeEvent);
     };
   }, []);
 
   const handleNewMultiplayerGame = () => {
     multiplayerStore.cleanupMultiplayer();
-    setCurrentScreen('multiplayerLobby');
+    navigateTo('multiplayerLobby');
+  };
+
+  const handleViewLeaderboard = () => {
+    console.log('🏆 App: Navigating to leaderboard');
+    navigateTo('leaderboard');
   };
 
   const renderCurrentScreen = () => {
@@ -159,7 +201,8 @@ const App: React.FC = () => {
           <MainMenu
             onSinglePlayer={handleSinglePlayerStart}
             onMultiplayer={handleMultiplayerClick}
-            multiplayerAvailable={awsInitialized}
+            multiplayerAvailable={true}
+            isConnecting={isConnectingToAWS}
           />
         );
         
@@ -179,6 +222,7 @@ const App: React.FC = () => {
           <MultiplayerLobby
             onGameStart={handleGameStart}
             onBack={handleBackToMenu}
+            globalUsername={globalUsername}
           />
         );
         
@@ -218,6 +262,13 @@ const App: React.FC = () => {
           />
         ) : (
           <div>Loading results...</div>
+        );
+        
+      case 'leaderboard':
+        return (
+          <LeaderboardScreen
+            onBack={navigateBack}
+          />
         );
         
       default:

@@ -133,7 +133,9 @@ const RecentGuessHistory: React.FC = () => {
 
   return (
     <div className="recent-guess-history">
-      <h4 className="history-title">Recent Guesses ({gameState.guesses.length})</h4>
+      <h4 className="history-title">
+        Recent Guesses ({gameState.guesses.length}) • Score: {gameState.score}
+      </h4>
       <div className="guess-history-list" ref={historyListRef}>
         {/* Always show actual guesses first */}
         {gameState.guesses.map((guess, index) => (

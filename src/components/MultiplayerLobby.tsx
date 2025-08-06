@@ -3,27 +3,28 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
-  Timer, 
   ArrowLeft, 
   Crown,
   Loader,
   AlertCircle,
-  Gamepad2,
-  Trophy,
-  Settings
+  Gamepad2
 } from 'lucide-react';
 import multiplayerService, { LobbyUpdate } from '../services/multiplayerService';
 import { DeviceDetection } from '../utils/deviceDetection';
+import { soundUtils } from '../utils/soundUtils';
+import { useGameStore } from '../stores/gameStore';
 
 interface MultiplayerLobbyProps {
   onGameStart: (gameData: any) => void;
   onBack: () => void;
   initialDifficulty?: string;
+  globalUsername?: string;
 }
 
 interface LobbyPlayer {
   username: string;
   joinedAt: string;
+  seatIndex?: number;
 }
 
 interface LobbyState {
@@ -45,7 +46,8 @@ const DIFFICULTY_CONFIGS = {
 export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   onGameStart,
   onBack,
-  initialDifficulty = 'classic'
+  initialDifficulty = 'classic',
+  globalUsername
 }) => {
   const [selectedDifficulty, setSelectedDifficulty] = useState(initialDifficulty);
   const [lobbyState, setLobbyState] = useState<LobbyState>({
@@ -57,11 +59,90 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentLayout, setCurrentLayout] = useState(() => DeviceDetection.getCurrentLayout());
+  const [showUsernameSelector, setShowUsernameSelector] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [previousUsernames, setPreviousUsernames] = useState<string[]>([]);
+  const [difficultyInterest, setDifficultyInterest] = useState<Record<string, number>>({});
+  const [countdownStarted, setCountdownStarted] = useState(false);
+  const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
+  const [showGameStartOverlay, setShowGameStartOverlay] = useState(false);
+  const [selectedSeatIndex, setSelectedSeatIndex] = useState<number | null>(null);
+  const [validatingUsername, setValidatingUsername] = useState(false);
   
   const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
   const gameStartSubscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentUsername = multiplayerService.getStoredUsername();
+  
+  // Use global username from gameStore
+  const { globalUsername: storeGlobalUsername, setGlobalUsername } = useGameStore();
+  
+  // Use passed globalUsername or fall back to store's globalUsername
+  const effectiveUsername = globalUsername || storeGlobalUsername || 'Player';
+  
+  // Load previous usernames and set initial username
+  useEffect(() => {
+    const storedUsernames = localStorage.getItem('pfb_previous_usernames');
+    if (storedUsernames) {
+      const usernames = JSON.parse(storedUsernames);
+      setPreviousUsernames(usernames);
+    }
+    
+    // Use the passed globalUsername if available, otherwise use first from stored usernames
+    if (globalUsername) {
+      console.log('🎮 MultiplayerLobby: Using passed username:', globalUsername);
+      setGlobalUsername(globalUsername);
+    } else if (storedUsernames) {
+      const usernames = JSON.parse(storedUsernames);
+      if (usernames.length > 0) {
+        console.log('🎮 MultiplayerLobby: Using first stored username:', usernames[0]);
+        setGlobalUsername(usernames[0]);
+      }
+    }
+    
+    console.log('🎮 MultiplayerLobby: Final selected username:', effectiveUsername);
+  }, [globalUsername, setGlobalUsername]);
+
+  // Initialize difficulty interest tracking
+  useEffect(() => {
+    const initializeDifficultyInterest = async () => {
+      try {
+        // Notify AWS of initial difficulty interest
+        await multiplayerService.updateDifficultyInterest(selectedDifficulty, true);
+        
+        // Set initial player counts (this would come from AWS in a real implementation)
+        setDifficultyInterest({
+          easy: 0,
+          classic: 0,
+          medium: 0,
+          hard: 0,
+          harder: 0,
+          hardest: 0
+        });
+      } catch (error) {
+        console.error('Failed to initialize difficulty interest:', error);
+      }
+    };
+
+    initializeDifficultyInterest();
+  }, [selectedDifficulty]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.username-dropdown')) {
+        setShowUsernameSelector(false);
+      }
+    };
+
+    if (showUsernameSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUsernameSelector]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -95,9 +176,22 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   }, [selectedDifficulty]);
 
   useEffect(() => {
-    // Handle countdown
-    if (lobbyState.countdown && lobbyState.countdown > 0) {
-      setCountdown(lobbyState.countdown);
+    // Handle countdown - only start if we have 2+ players
+    const playerCount = lobbyState.players.length;
+    const shouldStartCountdown = lobbyState.countdown && lobbyState.countdown > 0 && playerCount >= 2;
+    
+    if (shouldStartCountdown) {
+      setCountdown(lobbyState.countdown!);
+      
+      // Play countdown sound when countdown starts
+      if (!countdownStarted) {
+        setCountdownStarted(true);
+        console.log('⏱️ Starting countdown with', playerCount, 'players');
+        // Play the countdown sound effect using soundUtils
+        soundUtils.playStopwatchSound().catch(error => {
+          console.error('Failed to play countdown sound:', error);
+        });
+      }
       
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
@@ -109,6 +203,13 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
             if (countdownIntervalRef.current) {
               clearInterval(countdownIntervalRef.current);
             }
+            setCountdownStarted(false); // Reset for next countdown
+            
+            // Stop the stopwatch sound when countdown reaches 1
+            soundUtils.stopAllAudio();
+            
+            // Handle countdown reaching 0
+            handleCountdownEnd();
             return null;
           }
           return prev - 1;
@@ -116,6 +217,9 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
       }, 1000);
     } else {
       setCountdown(null);
+      setCountdownStarted(false); // Reset when countdown ends
+      // Stop the stopwatch sound when countdown is cancelled
+      soundUtils.stopAllAudio();
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
@@ -126,28 +230,215 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
         clearInterval(countdownIntervalRef.current);
       }
     };
-  }, [lobbyState.countdown]);
+  }, [lobbyState.countdown, countdownStarted, lobbyState.players.length]);
+
+  // Handle countdown reaching 0
+  const handleCountdownEnd = () => {
+    // Stop the stopwatch sound
+    soundUtils.stopAllAudio();
+    
+    const playerCount = lobbyState.players.length;
+    
+    if (playerCount < 2) {
+      // Not enough players - unseat current player
+      console.log('Countdown ended with insufficient players, unseating player');
+      setIsSeated(false);
+      setLobbyState(prev => ({
+        ...prev,
+        playersWaiting: 0,
+        players: []
+      }));
+    } else {
+      // Enough players - start game with 5-second countdown
+      console.log('Countdown ended with sufficient players, starting game');
+      startGameWithCountdown();
+    }
+  };
+
+  // Start game with 5-second countdown and fanfare
+  const startGameWithCountdown = () => {
+    setShowGameStartOverlay(true);
+    setGameStartCountdown(5);
+    
+    // Play fanfare sound using soundUtils
+    soundUtils.playFanfareSound().catch(error => {
+      console.error('Failed to play fanfare sound:', error);
+    });
+    
+    // Start 5-second countdown
+    const gameStartInterval = setInterval(() => {
+      setGameStartCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(gameStartInterval);
+          // Start the game
+          // startMultiplayerGame(); // This function is removed
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Remove the placeholder startMultiplayerGame function - real game start comes from AWS
+  // const startMultiplayerGame = () => {
+  //   setShowGameStartOverlay(false);
+  //   setGameStartCountdown(null);
+  //   
+  //   // Get game data from AWS (this would come from the lobby update)
+  //   const gameData = {
+  //     difficulty: selectedDifficulty,
+  //     players: lobbyState.players,
+  //     gameId: lobbyState.gameId,
+  //     // AWS would provide the random seed here
+  //     randomSeed: Math.floor(Math.random() * 1000000) // Placeholder - should come from AWS
+  //   };
+  //   
+  //   // Call the game start handler
+  //   onGameStart(gameData);
+  // };
 
   const subscribeToLobby = (difficulty: string) => {
+    console.log('🏆 subscribeToLobby called for difficulty:', difficulty);
+    
     if (subscriptionRef.current) {
+      console.log('🏆 Unsubscribing from previous lobby subscription');
       subscriptionRef.current.unsubscribe();
     }
 
-    subscriptionRef.current = multiplayerService.subscribeLobbyUpdates(
-      difficulty,
-      (update: LobbyUpdate) => {
-        console.log('Lobby update:', update);
-        setLobbyState({
-          playersWaiting: update.playersWaiting,
-          gameId: update.gameId,
-          countdown: update.countdown,
-          players: update.players || []
-        });
+    console.log('🏆 Setting up new lobby subscription');
+            subscriptionRef.current = multiplayerService.subscribeLobbyUpdates(
+          difficulty,
+          (update: LobbyUpdate) => {
+            console.log('🏆 Lobby update received:', update);
+            console.log('🏆 Current selectedUsername:', effectiveUsername);
+            console.log('🏆 Current lobbyState:', lobbyState);
+            
+            // Merge current local players with AWS update
+            setLobbyState(prev => {
+              // Keep current player if they're seated locally but not in AWS update
+              const currentPlayer = prev.players.find(p => p.username === effectiveUsername);
+              const awsPlayers = update.players || [];
+              
+              let mergedPlayers = [...awsPlayers];
+              if (currentPlayer && !awsPlayers.find(p => p.username === effectiveUsername)) {
+                mergedPlayers.push(currentPlayer);
+              }
+              
+              // Only start countdown if we have 2 or more players AND we're not the only one
+              const uniquePlayers = mergedPlayers.filter((player, index, self) => 
+                self.findIndex(p => p.username === player.username) === index
+              );
+              const shouldStartCountdown = uniquePlayers.length >= 2 && !prev.countdown;
+              const countdown = shouldStartCountdown ? 30 : update.countdown;
+              
+              // Calculate actual player count based on seated players
+              const actualPlayerCount = mergedPlayers.filter(player => player !== null && player !== undefined).length;
+              
+              console.log('🏆 Merged players:', mergedPlayers);
+              console.log('🏆 Actual player count:', actualPlayerCount);
+              console.log('🏆 Should start countdown:', shouldStartCountdown);
+              
+              return {
+                playersWaiting: actualPlayerCount,
+                gameId: update.gameId,
+                countdown: countdown,
+                players: mergedPlayers
+              };
+            });
+          }
+        );
+        
+        // Remove fallback mock player - users should manually select seats
+  };
+
+  const handleUsernameSelect = async (username: string) => {
+    const oldUsername = effectiveUsername;
+    setGlobalUsername(username);
+    setShowUsernameSelector(false);
+    
+    // If we're seated, notify AWS of the username change
+    if (isSeated && oldUsername !== username) {
+      try {
+        console.log('👤 MultiplayerLobby: Username changed from', oldUsername, 'to', username);
+        // Leave lobby with old username
+        await multiplayerService.leaveLobby(selectedDifficulty);
+        // Re-join lobby with new username
+        const result = await multiplayerService.joinLobby(selectedDifficulty, username);
+        console.log('👤 MultiplayerLobby: Rejoined lobby with new username:', result);
+      } catch (error) {
+        console.error('Failed to update username in lobby:', error);
+        setError('Failed to update username in lobby. Please try again.');
       }
-    );
+    }
+  };
+
+  const handleNewUsername = async () => {
+    if (newUsername.trim()) {
+      // Check if username already exists in previous usernames
+      if (previousUsernames.includes(newUsername.trim())) {
+        setError('Username already exists in your previous usernames. Please select it from the list or choose a different name.');
+        return;
+      }
+      
+      setValidatingUsername(true);
+      try {
+        // Validate username with AWS
+        const validation = await multiplayerService.validateUsername(newUsername.trim());
+        
+        if (!validation.available) {
+          setError(`${validation.message}${validation.suggestions.length > 0 ? '\n\nSuggestions:\n' + validation.suggestions.join('\n') : ''}`);
+          return;
+        }
+        
+        // Username is available, add to local storage
+        const updatedUsernames = [newUsername.trim(), ...previousUsernames].slice(0, 5);
+        setPreviousUsernames(updatedUsernames);
+        localStorage.setItem('pfb_previous_usernames', JSON.stringify(updatedUsernames));
+        
+        // Also save to multiplayer-specific storage for backward compatibility
+        localStorage.setItem('pfb_username', newUsername.trim());
+        localStorage.setItem('pfb_user_registered', 'true');
+        
+        const oldUsername = effectiveUsername;
+        setGlobalUsername(newUsername.trim());
+        setNewUsername('');
+        setShowUsernameSelector(false);
+        setError(''); // Clear any previous errors
+        
+        // If we're seated, notify AWS of the username change
+        if (isSeated && oldUsername !== newUsername.trim()) {
+          try {
+            console.log('👤 MultiplayerLobby: Username changed from', oldUsername, 'to', newUsername.trim());
+            // Leave lobby with old username
+            await multiplayerService.leaveLobby(selectedDifficulty);
+            // Re-join lobby with new username
+            const result = await multiplayerService.joinLobby(selectedDifficulty, newUsername.trim());
+            console.log('👤 MultiplayerLobby: Rejoined lobby with new username:', result);
+          } catch (error) {
+            console.error('Failed to update username in lobby:', error);
+            setError('Failed to update username in lobby. Please try again.');
+          }
+        }
+      } catch (error) {
+        console.error('Username validation failed:', error);
+        setError('Failed to validate username. Please check your connection and try again.');
+      } finally {
+        setValidatingUsername(false);
+      }
+    }
   };
 
   const handleDifficultyChange = async (newDifficulty: string) => {
+    if (loading) return;
+    
+    // Notify AWS of difficulty interest change
+    try {
+      await multiplayerService.updateDifficultyInterest(selectedDifficulty, false); // Leave current
+      await multiplayerService.updateDifficultyInterest(newDifficulty, true); // Join new
+    } catch (error) {
+      console.error('Failed to update difficulty interest:', error);
+    }
+    
     if (isSeated) {
       await handleLeaveLobby();
     }
@@ -332,32 +623,68 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
 
   const styles = getResponsiveStyles();
 
-  const handleJoinLobby = async () => {
+  const handleJoinLobby = async (seatIndex: number) => {
+    // Prevent joining if already seated
+    if (isSeated) {
+      setError('You are already seated. Please leave your current seat first.');
+      return;
+    }
+    
+    // Prevent joining if no username is selected
+    if (!effectiveUsername || effectiveUsername.trim() === '') {
+      setError('Please select a username before joining the lobby.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setSelectedSeatIndex(seatIndex);
     
     try {
       console.log('🎮 MultiplayerLobby: Attempting to join lobby for difficulty:', selectedDifficulty);
-      const result = await multiplayerService.joinLobby(selectedDifficulty);
+      console.log('🎮 MultiplayerLobby: Using username:', effectiveUsername);
+      
+      // Simply join the lobby with the selected username - no registration needed
+      const result = await multiplayerService.joinLobby(selectedDifficulty, effectiveUsername);
       console.log('🎮 MultiplayerLobby: Join lobby result:', result);
       
       if (result.success) {
         console.log('🎮 MultiplayerLobby: Successfully joined lobby');
         setIsSeated(true);
-        setLobbyState(prev => ({
-          ...prev,
-          playersWaiting: result.playersWaiting || 1,
-          gameId: result.gameId,
-          countdown: result.countdown
-        }));
+        
+        // Add current player to the players array at the specific seat
+        const currentPlayer = {
+          username: effectiveUsername,
+          joinedAt: new Date().toISOString(),
+          seatIndex: seatIndex
+        };
+        
+        setLobbyState(prev => {
+          // Create a new players array with the current player at the specific seat
+          const newPlayers = [...prev.players];
+          newPlayers[seatIndex] = currentPlayer;
+          
+          // Calculate player count based on actual seated players
+          const actualPlayerCount = newPlayers.filter(player => player !== null && player !== undefined).length;
+          
+          return {
+            ...prev,
+            playersWaiting: actualPlayerCount,
+            gameId: result.gameId,
+            countdown: result.countdown,
+            players: newPlayers
+          };
+        });
       } else {
         console.log('🎮 MultiplayerLobby: Failed to join lobby:', result.message);
         setError(result.message || 'Failed to join lobby');
+        setSelectedSeatIndex(null);
         // Don't change visual state if join fails
       }
     } catch (error) {
       console.error('🎮 MultiplayerLobby: Error joining lobby:', error);
       setError('Failed to join lobby. Please try again.');
+      setSelectedSeatIndex(null);
       // Don't change visual state if join fails
     } finally {
       setLoading(false);
@@ -371,9 +698,11 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
     try {
       await multiplayerService.leaveLobby(selectedDifficulty);
       setIsSeated(false);
+      setSelectedSeatIndex(null);
       setLobbyState(prev => ({
         ...prev,
-        playersWaiting: Math.max(0, prev.playersWaiting - 1)
+        playersWaiting: Math.max(0, prev.playersWaiting - 1),
+        players: prev.players.filter(player => player.username !== effectiveUsername)
       }));
     } catch (error) {
       setError('Failed to leave lobby.');
@@ -406,92 +735,78 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
     const maxPlayers = 4;
     const players = lobbyState.players.slice(0, maxPlayers);
     const tableSize = styles.tableSize;
-    const radius = tableSize * 0.35;
+    // const radius = tableSize * 0.35;
     
     return (
       <div style={{ position: 'relative', width: tableSize, height: tableSize }}>
-        {/* Poker Table - Simple circular table with felt interior and dark green border */}
+        {/* Octagonal Poker Table - Using the provided image */}
         <div style={{
           width: tableSize,
           height: tableSize,
-          borderRadius: '50%',
-          background: 'linear-gradient(145deg, #047857 0%, #065f46 100%)',
-          border: '8px solid #064e3b',
-          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.1)',
+          backgroundImage: 'url(/game_table.png)',
+          backgroundSize: 'contain',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           position: 'relative',
           margin: '0 auto'
         }}>
-          
-          {/* Table center logo with splash image */}
+          {/* Logo in center */}
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            color: 'white',
-            zIndex: 2,
-            width: tableSize * 0.54, // Reduced by 10% from 0.6 to 0.54
-            height: tableSize * 0.54, // Reduced by 10% from 0.6 to 0.54
-            borderRadius: '50%',
-            overflow: 'hidden'
+            width: tableSize * 0.375,
+            height: tableSize * 0.375,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
             <img 
               src="/splash-logo.png" 
-              alt="PicoFermiBagel"
+              alt="Game Logo"
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                objectFit: 'contain'
               }}
             />
-            <div style={{
-              fontSize: tableSize * 0.06,
-              fontWeight: 'bold',
-              marginTop: '8px',
-              textShadow: '0 2px 4px rgba(0,0,0,0.8)'
-            }}>
-              {DIFFICULTY_CONFIGS[selectedDifficulty as keyof typeof DIFFICULTY_CONFIGS]?.label}
-            </div>
-            
-            {/* Countdown overlay */}
-            {countdown && countdown > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(0, 0, 0, 0.8)',
-                  borderRadius: '50%',
-                  width: tableSize * 0.3,
-                  height: tableSize * 0.3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 3
-                }}
-              >
-                <div style={{
-                  fontSize: tableSize * 0.12,
-                  fontWeight: 'bold',
-                  color: '#fbbf24',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.8)'
-                }}>
-                  {countdown}
-                </div>
-              </motion.div>
+            {countdown && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: tableSize * 0.08,
+                fontWeight: 'bold',
+                color: 'white',
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '50%',
+                width: tableSize * 0.12,
+                height: tableSize * 0.12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {countdown}
+              </div>
             )}
           </div>
           
-          {/* Player seats */}
+          {/* Player seats positioned around the octagonal table */}
           {seatPositions.map(({ x, y, index }) => {
+            // Check if this seat should show the current user (either from players array or selected seat)
             const player = players[index];
-            const isEmpty = !player;
-            const isCurrentUser = player?.username === currentUsername;
+            const isEmpty = !player && !(isSeated && selectedSeatIndex === index);
+            const isCurrentUser = player?.username === effectiveUsername || (isSeated && selectedSeatIndex === index);
+            const isOccupiedByOther = player && player.username !== effectiveUsername;
+            
+            // Determine username position based on seat index
+            const isTopSeat = index === 0;    // Top seat
+            const isRightSeat = index === 1;   // Right seat
+            const isBottomSeat = index === 2;  // Bottom seat
+            const isLeftSeat = index === 3;    // Left seat
             
             return (
               <motion.div
@@ -506,11 +821,10 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                   zIndex: 3
                 }}
                 whileHover={isEmpty ? { scale: 1.1 } : {}}
-                // Removed animate prop to prevent seat movement
               >
                 {isEmpty ? (
                   <button
-                    onClick={!isSeated ? handleJoinLobby : undefined}
+                    onClick={!isSeated ? () => handleJoinLobby(index) : undefined}
                     disabled={isSeated || loading}
                     style={{
                       width: '100%',
@@ -549,38 +863,74 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                     </svg>
                   </button>
                 ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: isCurrentUser 
-                      ? 'linear-gradient(145deg, #3b82f6 0%, #2563eb 100%)'
-                      : 'linear-gradient(145deg, #6b7280 0%, #4b5563 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: tableSize * 0.06,
-                    boxShadow: isCurrentUser 
-                      ? '0 6px 12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.3)'
-                      : '0 4px 8px rgba(0, 0, 0, 0.3)',
-                    border: isCurrentUser ? '2px solid #60a5fa' : 'none'
-                  }}>
-                    {isCurrentUser && <Crown style={{ width: tableSize * 0.08, height: tableSize * 0.08, marginRight: '4px' }} />}
-                    <span style={{ 
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '80%',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                  <>
+                    {/* Occupied seat */}
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      background: isCurrentUser 
+                        ? 'linear-gradient(145deg, #3b82f6 0%, #2563eb 100%)'
+                        : 'linear-gradient(145deg, #6b7280 0%, #4b5563 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: tableSize * 0.06,
+                      boxShadow: isCurrentUser 
+                        ? '0 6px 12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.3)'
+                        : '0 4px 8px rgba(0, 0, 0, 0.3)',
+                      border: isCurrentUser ? '2px solid #60a5fa' : 'none'
                     }}>
-                      {player.username.length > 8 
-                        ? `${player.username.slice(0, 6)}...` 
-                        : player.username
+                      {isCurrentUser && <Crown style={{ width: tableSize * 0.08, height: tableSize * 0.08 }} />}
+                      {isOccupiedByOther && (
+                        <Users style={{ width: tableSize * 0.08, height: tableSize * 0.08, color: '#9ca3af' }} />
+                      )}
+                    </div>
+                    
+                    {/* Username positioned outside seat */}
+                    <div style={{
+                      position: 'absolute',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: tableSize * 0.04,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap',
+                      zIndex: 4,
+                      ...(isTopSeat && {
+                        bottom: '120%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        textAlign: 'center'
+                      }),
+                      ...(isBottomSeat && {
+                        top: '120%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        textAlign: 'center'
+                      }),
+                      ...(isLeftSeat && {
+                        right: '120%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed'
+                      }),
+                      ...(isRightSeat && {
+                        left: '120%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed'
+                      })
+                    }}>
+                      {(player?.username || (isCurrentUser ? effectiveUsername : '')).length > 8 
+                        ? `${(player?.username || (isCurrentUser ? effectiveUsername : '')).slice(0, 6)}...` 
+                        : (player?.username || (isCurrentUser ? effectiveUsername : ''))
                       }
-                    </span>
-                  </div>
+                    </div>
+                  </>
                 )}
               </motion.div>
             );
@@ -588,20 +938,14 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
         </div>
         
         {/* Game info */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            color: 'white',
-            marginBottom: '12px',
-            fontSize: tableSize * 0.04
-          }}>
-            <Users style={{ width: tableSize * 0.05, height: tableSize * 0.05 }} />
-            <span>{lobbyState.playersWaiting} of {maxPlayers} players</span>
-          </div>
-          
+        <div style={{ 
+          position: 'absolute',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          width: '100%'
+        }}>
 
           
           {isSeated && !countdown && (
@@ -617,7 +961,9 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                marginTop: '8px'
+                marginTop: '12px',
+                fontWeight: 'bold',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)'
               }}
             >
               Leave Lobby
@@ -703,11 +1049,194 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 }
               }}
             >
-              <div style={{ fontWeight: '600', marginBottom: '2px' }}>{config.label}</div>
-              <div style={{ fontSize: '0.8em', opacity: 0.8 }}>{config.description}</div>
+                          <div style={{ fontWeight: '600', marginBottom: '2px' }}>{config.label}</div>
+            <div style={{ fontSize: '0.8em', opacity: 0.8 }}>{config.description}</div>
+            {difficultyInterest[key] !== undefined && (
+              <div style={{ 
+                fontSize: '0.7em', 
+                opacity: 0.9, 
+                marginTop: '2px',
+                color: difficultyInterest[key] > 0 ? '#10b981' : 'rgba(255, 255, 255, 0.6)'
+              }}>
+                {difficultyInterest[key]} players
+              </div>
+            )}
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Username Selector */}
+      <div style={styles.difficultySection}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users style={{ width: '20px', height: '20px', color: 'white' }} />
+            <h2 style={{ 
+              ...styles.difficultyTitle, 
+              marginBottom: '0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: 'white'
+            }}>Select Username</h2>
+          </div>
+          
+          {/* Username Dropdown */}
+          <div className="username-dropdown" style={{ position: 'relative', flex: 1 }}>
+            <button
+              onClick={() => setShowUsernameSelector(!showUsernameSelector)}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '6px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                height: '36px',
+                boxSizing: 'border-box'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+            >
+              <span>{effectiveUsername || 'Select Username'}</span>
+              <span style={{ fontSize: '12px' }}>▼</span>
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showUsernameSelector && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '6px',
+                  marginTop: '4px',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}
+              >
+                {/* Previous Usernames */}
+                {previousUsernames.map((username) => (
+                  <button
+                    key={username}
+                    onClick={() => handleUsernameSelect(username)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      backgroundColor: effectiveUsername === username 
+                        ? 'rgba(59, 130, 246, 0.8)' 
+                        : 'transparent',
+                      color: 'white',
+                      border: 'none',
+                      textAlign: 'left' as const,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (effectiveUsername !== username) {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (effectiveUsername !== username) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
+                  >
+                    {username}
+                  </button>
+                ))}
+                
+                {/* Add New Username Option */}
+                <div style={{
+                  padding: '8px 12px',
+                  borderTop: '2px solid rgba(255, 255, 255, 0.2)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                }}>
+                  <div style={{ color: 'white', fontSize: '11px', marginBottom: '6px', opacity: 0.8 }}>
+                    Add New Username:
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      type="text"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Enter username..."
+                      style={{
+                        flex: 1,
+                        padding: '4px 6px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '3px',
+                        color: 'white',
+                        fontSize: '11px'
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleNewUsername();
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={handleNewUsername}
+                      disabled={validatingUsername || !newUsername.trim()}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: validatingUsername 
+                          ? 'rgba(107, 114, 128, 0.5)' 
+                          : (newUsername.trim() ? 'rgba(34, 197, 94, 0.8)' : 'rgba(107, 114, 128, 0.5)'),
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '3px',
+                        fontSize: '10px',
+                        cursor: (validatingUsername || !newUsername.trim()) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {validatingUsername ? 'Validating...' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Player Count */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        color: 'white',
+        marginBottom: '16px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+      }}>
+        <Users style={{ width: '20px', height: '20px' }} />
+        <span>{lobbyState.playersWaiting} of 4 players</span>
       </div>
 
       {/* Game Table */}
@@ -760,13 +1289,76 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
           <span>Waiting for more players to join...</span>
         )}
       </div>
+
+      {/* Game Start Overlay */}
+      <AnimatePresence>
+        {showGameStartOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              style={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                borderRadius: '16px',
+                padding: '32px',
+                textAlign: 'center',
+                color: 'white',
+                border: '2px solid rgba(59, 130, 246, 0.5)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+              }}
+            >
+              <h2 style={{ 
+                fontSize: '24px', 
+                marginBottom: '16px',
+                color: '#60a5fa',
+                fontWeight: 'bold'
+              }}>
+                Game Starting!
+              </h2>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: 'bold',
+                color: '#fbbf24',
+                marginBottom: '16px',
+                textShadow: '0 0 20px rgba(251, 191, 36, 0.5)'
+              }}>
+                {gameStartCountdown}
+              </div>
+              <p style={{ 
+                fontSize: '16px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                margin: 0
+              }}>
+                Get ready to play!
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 // Plus icon component (since it might not be in lucide-react)
-const Plus: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
+// const Plus: React.FC<{ className?: string }> = ({ className }) => (
+//   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+//   </svg>
+// );

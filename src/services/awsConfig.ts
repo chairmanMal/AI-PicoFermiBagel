@@ -12,6 +12,12 @@ const awsConfig = {
 // Configure Amplify
 export const initializeAWS = () => {
   try {
+    console.log('🔧 AWS: Initializing Amplify configuration...');
+    console.log('🔧 AWS: Endpoint:', awsConfig.aws_appsync_graphqlEndpoint);
+    console.log('🔧 AWS: Region:', awsConfig.aws_appsync_region);
+    console.log('🔧 AWS: Auth Type:', awsConfig.aws_appsync_authenticationType);
+    console.log('🔧 AWS: API Key:', awsConfig.aws_appsync_apiKey.substring(0, 10) + '...');
+    
     Amplify.configure({
       API: {
         GraphQL: {
@@ -22,9 +28,14 @@ export const initializeAWS = () => {
         }
       }
     });
-    console.log('AWS configured successfully');
-  } catch (error) {
-    console.error('AWS configuration failed:', error);
+    console.log('✅ AWS: Amplify configured successfully');
+  } catch (error: any) {
+    console.error('❌ AWS: Configuration failed:', error);
+    console.error('❌ AWS: Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
   }
 };
 

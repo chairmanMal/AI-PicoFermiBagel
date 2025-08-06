@@ -6,7 +6,8 @@ import './TargetDisplay.css';
 const TargetDisplay: React.FC = () => {
   const { gameState, settings } = useGameStore();
 
-  if (!settings.showTarget) {
+  // Show target if explicitly enabled OR if developer mode is enabled
+  if (!settings.showTarget && !settings.developerMode) {
     return null;
   }
 

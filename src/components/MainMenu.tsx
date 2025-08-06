@@ -1,19 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DeviceDetection } from '../utils/deviceDetection';
+import { Users, Plus } from 'lucide-react';
+import { useGameStore } from '../stores/gameStore';
 
 interface MainMenuProps {
   onSinglePlayer: () => void;
   onMultiplayer: () => void;
   multiplayerAvailable: boolean;
+  isConnecting?: boolean;
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ 
   onSinglePlayer, 
   onMultiplayer, 
-  multiplayerAvailable 
+  multiplayerAvailable,
+  isConnecting = false
 }) => {
   const [currentLayout, setCurrentLayout] = useState(() => DeviceDetection.getCurrentLayout());
+  const [showUsernameSelector, setShowUsernameSelector] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [previousUsernames, setPreviousUsernames] = useState<string[]>([]);
+  const [validatingUsername, setValidatingUsername] = useState(false);
+  
+  // Use global username from gameStore
+  const { globalUsername, setGlobalUsername } = useGameStore();
+
+  // Load previous usernames from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('pfb_previous_usernames');
+    if (saved) {
+      const usernames = JSON.parse(saved);
+      setPreviousUsernames(usernames);
+      if (usernames.length > 0 && !globalUsername) {
+        setGlobalUsername(usernames[0]);
+      }
+    }
+  }, [globalUsername, setGlobalUsername]);
+
+  const handleUsernameSelect = (username: string) => {
+    setGlobalUsername(username);
+    setShowUsernameSelector(false);
+    // Dispatch event to notify App component that username changed
+    window.dispatchEvent(new CustomEvent('usernameChanged'));
+  };
+
+  const handleNewUsername = async () => {
+    if (newUsername.trim()) {
+      // Check if username already exists in previous usernames
+      if (previousUsernames.includes(newUsername.trim())) {
+        alert('Username already exists in your previous usernames. Please select it from the list or choose a different name.');
+        return;
+      }
+      
+      setValidatingUsername(true);
+      try {
+        // Validate username with AWS
+        const { default: multiplayerService } = await import('../services/multiplayerService');
+        const validation = await multiplayerService.validateUsername(newUsername.trim());
+        
+        if (!validation.available) {
+          alert(`${validation.message}${validation.suggestions.length > 0 ? '\n\nSuggestions:\n' + validation.suggestions.join('\n') : ''}`);
+          return;
+        }
+        
+        // Username is available, add to local storage
+        const updatedUsernames = [newUsername.trim(), ...previousUsernames].slice(0, 5);
+        setPreviousUsernames(updatedUsernames);
+        localStorage.setItem('pfb_previous_usernames', JSON.stringify(updatedUsernames));
+        
+        setGlobalUsername(newUsername.trim());
+        setNewUsername('');
+        setShowUsernameSelector(false);
+        // Dispatch event to notify App component that username changed
+        window.dispatchEvent(new CustomEvent('usernameChanged'));
+      } catch (error) {
+        console.error('Username validation failed:', error);
+        alert('Failed to validate username. Please check your connection and try again.');
+      } finally {
+        setValidatingUsername(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -164,6 +232,117 @@ const MainMenu: React.FC<MainMenuProps> = ({
           PicoFermiBagel
         </h1>
         
+        {/* Username Selector */}
+        <div style={{
+          marginBottom: '24px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            marginBottom: '12px'
+          }}>
+            <Users size={20} color="#6b7280" />
+            <span style={{ fontSize: '16px', color: '#6b7280', fontWeight: '500' }}>
+              Select Username
+            </span>
+          </div>
+          
+          {!showUsernameSelector ? (
+            <button
+              onClick={() => setShowUsernameSelector(true)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid #d1d5db',
+                background: 'white',
+                color: '#374151',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                margin: '0 auto'
+              }}
+            >
+              {globalUsername || 'Choose username...'}
+              <Plus size={16} />
+            </button>
+          ) : (
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              border: '1px solid #d1d5db',
+              padding: '12px',
+              maxWidth: '280px',
+              margin: '0 auto'
+            }}>
+              {/* Previous usernames */}
+              {previousUsernames.length > 0 && (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                    Previous usernames:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {previousUsernames.map(username => (
+                      <button
+                        key={username}
+                        onClick={() => handleUsernameSelect(username)}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid #d1d5db',
+                          background: 'white',
+                          color: '#374151',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {username}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* New username input */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="Enter new username"
+                  style={{
+                    flex: 1,
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px'
+                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && handleNewUsername()}
+                />
+                <button
+                  onClick={handleNewUsername}
+                  disabled={validatingUsername}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    background: validatingUsername ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    fontSize: '14px',
+                    cursor: validatingUsername ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {validatingUsername ? 'Validating...' : 'Add'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
         <div style={styles.buttonContainer}>
           <button
             onClick={onSinglePlayer}
@@ -199,7 +378,7 @@ const MainMenu: React.FC<MainMenuProps> = ({
             }}
           >
             Multiplayer
-            {!multiplayerAvailable && (
+            {isConnecting && (
               <span style={{ display: 'block', fontSize: '14px', fontWeight: 'normal' }}>Connecting...</span>
             )}
           </button>
