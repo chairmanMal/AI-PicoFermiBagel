@@ -248,40 +248,41 @@ class MultiplayerService {
 
       console.log('🎮 MultiplayerService: Joining lobby with:', { deviceId: this.deviceId, username: selectedUsername, difficulty });
 
-      const result = await this.client.graphql({
-        query: mutations.joinLobby,
-        variables: {
-          input: {
-            deviceId: this.deviceId,
-            username: selectedUsername,
-            difficulty,
-            timestamp: new Date().toISOString()
+      // Try GraphQL first
+      try {
+        const result = await this.client.graphql({
+          query: mutations.joinLobby,
+          variables: {
+            input: {
+              deviceId: this.deviceId,
+              username: selectedUsername,
+              difficulty,
+              timestamp: new Date().toISOString()
+            }
           }
+        });
+
+        console.log('🎮 MultiplayerService: GraphQL result:', result);
+
+        // Type guard to check if it's a GraphQLResult
+        if ('errors' in result && result.errors && result.errors.length > 0) {
+          console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
+          throw new Error(`GraphQL error: ${result.errors[0].message}`);
         }
-      });
 
-      console.log('🎮 MultiplayerService: GraphQL result:', result);
+        if (!('data' in result) || !result.data || !result.data.joinLobby) {
+          console.error('🎮 MultiplayerService: No data in response:', result);
+          throw new Error('No response from server');
+        }
 
-      // Type guard to check if it's a GraphQLResult
-      if ('errors' in result && result.errors && result.errors.length > 0) {
-        console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
-        return {
-          success: false,
-          playersWaiting: 0,
-          message: `Failed to join game: ${result.errors[0].message}`
-        };
+        return (result as any).data.joinLobby;
+      } catch (graphqlError) {
+        console.error('🎮 MultiplayerService: GraphQL failed, trying direct Lambda:', graphqlError);
+        
+        // Fallback to direct Lambda call
+        const { directLambdaService } = await import('./directLambdaService');
+        return await directLambdaService.joinLobby(difficulty, selectedUsername);
       }
-
-      if (!('data' in result) || !result.data || !result.data.joinLobby) {
-        console.error('🎮 MultiplayerService: No data in response:', result);
-        return {
-          success: false,
-          playersWaiting: 0,
-          message: 'Failed to join game: No response from server'
-        };
-      }
-
-      return (result as any).data.joinLobby;
     } catch (error) {
       console.error('🎮 MultiplayerService: Join lobby failed:', error);
       return {
@@ -437,37 +438,46 @@ class MultiplayerService {
       console.log('🎮 MultiplayerService: Getting leaderboard via AppSync for difficulty:', difficulty);
       console.log('🎮 MultiplayerService: Using queries.getLeaderboard:', queries.getLeaderboard);
       
-      const result = await this.client.graphql({
-        query: queries.getLeaderboard,
-        variables: {
-          difficulty: difficulty,
-          limit: limit
+      // Try GraphQL first
+      try {
+        const result = await this.client.graphql({
+          query: queries.getLeaderboard,
+          variables: {
+            difficulty: difficulty,
+            limit: limit
+          }
+        });
+
+        console.log('🎮 MultiplayerService: AppSync query result:', JSON.stringify(result, null, 2));
+        
+        // Check for GraphQL errors
+        if ('errors' in result && result.errors && result.errors.length > 0) {
+          console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
+          throw new Error(`GraphQL error: ${result.errors[0].message}`);
         }
-      });
 
-      console.log('🎮 MultiplayerService: AppSync query result:', JSON.stringify(result, null, 2));
-      
-      // Check for GraphQL errors
-      if ('errors' in result && result.errors && result.errors.length > 0) {
-        console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
-        return [];
+        if (!('data' in result) || !result.data || !result.data.getLeaderboard) {
+          console.error('🎮 MultiplayerService: No data in response:', result);
+          throw new Error('No response from server');
+        }
+
+        const leaderboardData = result.data.getLeaderboard;
+        console.log('🎮 MultiplayerService: Leaderboard data received:', leaderboardData);
+        
+        return leaderboardData.map((entry: any) => ({
+          rank: entry.rank,
+          username: entry.username,
+          score: entry.score,
+          timestamp: entry.timestamp,
+          difficulty: entry.difficulty
+        }));
+      } catch (graphqlError) {
+        console.error('🎮 MultiplayerService: GraphQL failed, trying direct Lambda:', graphqlError);
+        
+        // Fallback to direct Lambda call
+        const { directLambdaService } = await import('./directLambdaService');
+        return await directLambdaService.getLeaderboard(difficulty, limit);
       }
-
-      if (!('data' in result) || !result.data || !result.data.getLeaderboard) {
-        console.error('🎮 MultiplayerService: No data in response:', result);
-        return [];
-      }
-
-      const leaderboardData = result.data.getLeaderboard;
-      console.log('🎮 MultiplayerService: Leaderboard data received:', leaderboardData);
-      
-      return leaderboardData.map((entry: any) => ({
-        rank: entry.rank,
-        username: entry.username,
-        score: entry.score,
-        timestamp: entry.timestamp,
-        difficulty: entry.difficulty
-      }));
       
     } catch (error: any) {
       console.error('Get leaderboard failed:', error);
