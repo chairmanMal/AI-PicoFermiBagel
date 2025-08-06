@@ -119,7 +119,7 @@ class MultiplayerService {
       console.log('🎮 MultiplayerService: Validating username:', username);
       
       const result = await this.client.graphql({
-        query: mutations.validateUsername,
+        query: mutations.registerUser,
         variables: { username }
       });
 
@@ -376,7 +376,7 @@ class MultiplayerService {
       try {
         console.log('🎮 MultiplayerService: Trying basic mutation (no return value)...');
         const result = await this.client.graphql({
-          query: mutations.submitGameResultBasic,
+          query: mutations.submitGameResult,
           variables: {
             input: {
               gameId: validGameId,

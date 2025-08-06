@@ -1,10 +1,14 @@
 // src/components/MultiplayerResults.tsx
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trophy, 
+  Medal, 
   Target, 
-  UserX,
+  Users, 
+  RotateCcw,
+  Home,
+  BarChart3,
   Crown,
   Star
 } from 'lucide-react';
@@ -23,7 +27,6 @@ interface MultiplayerResultsProps {
   newPersonalBest: boolean;
   onNewGame: () => void;
   onRematch?: () => void;
-  onViewLeaderboard: () => void;
   onMainMenu: () => void;
 }
 
@@ -36,16 +39,15 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
   newPersonalBest,
   onNewGame,
   onRematch,
-  // onViewLeaderboard,
   onMainMenu
 }) => {
-  const [showLeaderboard, setShowLeaderboard] = React.useState(false);
-  const [currentLeaderboardIndex, setCurrentLeaderboardIndex] = React.useState(0);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [currentLeaderboardIndex, setCurrentLeaderboardIndex] = useState(0);
 
   const currentPlayerRank = rankings.find(r => r.username === currentUsername);
   const isWinner = winner === currentUsername;
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Auto-scroll leaderboard
     if (showLeaderboard && leaderboardData.length > 0) {
       const interval = setInterval(() => {
@@ -69,9 +71,9 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
       case 1:
         return <Crown className="w-6 h-6 text-yellow-500" />;
       case 2:
-        return <UserX className="w-6 h-6 text-gray-400" />;
+        return <Medal className="w-6 h-6 text-gray-400" />;
       case 3:
-        return <UserX className="w-6 h-6 text-orange-500" />;
+        return <Medal className="w-6 h-6 text-orange-500" />;
       default:
         return <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">{rank}</div>;
     }
@@ -170,7 +172,7 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
             className="mb-6"
           >
             <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <UserX className="w-5 h-5" />
+              <Users className="w-5 h-5" />
               Final Rankings
             </h3>
             <div className="space-y-3">
@@ -222,7 +224,7 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
             className="bg-gray-50 rounded-xl p-4 mb-6"
           >
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <UserX className="w-5 h-5" />
+              <BarChart3 className="w-5 h-5" />
               Game Statistics
             </h3>
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -242,36 +244,37 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
           </motion.div>
 
           {/* Auto-scrolling Leaderboard */}
-          {/* Removed AnimatePresence as it's not used for leaderboard */}
-          {showLeaderboard && leaderboardData.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 mb-6"
-            >
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Trophy className="w-5 h-5" />
-                Global Leaderboard
-              </h3>
-              <div className="space-y-2">
-                {leaderboardData.slice(currentLeaderboardIndex, currentLeaderboardIndex + 5).map((entry) => (
-                  <motion.div
-                    key={`${entry.rank}-${entry.timestamp}`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold">#{entry.rank}</span>
-                      <span>{entry.username}</span>
-                    </div>
-                    <span className="font-bold">{entry.score}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {showLeaderboard && leaderboardData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 mb-6"
+              >
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Global Leaderboard
+                </h3>
+                <div className="space-y-2">
+                  {leaderboardData.slice(currentLeaderboardIndex, currentLeaderboardIndex + 5).map((entry) => (
+                    <motion.div
+                      key={`${entry.rank}-${entry.timestamp}`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center justify-between bg-white bg-opacity-20 rounded-lg px-3 py-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold">#{entry.rank}</span>
+                        <span>{entry.username}</span>
+                      </div>
+                      <span className="font-bold">{entry.score}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Action Buttons */}
@@ -282,7 +285,7 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
                 onClick={onRematch}
                 className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
               >
-                <UserX className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4" />
                 Rematch
               </button>
             )}
@@ -291,7 +294,7 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
               onClick={onNewGame}
               className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
             >
-              <UserX className="w-4 h-4" />
+              <Users className="w-4 h-4" />
               New Game
             </button>
             
@@ -307,7 +310,7 @@ export const MultiplayerResults: React.FC<MultiplayerResultsProps> = ({
               onClick={onMainMenu}
               className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
             >
-              <UserX className="w-4 h-4" />
+              <Home className="w-4 h-4" />
               Menu
             </button>
           </div>

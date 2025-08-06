@@ -6,7 +6,6 @@ import {
   Timer, 
   Trophy, 
   Target, 
-  // Clock,
   UserX,
   Crown
 } from 'lucide-react';

@@ -257,7 +257,7 @@ const App: React.FC = () => {
             newPersonalBest={multiplayerResults.newPersonalBest}
             onNewGame={handleNewMultiplayerGame}
             onRematch={() => handleNewMultiplayerGame()}
-            onViewLeaderboard={() => {}}
+
             onMainMenu={handleBackToMenu}
           />
         ) : (

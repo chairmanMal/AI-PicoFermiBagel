@@ -1,0 +1,14 @@
+[
+  {
+    "IndexName": "deviceId-index",
+    "KeySchema": [
+      {
+        "AttributeName": "deviceId",
+        "KeyType": "HASH"
+      }
+    ],
+    "Projection": {
+      "ProjectionType": "ALL"
+    }
+  }
+]

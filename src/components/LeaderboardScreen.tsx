@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { LeaderboardEntry } from '../types/game';
+import { ArrowLeft } from 'lucide-react';
 
 interface LeaderboardScreenProps {
   onBack: () => void;
 }
 
 const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBack }) => {
-  const { leaderboard, stats, settings } = useGameStore();
+  const { leaderboard, settings, globalUsername } = useGameStore();
   
   // Use the current game difficulty as the initial selected difficulty
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>(settings.difficulty);
@@ -98,51 +99,49 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBack }) => {
   useEffect(() => {
     // Load leaderboard data for selected difficulty
     const difficultyData = leaderboard.get(selectedDifficulty) || [];
-    console.log('🏆 LeaderboardScreen: Loading data for difficulty:', selectedDifficulty);
-    console.log('🏆 LeaderboardScreen: Available difficulties:', Array.from(leaderboard.keys()));
-    console.log('🏆 LeaderboardScreen: Data for', selectedDifficulty, ':', difficultyData);
     setLeaderboardData(difficultyData);
-    setCurrentPage(0);
   }, [selectedDifficulty, leaderboard]);
 
   useEffect(() => {
     // Calculate user statistics
-    const userStatsData = {
-      gamesPlayed: 0,
-      wins: 0,
-      losses: 0,
-      winRate: 0,
-      bestScores: [] as { difficulty: string; score: number }[],
-      averageScores: [] as { difficulty: string; score: number }[]
-    };
-
-    // Calculate stats from game store
-    difficulties.forEach(difficulty => {
-      const difficultyStats = stats.get(difficulty);
-      if (difficultyStats) {
-        userStatsData.gamesPlayed += difficultyStats.gamesPlayed;
-        userStatsData.wins += difficultyStats.gamesWon;
-        userStatsData.bestScores.push({
-          difficulty,
-          score: difficultyStats.bestScore
-        });
-        userStatsData.averageScores.push({
-          difficulty,
-          score: difficultyStats.averageScore
-        });
-      }
+    const allEntries = Array.from(leaderboard.values()).flat();
+    const userEntries = allEntries.filter(entry => entry.playerName === globalUsername);
+    
+    const gamesPlayed = userEntries.length;
+    const wins = userEntries.filter(entry => entry.score > 0).length;
+    const losses = gamesPlayed - wins;
+    const winRate = gamesPlayed > 0 ? (wins / gamesPlayed) * 100 : 0;
+    
+    // Calculate best scores per difficulty
+    const bestScores = difficulties.map(difficulty => {
+      const difficultyEntries = userEntries.filter(entry => entry.difficulty === difficulty);
+      const bestEntry = difficultyEntries.reduce((best, current) => 
+        current.score > best.score ? current : best, 
+        { score: 0, difficulty }
+      );
+      return { difficulty, score: bestEntry.score };
+    }).filter(score => score.score > 0);
+    
+    // Calculate average scores per difficulty
+    const averageScores = difficulties.map(difficulty => {
+      const difficultyEntries = userEntries.filter(entry => entry.difficulty === difficulty);
+      if (difficultyEntries.length === 0) return { difficulty, score: 0 };
+      const totalScore = difficultyEntries.reduce((sum, entry) => sum + entry.score, 0);
+      return { difficulty, score: Math.round(totalScore / difficultyEntries.length) };
+    }).filter(score => score.score > 0);
+    
+    setUserStats({
+      gamesPlayed,
+      wins,
+      losses,
+      winRate,
+      bestScores,
+      averageScores
     });
-
-    userStatsData.losses = userStatsData.gamesPlayed - userStatsData.wins;
-    userStatsData.winRate = userStatsData.gamesPlayed > 0 
-      ? (userStatsData.wins / userStatsData.gamesPlayed) * 100 
-      : 0;
-
-    setUserStats(userStatsData);
-  }, [stats]);
+  }, [leaderboard, globalUsername]);
 
   const formatDate = (timestamp: Date) => {
-    return new Date(timestamp).toLocaleDateString();
+    return timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
   };
 
   const getDifficultyDisplayName = (difficulty: string) => {
@@ -183,23 +182,39 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBack }) => {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-          🏆 Leaderboard
-        </h1>
         <button
           onClick={onBack}
           style={{
-            background: 'rgba(255,255,255,0.2)',
-            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
             color: 'white',
-            padding: '10px 20px',
-            borderRadius: '8px',
+            background: 'none',
+            border: 'none',
             cursor: 'pointer',
-            fontSize: '16px'
+            fontSize: '14px',
+            opacity: 0.9,
+            transition: 'opacity 0.2s ease'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.9'}
         >
-          ← Back
+          <ArrowLeft style={{ width: '16px', height: '16px' }} />
+          Back to Game Display
         </button>
+        
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '24px', 
+          fontWeight: 'bold',
+          flex: 1,
+          textAlign: 'center'
+        }}>
+          🏆 Leaderboard
+        </h1>
+        
+        {/* Empty div to balance the layout */}
+        <div style={{ width: '120px' }}></div>
       </div>
 
       {/* Difficulty Filter */}
