@@ -43,17 +43,9 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBack }) => {
         // Import multiplayerService dynamically to avoid circular dependencies
         console.log('🏆 LeaderboardScreen: About to import multiplayerService...');
         
-        // Try different import approaches
-        let multiplayerService;
-        try {
-          const module = await import('../services/multiplayerService');
-          console.log('🏆 LeaderboardScreen: Module imported successfully:', Object.keys(module));
-          multiplayerService = module.default;
-          console.log('🏆 LeaderboardScreen: Default export found:', multiplayerService);
-        } catch (importError: any) {
-          console.error('🏆 LeaderboardScreen: Import failed:', importError);
-          throw importError;
-        }
+        // Import multiplayerService
+        const { multiplayerService } = await import('../services/multiplayerService');
+        console.log('🏆 LeaderboardScreen: multiplayerService imported successfully');
         
         console.log('🏆 LeaderboardScreen: multiplayerService imported successfully');
         console.log('🏆 LeaderboardScreen: multiplayerService methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(multiplayerService)));
