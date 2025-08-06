@@ -4,7 +4,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { getNextUnlockedPosition, calculateTargetRowSums } from '@/utils/gameLogic';
 import { soundUtils } from '@/utils/soundUtils';
 import { registerDragIndicator, unregisterDragIndicator } from '@/utils/dragCleanup';
-import { getBuildString } from '@/config/version';
+import { getVersionString } from '@/config/version';
 import './GuessArea.css';
 
 interface GuessBoxProps {
@@ -536,7 +536,7 @@ const GuessArea: React.FC<GuessAreaProps> = () => {
   const { settings, gameState, hintState, dispatch } = useGameStore();
   
   // Log build number for debugging
-  console.log(`🎯 GuessArea: Component initialized - ${getBuildString()}`);
+          console.log(`🎯 GuessArea: Component initialized - ${getVersionString()}`);
   
   // Calculate row sums if any have been purchased
   const targetRowSums = hintState.purchasedHints.revealedRowSums.size > 0

@@ -1,8 +1,8 @@
 // src/components/UsernameRegistration.tsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, CheckCircle, AlertCircle, Loader } from 'lucide-react';
-import multiplayerService from '../services/multiplayerService';
+import { User, AlertCircle, Loader, CheckCircle } from 'lucide-react';
+import { multiplayerService } from '../services/multiplayerService';
 import { DeviceDetection } from '../utils/deviceDetection';
 
 interface UsernameRegistrationProps {

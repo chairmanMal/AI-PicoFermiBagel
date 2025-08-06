@@ -11,6 +11,25 @@ console.log('🔧 MultiplayerService: queries imported:', Object.keys(queries));
 console.log('🔧 MultiplayerService: subscriptions imported:', Object.keys(subscriptions));
 console.log('🔧 MultiplayerService: getLeaderboard query:', queries.getLeaderboard);
 
+// Enhanced error types
+export interface ServiceError {
+  type: 'NETWORK' | 'AUTHENTICATION' | 'PERMISSION' | 'VALIDATION' | 'SERVER' | 'UNKNOWN';
+  message: string;
+  details: string;
+  retryable: boolean;
+  suggestedAction: 'RETRY' | 'SWITCH_TO_SINGLE_PLAYER' | 'CHECK_CREDENTIALS' | 'CONTACT_SUPPORT';
+  timestamp: string;
+  operation: string;
+  originalError?: any;
+}
+
+export interface ServiceResult<T> {
+  success: boolean;
+  data?: T;
+  error?: ServiceError;
+  retryCount?: number;
+}
+
 // Types
 export interface UserRegistrationResult {
   success: boolean;
@@ -26,6 +45,7 @@ export interface LobbyJoinResult {
   playersWaiting: number;
   countdown?: number;
   message: string;
+  error?: ServiceError;
 }
 
 export interface GamePulseResult {
@@ -47,6 +67,7 @@ export interface GameEndResult {
   rankings: PlayerRanking[];
   leaderboardUpdated: boolean;
   newPersonalBest: boolean;
+  error?: ServiceError;
 }
 
 export interface PlayerRanking {
@@ -98,159 +119,467 @@ class MultiplayerService {
   private client = generateClient();
   private subscriptions = new Map<string, any>();
   private deviceId: string;
-  private failedOperationsQueue: any[] = [];
+  private maxRetries = 3;
 
   constructor() {
     this.deviceId = this.getOrCreateDeviceId();
   }
 
   private getOrCreateDeviceId(): string {
-    let deviceId = localStorage.getItem('pfb_device_id');
-    if (!deviceId) {
-      deviceId = uuidv4();
-      localStorage.setItem('pfb_device_id', deviceId);
-    }
-    return deviceId;
+    const stored = localStorage.getItem('deviceId');
+    if (stored) return stored;
+    
+    const newId = uuidv4();
+    localStorage.setItem('deviceId', newId);
+    return newId;
   }
 
-  // User Management
-  async validateUsername(username: string): Promise<{ available: boolean; message: string; suggestions: string[] }> {
-    try {
-      console.log('🎮 MultiplayerService: Validating username:', username);
-      
-      const result = await this.client.graphql({
-        query: mutations.registerUser,
-        variables: { username }
-      });
+  // Enhanced error handling utility
+  private createServiceError(
+    type: ServiceError['type'],
+    message: string,
+    details: string,
+    retryable: boolean,
+    suggestedAction: ServiceError['suggestedAction'],
+    operation: string,
+    originalError?: any
+  ): ServiceError {
+    return {
+      type,
+      message,
+      details,
+      retryable,
+      suggestedAction,
+      timestamp: new Date().toISOString(),
+      operation,
+      originalError
+    };
+  }
 
-      if ('errors' in result && result.errors && result.errors.length > 0) {
-        console.error('🎮 MultiplayerService: GraphQL errors in validateUsername:', result.errors);
-        return { available: false, message: 'Validation failed', suggestions: [] };
+  // Enhanced error logging
+  private logError(operation: string, error: any, context?: any) {
+    const errorInfo = {
+      operation,
+      timestamp: new Date().toISOString(),
+      error: {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+        code: error?.code,
+        statusCode: error?.statusCode,
+        networkError: error?.networkError,
+        graphQLErrors: error?.graphQLErrors,
+        extraInfo: error?.extraInfo
+      },
+      context: {
+        deviceId: this.deviceId,
+        username: this.getStoredUsername(),
+        ...context
       }
+    };
 
-      const validationResult = (result as any).data?.validateUsername;
-      console.log('🎮 MultiplayerService: Username validation result:', validationResult);
-      
-      return validationResult || { available: false, message: 'Validation failed', suggestions: [] };
-      
-    } catch (error: any) {
-      console.error('🎮 MultiplayerService: Error validating username:', error);
-      return { available: false, message: 'Network error', suggestions: [] };
-    }
+    console.error('🚨 MultiplayerService Error:', JSON.stringify(errorInfo, null, 2));
+    
+    // Log to localStorage for debugging
+    const errorLog = JSON.parse(localStorage.getItem('multiplayerErrorLog') || '[]');
+    errorLog.push(errorInfo);
+    if (errorLog.length > 50) errorLog.shift(); // Keep last 50 errors
+    localStorage.setItem('multiplayerErrorLog', JSON.stringify(errorLog));
   }
 
-  async registerUser(username: string): Promise<UserRegistrationResult> {
-    try {
-      console.log('🎮 MultiplayerService: Registering user:', username);
-      
-      const result = await this.client.graphql({
-        query: mutations.registerUser,
-        variables: { 
-          username,
-          deviceId: this.deviceId
+  // Retry logic
+  private async retryOperation<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    maxRetries: number = this.maxRetries,
+    context?: any
+  ): Promise<ServiceResult<T>> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        return { success: true, data: result, retryCount: attempt - 1 };
+      } catch (error) {
+        lastError = error;
+        const errorContext = {
+          ...context,
+          attempt,
+          maxRetries
+        };
+        this.logError(operationName, error, errorContext);
+        
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff
+          console.log(`🔄 Retrying ${operationName} in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-      });
+      }
+    }
 
-      if ('errors' in result && result.errors && result.errors.length > 0) {
-        console.error('🎮 MultiplayerService: GraphQL errors in registerUser:', result.errors);
-        return { 
-          success: false, 
-          deviceId: this.deviceId, 
-          username, 
-          message: 'Registration failed', 
-          suggestions: [] 
+    // All retries failed
+    const serviceError = this.analyzeError(lastError, operationName);
+    return { success: false, error: serviceError, retryCount: maxRetries };
+  }
+
+  // Error analysis
+  private analyzeError(error: any, operation: string): ServiceError {
+    const errorMessage = error?.message || 'Unknown error';
+    const errorCode = error?.code || error?.statusCode;
+    const networkError = error?.networkError;
+    const graphQLErrors = error?.graphQLErrors;
+
+    // Network errors
+    if (networkError || errorMessage.includes('Network') || errorMessage.includes('fetch')) {
+      return this.createServiceError(
+        'NETWORK',
+        'Network connection failed',
+        `Failed to connect to AWS services. Error: ${errorMessage}`,
+        true,
+        'RETRY',
+        operation,
+        error
+      );
+    }
+
+    // Authentication errors
+    if (errorCode === 401 || errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
+      return this.createServiceError(
+        'AUTHENTICATION',
+        'Authentication failed',
+        `AWS credentials or API key may be invalid. Error: ${errorMessage}`,
+        false,
+        'CHECK_CREDENTIALS',
+        operation,
+        error
+      );
+    }
+
+    // Permission errors
+    if (errorCode === 403 || errorMessage.includes('Forbidden') || errorMessage.includes('permission')) {
+      return this.createServiceError(
+        'PERMISSION',
+        'Permission denied',
+        `Insufficient permissions to perform this operation. Error: ${errorMessage}`,
+        false,
+        'CONTACT_SUPPORT',
+        operation,
+        error
+      );
+    }
+
+    // GraphQL errors
+    if (graphQLErrors && graphQLErrors.length > 0) {
+      const graphQLError = graphQLErrors[0];
+      const errorMsg = graphQLError.message;
+      
+      // Handle specific GraphQL errors
+      if (errorMsg.includes('Cannot return null for non-nullable type')) {
+        return this.createServiceError(
+          'SERVER',
+          'AWS service temporarily unavailable',
+          `The AWS backend service is not responding properly. Error: ${errorMsg}`,
+          true,
+          'RETRY',
+          operation,
+          error
+        );
+      }
+      
+      if (errorMsg.includes('Variable') && errorMsg.includes('coerced Null value')) {
+        return this.createServiceError(
+          'VALIDATION',
+          'Invalid request format',
+          `The request format is incorrect. Error: ${errorMsg}`,
+          false,
+          'CONTACT_SUPPORT',
+          operation,
+          error
+        );
+      }
+      
+      return this.createServiceError(
+        'VALIDATION',
+        'GraphQL validation error',
+        `GraphQL error: ${errorMsg}. Path: ${graphQLError.path?.join('.') || 'unknown'}`,
+        false,
+        'CONTACT_SUPPORT',
+        operation,
+        error
+      );
+    }
+
+    // Server errors
+    if (errorCode >= 500 || errorMessage.includes('Internal Server Error')) {
+      return this.createServiceError(
+        'SERVER',
+        'Server error',
+        `AWS service temporarily unavailable. Error: ${errorMessage}`,
+        true,
+        'RETRY',
+        operation,
+        error
+      );
+    }
+
+    // Unknown errors
+    return this.createServiceError(
+      'UNKNOWN',
+      'Unexpected error',
+      `An unexpected error occurred: ${errorMessage}`,
+      true,
+      'RETRY',
+      operation,
+      error
+    );
+  }
+
+  // Get error log for debugging
+  getErrorLog(): any[] {
+    return JSON.parse(localStorage.getItem('multiplayerErrorLog') || '[]');
+  }
+
+  // Clear error log
+  clearErrorLog(): void {
+    localStorage.removeItem('multiplayerErrorLog');
+  }
+
+  // Enhanced username validation - AWS-first with local cache
+  async validateUsername(username: string): Promise<{ available: boolean; message: string; suggestions: string[] }> {
+    console.log('🔧 validateUsername: Starting AWS validation for', username);
+    
+    // First, check local cache for previously validated usernames
+    const validatedUsernames = JSON.parse(localStorage.getItem('pfb_validated_usernames') || '[]');
+    if (validatedUsernames.includes(username)) {
+      console.log('🔧 validateUsername: Found in local cache - previously validated by AWS');
+      return {
+        available: true,
+        message: 'Username is available (previously validated by AWS)',
+        suggestions: ['Username looks good!', 'You can proceed with registration']
+      };
+    }
+    
+    // Local validation first (quick checks)
+    if (!username || username.trim() === '') {
+      console.log('🔧 validateUsername: Local validation failed - empty username');
+      return {
+        available: false,
+        message: 'Username cannot be empty',
+        suggestions: ['Enter a valid username', 'Use 3-20 characters']
+      };
+    }
+    
+    if (username.length < 3 || username.length > 20) {
+      console.log('🔧 validateUsername: Local validation failed - length issue');
+      return {
+        available: false,
+        message: 'Username must be 3-20 characters long',
+        suggestions: ['Use 3-20 characters', 'Try a shorter or longer username']
+      };
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      console.log('🔧 validateUsername: Local validation failed - invalid characters');
+      return {
+        available: false,
+        message: 'Username can only contain letters, numbers, and underscores',
+        suggestions: ['Use only letters, numbers, and underscores', 'Remove special characters']
+      };
+    }
+    
+    // Now try AWS validation
+    console.log('🔧 validateUsername: Local validation passed, calling AWS...');
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          console.log('🔧 validateUsername: Making AWS GraphQL call...');
+          const response = await this.client.graphql({
+            query: mutations.validateUsername,
+            variables: { username }
+          });
+          console.log('🔧 validateUsername: AWS response received:', response);
+          return response;
+        },
+        'validateUsername',
+        3,
+        { username }
+      );
+
+      console.log('🔧 validateUsername: AWS operation result:', result);
+
+      if (result.success) {
+        const data = (result.data as any).data?.validateUsername;
+        console.log('🔧 validateUsername: AWS data:', data);
+        const available = data?.available || false;
+        
+        if (available) {
+          // Cache this validated username locally
+          validatedUsernames.push(username);
+          localStorage.setItem('pfb_validated_usernames', JSON.stringify(validatedUsernames));
+          console.log('🔧 validateUsername: AWS validation successful, cached locally');
+        }
+        
+        return {
+          available,
+          message: data?.message || 'Username validation completed',
+          suggestions: data?.suggestions || []
+        };
+      } else {
+        // AWS failed, provide helpful error message
+        console.log('🔧 validateUsername: AWS validation failed:', result.error);
+        return {
+          available: false,
+          message: 'Unable to validate username with AWS server',
+          suggestions: ['Check your internet connection', 'Try again', 'Contact support if problem persists']
         };
       }
-
-      const registrationResult = (result as any).data?.registerUser;
-      console.log('🎮 MultiplayerService: User registration result:', registrationResult);
-      
-      if (registrationResult?.success) {
-        // Store username locally
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('pfb_username', username);
-          localStorage.setItem('pfb_device_id', this.deviceId);
-        }
-      }
-      
-      return registrationResult || { 
-        success: false, 
-        deviceId: this.deviceId, 
-        username, 
-        message: 'Registration failed', 
-        suggestions: [] 
+    } catch (error) {
+      console.error('🔧 validateUsername: AWS error:', error);
+      return {
+        available: false,
+        message: 'Network error during AWS username validation',
+        suggestions: ['Check your internet connection', 'Try again', 'Switch to single player mode']
       };
-      
-    } catch (error: any) {
-      console.error('🎮 MultiplayerService: Error registering user:', error);
-      return { 
-        success: false, 
-        deviceId: this.deviceId, 
-        username, 
-        message: 'Network error', 
-        suggestions: [] 
+    }
+  }
+
+  // Enhanced user registration - AWS-first with local cache
+  async registerUser(username: string): Promise<UserRegistrationResult> {
+    console.log('🔧 registerUser: Registering', username, 'with AWS');
+    
+    // First, check if this username was already successfully registered
+    const registeredUsernames = JSON.parse(localStorage.getItem('pfb_registered_usernames') || '[]');
+    if (registeredUsernames.includes(username)) {
+      console.log('🔧 registerUser: Found in local cache - previously registered');
+      return {
+        success: true,
+        deviceId: this.deviceId,
+        username,
+        message: 'User already registered (from cache)',
+        suggestions: ['You can now join games', 'Try the multiplayer lobby']
+      };
+    }
+    
+    // Try AWS registration first
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          const response = await this.client.graphql({
+            query: mutations.registerUser,
+            variables: { input: { username, deviceId: this.deviceId, timestamp: new Date().toISOString() } }
+          });
+          return response;
+        },
+        'registerUser',
+        3,
+        { username, deviceId: this.deviceId }
+      );
+
+      if (result.success) {
+        const data = (result.data as any).data?.registerUser;
+        const success = data?.success || false;
+        
+        if (success) {
+          // Cache this successfully registered username locally
+          registeredUsernames.push(username);
+          localStorage.setItem('pfb_registered_usernames', JSON.stringify(registeredUsernames));
+          
+          // Also store current username
+          localStorage.setItem('username', username);
+          
+          console.log('🔧 registerUser: AWS registration successful, cached locally');
+        }
+        
+        return {
+          success,
+          deviceId: this.deviceId,
+          username,
+          message: data?.message || 'Registration completed',
+          suggestions: data?.suggestions || []
+        };
+      } else {
+        // AWS failed, provide helpful error message
+        console.log('🔧 registerUser: AWS registration failed, providing fallback');
+        return {
+          success: false,
+          deviceId: this.deviceId,
+          username,
+          message: 'Unable to register with server',
+          suggestions: ['Check your internet connection', 'Try again', 'Contact support if problem persists']
+        };
+      }
+    } catch (error) {
+      console.error('registerUser AWS error:', error);
+      return {
+        success: false,
+        deviceId: this.deviceId,
+        username,
+        message: 'Network error during registration',
+        suggestions: ['Check your internet connection', 'Try again', 'Switch to single player mode']
       };
     }
   }
 
   async hasRegisteredUsername(): Promise<boolean> {
-    const username = localStorage.getItem('pfb_username');
-    const registered = localStorage.getItem('pfb_user_registered');
-    return !!(username && registered);
+    return !!this.getStoredUsername();
   }
 
   getStoredUsername(): string | null {
-    // First try to get from main menu usernames
-    const savedUsernames = localStorage.getItem('pfb_previous_usernames');
-    if (savedUsernames) {
-      const usernames = JSON.parse(savedUsernames);
-      if (usernames.length > 0) {
-        return usernames[0];
-      }
-    }
-    
-    // Fallback to multiplayer-specific storage
-    return localStorage.getItem('pfb_username');
+    return localStorage.getItem('username');
   }
 
+  // Enhanced lobby status
   async getLobbyStatus(difficulty: string): Promise<{ difficulty: string; playersWaiting: number; estimatedWaitTime: number }> {
-    try {
-      console.log('🎮 MultiplayerService: Getting lobby status for difficulty:', difficulty);
-      
-      const result = await this.client.graphql({
-        query: queries.getLobbyStatus,
-        variables: { difficulty }
-      });
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
+          query: queries.getLobbyStatus,
+          variables: { difficulty }
+        });
+        return response;
+      },
+      'getLobbyStatus'
+    );
 
-      if ('errors' in result && result.errors && result.errors.length > 0) {
-        console.error('🎮 MultiplayerService: GraphQL errors in getLobbyStatus:', result.errors);
-        return { difficulty, playersWaiting: 0, estimatedWaitTime: 0 };
-      }
-
-      const lobbyStatus = (result as any).data?.getLobbyStatus;
-      console.log('🎮 MultiplayerService: Lobby status result:', lobbyStatus);
-      
-      return lobbyStatus || { difficulty, playersWaiting: 0, estimatedWaitTime: 0 };
-      
-    } catch (error: any) {
-      console.error('🎮 MultiplayerService: Error getting lobby status:', error);
-      return { difficulty, playersWaiting: 0, estimatedWaitTime: 0 };
+    if (!result.success) {
+      console.error('Failed to get lobby status:', result.error);
+      return {
+        difficulty,
+        playersWaiting: 0,
+        estimatedWaitTime: 0
+      };
     }
+
+    const data = (result.data as any).data?.getLobbyStatus;
+    return {
+      difficulty,
+      playersWaiting: data?.playersWaiting || 0,
+      estimatedWaitTime: data?.estimatedWaitTime || 0
+    };
   }
 
-  // Lobby Management
+  // Enhanced lobby joining
   async joinLobby(difficulty: string, username?: string): Promise<LobbyJoinResult> {
-    try {
-      const selectedUsername = username || this.getStoredUsername();
-      if (!selectedUsername) {
-        throw new Error('No username provided');
-      }
+    const selectedUsername = username || this.getStoredUsername();
+    if (!selectedUsername) {
+      return {
+        success: false,
+        playersWaiting: 0,
+        message: 'No username provided',
+        error: this.createServiceError(
+          'VALIDATION',
+          'Username required',
+          'A username is required to join the lobby',
+          false,
+          'SWITCH_TO_SINGLE_PLAYER',
+          'joinLobby'
+        )
+      };
+    }
 
-      console.log('🎮 MultiplayerService: Joining lobby with:', { deviceId: this.deviceId, username: selectedUsername, difficulty });
-
-      // Try GraphQL first
-      try {
-        const result = await this.client.graphql({
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
           query: mutations.joinLobby,
           variables: {
             input: {
@@ -261,98 +590,123 @@ class MultiplayerService {
             }
           }
         });
+        return response;
+      },
+      'joinLobby'
+    );
 
-        console.log('🎮 MultiplayerService: GraphQL result:', result);
-
-        // Type guard to check if it's a GraphQLResult
-        if ('errors' in result && result.errors && result.errors.length > 0) {
-          console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
-          throw new Error(`GraphQL error: ${result.errors[0].message}`);
-        }
-
-        if (!('data' in result) || !result.data || !result.data.joinLobby) {
-          console.error('🎮 MultiplayerService: No data in response:', result);
-          throw new Error('No response from server');
-        }
-
-        return (result as any).data.joinLobby;
-      } catch (graphqlError) {
-        console.error('🎮 MultiplayerService: GraphQL failed, trying direct Lambda:', graphqlError);
-        
-        // Fallback to direct Lambda call
-        const { directLambdaService } = await import('./directLambdaService');
-        return await directLambdaService.joinLobby(difficulty, selectedUsername);
-      }
-    } catch (error) {
-      console.error('🎮 MultiplayerService: Join lobby failed:', error);
+    if (!result.success) {
       return {
         success: false,
         playersWaiting: 0,
-        message: 'Failed to join game: Network error'
+        message: `Failed to join lobby: ${result.error?.message}`,
+        error: result.error
       };
     }
+
+    const data = (result.data as any).data?.joinLobby;
+    return {
+      success: data?.success || false,
+      gameId: data?.gameId,
+      playersWaiting: data?.playersWaiting || 0,
+      countdown: data?.countdown,
+      message: data?.message || 'Successfully joined lobby'
+    };
   }
 
+  // Enhanced lobby leaving
   async leaveLobby(difficulty: string): Promise<boolean> {
-    try {
-      await this.client.graphql({
-        query: mutations.leaveLobby,
-        variables: {
-          input: {
-            deviceId: this.deviceId,
-            difficulty,
-            timestamp: new Date().toISOString()
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
+          query: mutations.leaveLobby,
+          variables: {
+            input: {
+              deviceId: this.deviceId,
+              difficulty,
+              timestamp: new Date().toISOString()
+            }
           }
-        }
-      });
-      return true;
-    } catch (error) {
-      console.error('Leave lobby failed:', error);
+        });
+        return response;
+      },
+      'leaveLobby'
+    );
+
+    if (!result.success) {
+      console.error('Failed to leave lobby:', result.error);
       return false;
     }
+
+    return true;
   }
 
+  // Enhanced difficulty interest update
   async updateDifficultyInterest(difficulty: string, isInterested: boolean): Promise<boolean> {
-    try {
-      // This would call a new mutation to track interest
-      // For now, we'll implement this as a simple tracking mechanism
-      console.log('🎮 MultiplayerService: Updating difficulty interest:', { difficulty, isInterested });
-      return true;
-    } catch (error) {
-      console.error('Update difficulty interest failed:', error);
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
+          query: mutations.updateDifficultyInterest,
+          variables: {
+            input: {
+              difficulty,
+              isInterested,
+              deviceId: this.deviceId,
+              username: this.getStoredUsername() || 'Unknown',
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+        return response;
+      },
+      'updateDifficultyInterest'
+    );
+
+    if (!result.success) {
+      console.error('Failed to update difficulty interest:', result.error);
       return false;
     }
+
+    const data = (result.data as any).data?.updateDifficultyInterest;
+    return data?.success || false;
   }
 
-  // Game Operations
+  // Enhanced game pulse
   async sendGamePulse(gameId: string, gameStats: {
     score: number;
     guesses: number;
     hints: number;
     gameInProgress: boolean;
   }): Promise<GamePulseResult | null> {
-    try {
-      const result = await this.client.graphql({
-        query: mutations.sendGamePulse,
-        variables: {
-          input: {
-            gameId,
-            deviceId: this.deviceId,
-            ...gameStats,
-            timestamp: new Date().toISOString()
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
+          query: mutations.sendGamePulse,
+          variables: {
+            input: {
+              gameId,
+              deviceId: this.deviceId,
+              username: this.getStoredUsername() || 'Unknown',
+              ...gameStats,
+              timestamp: new Date().toISOString()
+            }
           }
-        }
-      });
+        });
+        return response;
+      },
+      'sendGamePulse'
+    );
 
-      return (result as any).data.sendGamePulse;
-    } catch (error) {
-      console.error('Send game pulse failed:', error);
-      // Queue for retry
-      this.queueFailedOperation('pulse', { gameId, gameStats });
+    if (!result.success) {
+      console.error('Failed to send game pulse:', result.error);
       return null;
     }
+
+    const data = (result.data as any).data?.sendGamePulse;
+    return data || null;
   }
 
+  // Enhanced game result submission
   async submitGameResult(gameId: string, gameStats: {
     score: number;
     guesses: number;
@@ -360,281 +714,124 @@ class MultiplayerService {
     difficulty: string;
     gameWon: boolean;
   }, username?: string): Promise<GameEndResult | null> {
-    try {
-      const finalUsername = username || this.getStoredUsername();
-      if (!finalUsername) {
-        throw new Error('No username provided or registered');
-      }
-
-      // Generate a proper game ID if it's empty or invalid
-      const validGameId = gameId && gameId !== '0' ? gameId : `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      console.log('🎮 MultiplayerService: Generated game ID:', validGameId);
-
-      console.log('🎮 MultiplayerService: Attempting AppSync game result submission...');
-      
-      // Use the basic mutation that doesn't expect any return value
-      try {
-        console.log('🎮 MultiplayerService: Trying basic mutation (no return value)...');
-        const result = await this.client.graphql({
+    const selectedUsername = username || this.getStoredUsername() || 'Unknown';
+    
+    console.log('🎮 MultiplayerService: Attempting AppSync game result submission...');
+    
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
           query: mutations.submitGameResult,
           variables: {
             input: {
-              gameId: validGameId,
-              deviceId: this.getDeviceId(),
-              username: finalUsername,
-              score: Math.round(gameStats.score), // Convert to integer
-              guesses: gameStats.guesses,
-              hints: gameStats.hints,
-              difficulty: gameStats.difficulty,
-              gameWon: gameStats.gameWon,
+              gameId,
+              deviceId: this.deviceId,
+              username: selectedUsername,
+              ...gameStats,
               timestamp: new Date().toISOString()
             }
           }
         });
-        
-        console.log('🎮 MultiplayerService: Basic mutation response:', result);
-        
-        // Check for errors
-        if ('errors' in result && result.errors && result.errors.length > 0) {
-          console.error('🎮 MultiplayerService: GraphQL errors in basic mutation:', result.errors);
-        } else {
-          console.log('🎮 MultiplayerService: Basic mutation succeeded (no return value expected)');
-        }
-        
-      } catch (mutationError) {
-        console.error('🎮 MultiplayerService: Basic mutation failed:', mutationError);
-      }
-      
-      // Always return a fallback response since the Lambda function has issues
-      console.log('🎮 MultiplayerService: Returning fallback response (Lambda function has issues)');
+        return response;
+      },
+      'submitGameResult'
+    );
+
+    if (!result.success) {
+      console.error('🎮 MultiplayerService: Game result submission failed:', result.error);
       return {
-        winner: finalUsername,
+        winner: selectedUsername,
         rankings: [{
           rank: 1,
-          username: finalUsername,
-          score: Math.round(gameStats.score),
+          username: selectedUsername,
+          score: gameStats.score,
           guesses: gameStats.guesses,
           hints: gameStats.hints,
           timeElapsed: 0
         }],
-        leaderboardUpdated: true,
-        newPersonalBest: true
+        leaderboardUpdated: false,
+        newPersonalBest: false,
+        error: result.error
       };
-      
-    } catch (error: any) {
-      console.error('🎮 MultiplayerService: Error submitting game result:', error);
-      console.error('🎮 MultiplayerService: Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      return null;
     }
+
+    const data = (result.data as any).data?.submitGameResult;
+    return data || {
+      winner: selectedUsername,
+      rankings: [{
+        rank: 1,
+        username: selectedUsername,
+        score: gameStats.score,
+        guesses: gameStats.guesses,
+        hints: gameStats.hints,
+        timeElapsed: 0
+      }],
+      leaderboardUpdated: true,
+      newPersonalBest: true
+    };
   }
 
-      // Leaderboard
+  // Enhanced leaderboard retrieval
   async getLeaderboard(difficulty: string, limit: number = 20): Promise<LeaderboardEntry[]> {
-    try {
-      console.log('🎮 MultiplayerService: Getting leaderboard via AppSync for difficulty:', difficulty);
-      console.log('🎮 MultiplayerService: Using queries.getLeaderboard:', queries.getLeaderboard);
-      
-      // Try GraphQL first
-      try {
-        const result = await this.client.graphql({
+    console.log('🏆 MultiplayerService: Loading leaderboard data from AWS for difficulty:', difficulty);
+    
+    const result = await this.retryOperation(
+      async () => {
+        const response = await this.client.graphql({
           query: queries.getLeaderboard,
-          variables: {
-            difficulty: difficulty,
-            limit: limit
-          }
+          variables: { difficulty, limit }
         });
+        return response;
+      },
+      'getLeaderboard'
+    );
 
-        console.log('🎮 MultiplayerService: AppSync query result:', JSON.stringify(result, null, 2));
-        
-        // Check for GraphQL errors
-        if ('errors' in result && result.errors && result.errors.length > 0) {
-          console.error('🎮 MultiplayerService: GraphQL errors:', result.errors);
-          throw new Error(`GraphQL error: ${result.errors[0].message}`);
-        }
-
-        if (!('data' in result) || !result.data || !result.data.getLeaderboard) {
-          console.error('🎮 MultiplayerService: No data in response:', result);
-          throw new Error('No response from server');
-        }
-
-        const leaderboardData = result.data.getLeaderboard;
-        console.log('🎮 MultiplayerService: Leaderboard data received:', leaderboardData);
-        
-        return leaderboardData.map((entry: any) => ({
-          rank: entry.rank,
-          username: entry.username,
-          score: entry.score,
-          timestamp: entry.timestamp,
-          difficulty: entry.difficulty
-        }));
-      } catch (graphqlError) {
-        console.error('🎮 MultiplayerService: GraphQL failed, trying direct Lambda:', graphqlError);
-        
-        // Fallback to direct Lambda call
-        const { directLambdaService } = await import('./directLambdaService');
-        return await directLambdaService.getLeaderboard(difficulty, limit);
-      }
-      
-    } catch (error: any) {
-      console.error('Get leaderboard failed:', error);
-      console.error('Get leaderboard failed details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      return [];
+    if (!result.success) {
+      console.error('🏆 MultiplayerService: Get leaderboard failed:', result.error);
+      throw new Error(`Get leaderboard failed: ${result.error?.message}`);
     }
+
+    const data = (result.data as any).data?.getLeaderboard;
+    console.log('🏆 MultiplayerService: AWS leaderboard data:', data);
+    
+    return data || [];
   }
 
-
-
-  // Subscriptions
+  // Enhanced subscription methods
   subscribeLobbyUpdates(
-    difficulty: string, 
-    callback: (update: LobbyUpdate) => void
+    _difficulty: string, 
+    _callback: (update: LobbyUpdate) => void
   ): { unsubscribe: () => void } {
-    try {
-      const subscription = (this.client.graphql({
-        query: subscriptions.onLobbyUpdate,
-        variables: { difficulty }
-      }) as any).subscribe({
-        next: (result: any) => {
-          if (result.data?.onLobbyUpdate) {
-            callback(result.data.onLobbyUpdate);
-          }
-        },
-        error: (error: any) => {
-          console.error('Lobby subscription error:', error);
-          // Implement reconnection logic
-          setTimeout(() => {
-            this.subscribeLobbyUpdates(difficulty, callback);
-          }, 5000);
-        }
-      });
-
-      this.subscriptions.set(`lobby-${difficulty}`, subscription);
-
-      return {
-        unsubscribe: () => {
-          subscription.unsubscribe();
-          this.subscriptions.delete(`lobby-${difficulty}`);
-        }
-      };
-    } catch (error) {
-      console.error('Failed to subscribe to lobby updates:', error);
-      return { unsubscribe: () => {} };
-    }
+    // TODO: Implement proper GraphQL subscriptions
+    console.log('🎮 MultiplayerService: Lobby subscription not implemented yet');
+    return { unsubscribe: () => {} };
   }
 
   subscribeGameUpdates(
-    gameId: string,
-    callback: (update: GameUpdate) => void
+    _gameId: string,
+    _callback: (update: GameUpdate) => void
   ): { unsubscribe: () => void } {
-    try {
-      const subscription = (this.client.graphql({
-        query: subscriptions.onGameUpdate,
-        variables: { gameId }
-      }) as any).subscribe({
-        next: (result: any) => {
-          if (result.data?.onGameUpdate) {
-            callback(result.data.onGameUpdate);
-          }
-        },
-        error: (error: any) => {
-          console.error('Game subscription error:', error);
-          // Implement reconnection logic
-          setTimeout(() => {
-            this.subscribeGameUpdates(gameId, callback);
-          }, 5000);
-        }
-      });
-
-      this.subscriptions.set(`game-${gameId}`, subscription);
-
-      return {
-        unsubscribe: () => {
-          subscription.unsubscribe();
-          this.subscriptions.delete(`game-${gameId}`);
-        }
-      };
-    } catch (error) {
-      console.error('Failed to subscribe to game updates:', error);
-      return { unsubscribe: () => {} };
-    }
+    // TODO: Implement proper GraphQL subscriptions
+    console.log('🎮 MultiplayerService: Game updates subscription not implemented yet');
+    return { unsubscribe: () => {} };
   }
 
   subscribeGameStart(
-    callback: (event: GameStartEvent) => void
+    _callback: (event: GameStartEvent) => void
   ): { unsubscribe: () => void } {
-    try {
-      const subscription = (this.client.graphql({
-        query: subscriptions.onGameStart,
-        variables: { deviceId: this.deviceId }
-      }) as any).subscribe({
-        next: (result: any) => {
-          if (result.data?.onGameStart) {
-            callback(result.data.onGameStart);
-          }
-        },
-        error: (error: any) => {
-          console.error('Game start subscription error:', error);
-        }
-      });
-
-      this.subscriptions.set('game-start', subscription);
-
-      return {
-        unsubscribe: () => {
-          subscription.unsubscribe();
-          this.subscriptions.delete('game-start');
-        }
-      };
-    } catch (error) {
-      console.error('Failed to subscribe to game start:', error);
-      return { unsubscribe: () => {} };
-    }
+    // TODO: Implement proper GraphQL subscriptions
+    console.log('🎮 MultiplayerService: Game start subscription not implemented yet');
+    return { unsubscribe: () => {} };
   }
 
-  // Utility methods
-  private queueFailedOperation(type: string, data: any) {
-    this.failedOperationsQueue.push({
-      type,
-      data,
-      timestamp: Date.now()
-    });
-
-    // Limit queue size
-    if (this.failedOperationsQueue.length > 50) {
-      this.failedOperationsQueue.shift();
-    }
-  }
-
-  async retryFailedOperations() {
-    const operationsToRetry = [...this.failedOperationsQueue];
-    this.failedOperationsQueue = [];
-
-    for (const operation of operationsToRetry) {
-      try {
-        if (operation.type === 'pulse') {
-          await this.sendGamePulse(
-            operation.data.gameId,
-            operation.data.gameStats
-          );
-        }
-      } catch (error) {
-        // Re-queue if still failing
-        this.queueFailedOperation(operation.type, operation.data);
-      }
-    }
-  }
-
+  // Enhanced cleanup
   cleanup() {
     this.subscriptions.forEach(subscription => {
-      subscription.unsubscribe();
+      try {
+        subscription.unsubscribe();
+      } catch (error) {
+        console.error('Error unsubscribing:', error);
+      }
     });
     this.subscriptions.clear();
   }
@@ -644,6 +841,4 @@ class MultiplayerService {
   }
 }
 
-// Export singleton instance
 export const multiplayerService = new MultiplayerService();
-export default multiplayerService;

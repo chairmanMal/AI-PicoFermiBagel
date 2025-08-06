@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DeviceDetection } from '../utils/deviceDetection';
-import { Users, Plus } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
 
 interface MainMenuProps {
@@ -21,7 +21,6 @@ const MainMenu: React.FC<MainMenuProps> = ({
   const [showUsernameSelector, setShowUsernameSelector] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [previousUsernames, setPreviousUsernames] = useState<string[]>([]);
-  const [validatingUsername, setValidatingUsername] = useState(false);
   
   // Use global username from gameStore
   const { globalUsername, setGlobalUsername } = useGameStore();
@@ -46,40 +45,47 @@ const MainMenu: React.FC<MainMenuProps> = ({
   };
 
   const handleNewUsername = async () => {
-    if (newUsername.trim()) {
-      // Check if username already exists in previous usernames
-      if (previousUsernames.includes(newUsername.trim())) {
-        alert('Username already exists in your previous usernames. Please select it from the list or choose a different name.');
-        return;
-      }
+    if (!newUsername.trim()) return;
+    
+    const trimmedUsername = newUsername.trim();
+    
+    try {
+      // Initialize AWS first
+      const { initializeAWS } = await import('../services/awsConfig');
+      initializeAWS();
       
-      setValidatingUsername(true);
-      try {
-        // Validate username with AWS
-        const { default: multiplayerService } = await import('../services/multiplayerService');
-        const validation = await multiplayerService.validateUsername(newUsername.trim());
+      // Small delay to ensure AWS is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Import and use multiplayerService for validation
+      const { multiplayerService } = await import('../services/multiplayerService');
+      const validation = await multiplayerService.validateUsername(trimmedUsername);
+      
+      if (validation.available) {
+        // Username is available, register it
+        const result = await multiplayerService.registerUser(trimmedUsername);
         
-        if (!validation.available) {
-          alert(`${validation.message}${validation.suggestions.length > 0 ? '\n\nSuggestions:\n' + validation.suggestions.join('\n') : ''}`);
-          return;
+        if (result.success) {
+          // Username is valid, add to local storage
+          const updatedUsernames = [trimmedUsername, ...previousUsernames].slice(0, 5);
+          setPreviousUsernames(updatedUsernames);
+          localStorage.setItem('pfb_previous_usernames', JSON.stringify(updatedUsernames));
+          
+          setGlobalUsername(trimmedUsername);
+          setNewUsername('');
+          setShowUsernameSelector(false);
+          
+          // Dispatch event to notify App component that username changed
+          window.dispatchEvent(new CustomEvent('usernameChanged'));
+        } else {
+          alert(result.message || 'Failed to register username');
         }
-        
-        // Username is available, add to local storage
-        const updatedUsernames = [newUsername.trim(), ...previousUsernames].slice(0, 5);
-        setPreviousUsernames(updatedUsernames);
-        localStorage.setItem('pfb_previous_usernames', JSON.stringify(updatedUsernames));
-        
-        setGlobalUsername(newUsername.trim());
-        setNewUsername('');
-        setShowUsernameSelector(false);
-        // Dispatch event to notify App component that username changed
-        window.dispatchEvent(new CustomEvent('usernameChanged'));
-      } catch (error) {
-        console.error('Username validation failed:', error);
-        alert('Failed to validate username. Please check your connection and try again.');
-      } finally {
-        setValidatingUsername(false);
+      } else {
+        alert(validation.message || 'Username not available');
       }
+    } catch (error) {
+      console.error('Username registration error:', error);
+      alert('Unable to validate username. Please check your internet connection and try again.');
     }
   };
 
@@ -268,7 +274,6 @@ const MainMenu: React.FC<MainMenuProps> = ({
               }}
             >
               {globalUsername || 'Choose username...'}
-              <Plus size={16} />
             </button>
           ) : (
             <div style={{
@@ -325,18 +330,17 @@ const MainMenu: React.FC<MainMenuProps> = ({
                 />
                 <button
                   onClick={handleNewUsername}
-                  disabled={validatingUsername}
                   style={{
                     padding: '6px 12px',
                     borderRadius: '4px',
                     border: 'none',
-                    background: validatingUsername ? '#9ca3af' : '#2563eb',
+                    background: '#2563eb',
                     color: 'white',
                     fontSize: '14px',
-                    cursor: validatingUsername ? 'not-allowed' : 'pointer'
+                    cursor: 'pointer'
                   }}
                 >
-                  {validatingUsername ? 'Validating...' : 'Add'}
+                  Add
                 </button>
               </div>
             </div>

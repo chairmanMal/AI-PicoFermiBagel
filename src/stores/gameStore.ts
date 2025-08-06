@@ -878,7 +878,7 @@ export const useGameStore = create<GameStore>()(
           const { initializeAWS } = await import('../services/awsConfig');
           initializeAWS();
           
-          const { default: multiplayerService } = await import('../services/multiplayerService');
+          const { multiplayerService } = await import('../services/multiplayerService');
           console.log('🎮 GameStore: Calling multiplayerService.submitGameResult...');
           const result = await multiplayerService.submitGameResult(_gameId, {
             score: Math.round(gameState.score),

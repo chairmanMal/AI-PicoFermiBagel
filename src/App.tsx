@@ -12,7 +12,7 @@ import { UsernameRegistration } from './components/UsernameRegistration';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGameProgress } from './components/MultiplayerGameProgress';
 import { MultiplayerResults } from './components/MultiplayerResults';
-import multiplayerService, { GameStartEvent, GameEndResult } from './services/multiplayerService';
+import { multiplayerService, GameStartEvent, GameEndResult } from './services/multiplayerService';
 import MainMenu from './components/MainMenu';
 import LeaderboardScreen from './components/LeaderboardScreen';
 
@@ -30,7 +30,6 @@ const App: React.FC = () => {
   const { settings, globalUsername } = useGameStore();
   const multiplayerStore = useMultiplayerStore();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
-  const [navigationHistory, setNavigationHistory] = useState<AppScreen[]>([]);
   const [awsInitialized, setAwsInitialized] = useState(false);
   const [isConnectingToAWS, setIsConnectingToAWS] = useState(false);
   const [multiplayerResults] = useState<GameEndResult | null>(null);
@@ -75,23 +74,7 @@ const App: React.FC = () => {
   // Navigation helper that tracks history
   const navigateTo = (screen: AppScreen) => {
     console.log(`🔄 Navigating from ${currentScreen} to ${screen}`);
-    setNavigationHistory(prev => [...prev, currentScreen]);
     setCurrentScreen(screen);
-  };
-
-  // Navigation helper that goes back to previous screen
-  const navigateBack = () => {
-    if (navigationHistory.length > 0) {
-      const previousScreen = navigationHistory[navigationHistory.length - 1];
-      console.log(`🔄 Navigating back from ${currentScreen} to ${previousScreen}`);
-      setCurrentScreen(previousScreen);
-      setNavigationHistory(prev => prev.slice(0, -1));
-    } else {
-      // Fallback to menu if no history
-      console.log(`🔄 No navigation history, falling back to menu`);
-      setCurrentScreen('menu');
-      setNavigationHistory([]);
-    }
   };
 
   const handleSplashComplete = () => {
@@ -150,7 +133,6 @@ const App: React.FC = () => {
   const handleBackToMenu = () => {
     multiplayerStore.cleanupMultiplayer();
     setCurrentScreen('menu');
-    setNavigationHistory([]);
   };
 
   // Listen for custom event from settings drawer
@@ -267,7 +249,7 @@ const App: React.FC = () => {
       case 'leaderboard':
         return (
           <LeaderboardScreen
-            onBack={navigateBack}
+            onBack={() => setCurrentScreen('singlePlayer')}
           />
         );
         

@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen, Users, Award } from 'lucide-react';
+import { Settings, Volume2, VolumeX, RotateCcw, Grid3X3, Users, Award, BookOpen, Hash, EyeOff, Eye, X } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
-// import { useMultiplayerStore } from '../stores/multiplayerStore';
-import { getFullVersionString } from '../config/version';
+import { getVersionString } from '../config/version';
 import { getBackgroundGradient } from '../utils/gameLogic';
 // Removed CustomScrollIndicator - using simple iPhone menu drawer scrolling approach
 
@@ -33,6 +32,8 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const [developerPassword, setDeveloperPassword] = useState('');
   const [developerLoseScore, setDeveloperLoseScore] = useState('80');
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
+  const [showUsernameSelector, setShowUsernameSelector] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
   // const multiplayerStore = useMultiplayerStore();
 
@@ -114,6 +115,62 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
     window.dispatchEvent(new CustomEvent('switchToMultiplayer'));
   };
 
+  // Username handling functions
+  const handleUsernameSelect = (username: string) => {
+    // Dispatch username change event
+    const event = new CustomEvent('usernameChanged', { detail: { username } });
+    window.dispatchEvent(event);
+    setShowUsernameSelector(false);
+  };
+
+  const handleNewUsername = async () => {
+    if (!newUsername.trim()) return;
+    
+    const trimmedUsername = newUsername.trim();
+    
+    try {
+      // Initialize AWS first
+      const { initializeAWS } = await import('../services/awsConfig');
+      initializeAWS();
+      
+      // Small delay to ensure AWS is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Import and use multiplayerService for validation
+      const { multiplayerService } = await import('../services/multiplayerService');
+      const validation = await multiplayerService.validateUsername(trimmedUsername);
+      
+      if (validation.available) {
+        // Username is available, register it
+        const result = await multiplayerService.registerUser(trimmedUsername);
+        
+        if (result.success) {
+          // Dispatch username change event
+          const event = new CustomEvent('usernameChanged', { detail: { username: trimmedUsername } });
+          window.dispatchEvent(event);
+          
+          // Add to previous usernames
+          const previousUsernames = JSON.parse(localStorage.getItem('pfb_previous_usernames') || '[]');
+          if (!previousUsernames.includes(trimmedUsername)) {
+            previousUsernames.unshift(trimmedUsername);
+            previousUsernames.splice(10); // Keep only last 10
+            localStorage.setItem('pfb_previous_usernames', JSON.stringify(previousUsernames));
+          }
+          
+          setNewUsername('');
+          setShowUsernameSelector(false);
+        } else {
+          alert(result.message || 'Failed to register username');
+        }
+      } else {
+        alert(validation.message || 'Username not available');
+      }
+    } catch (error) {
+      console.error('Username registration error:', error);
+      alert('Unable to validate username. Please check your internet connection and try again.');
+    }
+  };
+
   const handleDeveloperModeToggle = () => {
     if (isDeveloperMode) {
       // Disable developer mode
@@ -133,8 +190,17 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   };
 
   const handleDeveloperModeEnable = () => {
-    if (developerPassword === 'pfb2024') {
+    if (developerPassword === '10.4') {
       setIsDeveloperMode(true);
+      
+      // Save developer mode state to localStorage for persistence
+      localStorage.setItem('pfb_developer_mode', 'true');
+      localStorage.setItem('pfb_developer_lose_score', developerLoseScore || '80');
+      
+      // Also save to sessionStorage for immediate access
+      sessionStorage.setItem('pfb_developer_mode', 'true');
+      sessionStorage.setItem('pfb_developer_lose_score', developerLoseScore || '80');
+      
       updateSettings({ 
         developerMode: true,
         developerLoseScore: parseInt(developerLoseScore) || 80
@@ -256,7 +322,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
       >
         {/* Direct menu content without drawer wrapper */}
         <div className="menu-section" style={{ 
-          padding: '0 20px 16px 0', // Add 20px right padding to keep content away from scrollbar
+                      padding: '0 10px 16px 0', // Reduced right padding from 20px to 10px
           borderBottom: '1px solid #f3f4f6',
           /* DEBUG: Magenta border for menu sections - REMOVED */
           /* border: '2px solid magenta' */
@@ -338,6 +404,125 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
             View Leaderboard
             <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Global rankings!</span>
           </button>
+
+          <button
+            onClick={() => setShowUsernameSelector(!showUsernameSelector)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              border: '1px solid #3b82f6',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
+              textAlign: 'left'
+            }}
+          >
+            <Users size={18} />
+            Set Username
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Set or change username</span>
+          </button>
+
+          {/* Username Selector */}
+          {showUsernameSelector && (
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              border: '1px solid #d1d5db',
+              padding: '12px',
+              marginBottom: '8px',
+              maxWidth: '100%',
+              overflow: 'hidden'
+            }}>
+              {/* Previous usernames */}
+              {(() => {
+                const previousUsernames = JSON.parse(localStorage.getItem('pfb_previous_usernames') || '[]');
+                return previousUsernames.length > 0 && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
+                      Previous usernames:
+                    </div>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: '6px',
+                      maxWidth: '100%',
+                      overflow: 'hidden'
+                    }}>
+                      {previousUsernames.map((username: string) => (
+                        <button
+                          key={username}
+                          onClick={() => handleUsernameSelect(username)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid #d1d5db',
+                            background: 'white',
+                            color: '#374151',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {username}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              
+              {/* New username input */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '8px',
+                maxWidth: '100%',
+                overflow: 'hidden'
+              }}>
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="Enter new username"
+                  style={{
+                    flex: 1,
+                    minWidth: '0', // Allow flex item to shrink below content size
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #d1d5db',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && handleNewUsername()}
+                />
+                <button
+                  onClick={handleNewUsername}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    background: '#2563eb',
+                    color: 'white',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    flexShrink: 0 // Prevent button from shrinking
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
 
           <button
             onClick={handleOpenManual}
@@ -734,7 +919,7 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
                 transition: 'color 0.2s ease'
               }}
             >
-              {getFullVersionString()}
+              {getVersionString()}
             </span>
             {isDeveloperMode && (
               <button
@@ -1032,4 +1217,4 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   );
 };
 
-export default SettingsDrawerContent; 
+export default SettingsDrawerContent;

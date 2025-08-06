@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { getBuildString } from '../config/version';
-import { soundUtils } from '../utils/soundUtils';
+import React, { useState, useEffect } from 'react';
+import { getVersionString } from '../config/version';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -10,14 +9,14 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    console.log(`🎨 SplashScreen: Starting splash screen (Build ${getBuildString()})`);
+    console.log(`🎨 SplashScreen: Starting splash screen (Build ${getVersionString()})`);
     
     // Activate audio system during splash screen
-    soundUtils.activateAudio().then(() => {
-      // Audio system activated successfully
-    }).catch((error) => {
-      console.error('🎵 SplashScreen: Failed to activate audio system:', error);
-    });
+    // soundUtils.activateAudio().then(() => { // This line was removed as per the new_code
+    //   // Audio system activated successfully
+    // }).catch((error) => { // This line was removed as per the new_code
+    //   console.error('🎵 SplashScreen: Failed to activate audio system:', error); // This line was removed as per the new_code
+    // }); // This line was removed as per the new_code
     
     const timer = setTimeout(() => {
       console.log('🎨 SplashScreen: Splash screen duration complete, transitioning to main app');

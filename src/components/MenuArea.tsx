@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, RotateCcw, Settings, Eye, EyeOff, Volume2, VolumeX, Grid3X3, Hash, BookOpen } from 'lucide-react';
-import { useGameStore } from '@/stores/gameStore';
-import { getFullVersionString } from '@/config/version';
-
+import { Settings, ChevronLeft, RotateCcw, Hash, Grid3X3, BookOpen, EyeOff, Eye, Volume2, VolumeX, X } from 'lucide-react';
+import { useGameStore } from '../stores/gameStore';
+import { getVersionString } from '@/config/version';
 import CustomScrollIndicator from './CustomScrollIndicator';
 import './MenuArea.css';
 
@@ -327,7 +326,7 @@ const MenuArea: React.FC<MenuAreaProps> = ({ onClose }) => {
 
         <div className="menu-section version-section">
           <div className="version-info">
-            <span className="version-text">{getFullVersionString()}</span>
+            <span className="version-text">{getVersionString()}</span>
           </div>
         </div>
       </div>
