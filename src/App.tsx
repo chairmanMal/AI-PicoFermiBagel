@@ -1,38 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import GameScreen from './components/GameScreen';
+import React, { useState, useEffect } from 'react';
 import SplashScreen from './components/SplashScreen';
-import { forceCleanupDragIndicators } from '@/utils/dragCleanup';
-import { initializeSoundVolume } from '@/utils/soundUtils';
-import { useGameStore } from '@/stores/gameStore';
-import { useMultiplayerStore } from '@/stores/multiplayerStore';
-import './App.css';
-
-// Multiplayer components (only imported if needed)
-import { UsernameRegistration } from './components/UsernameRegistration';
+import MainMenu from './components/MainMenu';
+import GameScreen from './components/GameScreen';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGameProgress } from './components/MultiplayerGameProgress';
 import { MultiplayerResults } from './components/MultiplayerResults';
-import { multiplayerService, GameStartEvent, GameEndResult } from './services/multiplayerService';
-import MainMenu from './components/MainMenu';
 import LeaderboardScreen from './components/LeaderboardScreen';
+import { useMultiplayerStore } from './stores/multiplayerStore';
+import { authService } from './services/authService';
+import './App.css';
+import { forceCleanupDragIndicators } from '@/utils/dragCleanup';
+import { initializeSoundVolume } from '@/utils/soundUtils';
+import { useGameStore } from '@/stores/gameStore';
+import { GameStartEvent, GameEndResult } from './services/multiplayerService';
 
 type AppScreen = 
   | 'splash' 
   | 'menu'
   | 'singlePlayer' 
-  | 'usernameRegistration' 
   | 'multiplayerLobby' 
   | 'multiplayerGame'
   | 'multiplayerResults'
   | 'leaderboard';
 
 const App: React.FC = () => {
-  const { settings, globalUsername } = useGameStore();
-  const multiplayerStore = useMultiplayerStore();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
-  const [awsInitialized, setAwsInitialized] = useState(false);
-  const [isConnectingToAWS, setIsConnectingToAWS] = useState(false);
   const [multiplayerResults] = useState<GameEndResult | null>(null);
+  
+  const multiplayerStore = useMultiplayerStore();
+  const { settings } = useGameStore();
 
   // Initialize sound volume on app start
   useEffect(() => {
@@ -46,25 +42,10 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Initialize multiplayer when needed
-  const initializeMultiplayer = async () => {
-    if (awsInitialized) return;
-    
-    try {
-      await multiplayerStore.initializeMultiplayer();
-      setAwsInitialized(true);
-      console.log('✅ Multiplayer initialized successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize multiplayer:', error);
-      throw error;
-    }
-  };
-
   // Reset multiplayer state only when in lobby
   const resetMultiplayerStateIfInLobby = () => {
     if (currentScreen === 'multiplayerLobby') {
       console.log('🔄 Resetting multiplayer state due to username change in lobby');
-      setAwsInitialized(false);
       multiplayerStore.cleanupMultiplayer();
     } else {
       console.log('👤 Username changed but not in lobby - no reset needed');
@@ -88,39 +69,17 @@ const App: React.FC = () => {
   };
 
   const handleMultiplayerClick = async () => {
-    // Set connecting state
-    setIsConnectingToAWS(true);
+    console.log('🎮 App: Multiplayer button clicked');
     
-    // Try to initialize AWS if not already initialized
-    if (!awsInitialized) {
-      try {
-        await initializeMultiplayer();
-      } catch (error) {
-        setIsConnectingToAWS(false);
-        alert('Multiplayer features are not available. Please check your connection.');
-        return;
-      }
+    // Check if user is authenticated
+    const isAuthenticated = authService.isAuthenticated();
+    if (!isAuthenticated) {
+      console.log('🎮 App: User not authenticated, redirecting to menu for sign-in');
+      navigateTo('menu');
+      return;
     }
 
-    try {
-      const hasUsername = await multiplayerService.hasRegisteredUsername();
-      setIsConnectingToAWS(false);
-      if (hasUsername) {
-        navigateTo('multiplayerLobby');
-      } else {
-        navigateTo('usernameRegistration');
-      }
-    } catch (error) {
-      setIsConnectingToAWS(false);
-      console.warn('Multiplayer service error:', error);
-      // Fallback to username registration
-      navigateTo('usernameRegistration');
-    }
-  };
-
-  const handleUsernameRegistration = (username: string) => {
-    console.log('🎮 App: Username registered:', username);
-    console.log('🎮 App: Switching to multiplayer lobby');
+    console.log('🎮 App: User authenticated, navigating to multiplayer lobby');
     navigateTo('multiplayerLobby');
   };
 
@@ -191,27 +150,19 @@ const App: React.FC = () => {
             onSinglePlayer={handleSinglePlayerStart}
             onMultiplayer={handleMultiplayerClick}
             multiplayerAvailable={true}
-            isConnecting={isConnectingToAWS}
+            isConnecting={false} // isConnectingToAWS removed
           />
         );
         
       case 'singlePlayer':
         return <GameScreen />;
         
-      case 'usernameRegistration':
-        return (
-          <UsernameRegistration
-            onRegistrationComplete={handleUsernameRegistration}
-            onCancel={handleBackToMenu}
-          />
-        );
-        
       case 'multiplayerLobby':
         return (
           <MultiplayerLobby
             onGameStart={handleGameStart}
             onBack={handleBackToMenu}
-            globalUsername={globalUsername}
+            globalUsername={multiplayerStore.currentUsername || ''}
           />
         );
         
