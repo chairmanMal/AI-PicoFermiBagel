@@ -130,6 +130,17 @@ const App: React.FC = () => {
   }, []);
 
   const handleNewMultiplayerGame = () => {
+    console.log('🎮 App: New multiplayer game requested');
+    
+    // Check if user is authenticated
+    const isAuthenticated = authService.isAuthenticated();
+    if (!isAuthenticated) {
+      console.log('🎮 App: User not authenticated for new multiplayer game, redirecting to menu');
+      navigateTo('menu');
+      return;
+    }
+
+    console.log('🎮 App: User authenticated for new multiplayer game');
     multiplayerStore.cleanupMultiplayer();
     navigateTo('multiplayerLobby');
   };

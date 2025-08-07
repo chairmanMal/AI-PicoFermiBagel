@@ -2,6 +2,10 @@
 import tadaaVictorySound from '../assets/tadaa-victory.mp3';
 // Import the losing horn sound
 import losingHornSound from '../assets/losing-horn-313723.mp3';
+// Import the fanfare sound
+import fanfareSound from '../assets/fanfare.mp3';
+// Import the stopwatch sound
+import stopwatchSound from '../assets/start-stop-stopwatch.mp3';
 
 // High-performance sound utility with iOS silent mode compatibility
 class SoundUtils {
@@ -610,7 +614,7 @@ class SoundUtils {
   async playFanfareSound() {
     console.log('🎵 🎺 Playing fanfare sound');
     try {
-      const audio = new Audio('/fanfare.mp3');
+      const audio = new Audio(fanfareSound);
       audio.volume = this.masterVolume;
       await audio.play();
     } catch (error) {
@@ -622,7 +626,7 @@ class SoundUtils {
   async playStopwatchSound() {
     console.log('🎵 ⏱️ Playing stopwatch sound');
     try {
-      const audio = new Audio('/start-stop-stopwatch.mp3');
+      const audio = new Audio(stopwatchSound);
       audio.volume = this.masterVolume;
       // Skip the first second to avoid glitch
       audio.currentTime = 1.0;

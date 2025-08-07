@@ -1,5 +1,5 @@
 // src/config/version.ts
-export const BUILD_REVISION = 37;
+export const BUILD_REVISION = 49;
 export const BUILD_DATE = '2025-08-07';
 export const VERSION = '1.0.0';
 
