@@ -49,6 +49,13 @@ const GameScreen: React.FC = () => {
     setIsSettingsDrawerOpen(false);
   };
 
+  // Navigation handler for settings drawer
+  const handleNavigateToMenu = () => {
+    console.log('🔄 GameScreen: Navigating to menu from settings drawer');
+    // Dispatch event to trigger navigation to menu
+    window.dispatchEvent(new CustomEvent('navigateToMenu'));
+  };
+
   // Refs for layout components
   const guessElementRef = useRef<HTMLDivElement>(null);
   const gameScreenRef = useRef<HTMLDivElement>(null);
@@ -563,7 +570,8 @@ const GameScreen: React.FC = () => {
           }}>
             <SettingsDrawerContent 
               key={isSettingsDrawerOpen ? 'open' : 'closed'} 
-              onClose={handleSettingsDrawerClose} 
+              onClose={handleSettingsDrawerClose}
+              onNavigateToMenu={handleNavigateToMenu}
             />
           </div>
         </div>

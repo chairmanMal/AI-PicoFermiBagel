@@ -22,9 +22,11 @@ import { getBackgroundGradient } from '../utils/gameLogic';
 interface SettingsDrawerContentProps {
   /** Optional callback when close is requested (handled by parent) */
   onClose?: () => void;
+  /** Optional callback to navigate to menu for sign-in/sign-up */
+  onNavigateToMenu?: () => void;
 }
 
-const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }) => {
+const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose, onNavigateToMenu }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showCustomSettings, setShowCustomSettings] = useState(false);
   const [showManual, setShowManual] = useState(false);
@@ -32,8 +34,6 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   const [developerPassword, setDeveloperPassword] = useState('');
   const [developerLoseScore, setDeveloperLoseScore] = useState('80');
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
-  const [showUsernameSelector, setShowUsernameSelector] = useState(false);
-  const [newUsername, setNewUsername] = useState('');
   const { settings, resetGame, updateSettings, gameState } = useGameStore();
   // const multiplayerStore = useMultiplayerStore();
 
@@ -107,68 +107,8 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
   };
 
   const handleSwitchToMultiplayer = () => {
-    console.log('🎮 Switching to multiplayer mode from settings');
-    // Close the settings drawer
-    handleCloseDrawer();
-    // Navigate to multiplayer mode (this will be handled by the parent App component)
-    // For now, we'll use a custom event that the App can listen to
+    console.log('🎮 SettingsDrawerContent: Switch to multiplayer clicked');
     window.dispatchEvent(new CustomEvent('switchToMultiplayer'));
-  };
-
-  // Username handling functions
-  const handleUsernameSelect = (username: string) => {
-    // Dispatch username change event
-    const event = new CustomEvent('usernameChanged', { detail: { username } });
-    window.dispatchEvent(event);
-    setShowUsernameSelector(false);
-  };
-
-  const handleNewUsername = async () => {
-    if (!newUsername.trim()) return;
-    
-    const trimmedUsername = newUsername.trim();
-    
-    try {
-      // Initialize AWS first
-      const { initializeAWS } = await import('../services/awsConfig');
-      initializeAWS();
-      
-      // Small delay to ensure AWS is fully initialized
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Import and use multiplayerService for validation
-      const { multiplayerService } = await import('../services/multiplayerService');
-      const validation = await multiplayerService.validateUsername(trimmedUsername);
-      
-      if (validation.available) {
-        // Username is available, register it
-        const result = await multiplayerService.registerUser(trimmedUsername);
-        
-        if (result.success) {
-          // Dispatch username change event
-          const event = new CustomEvent('usernameChanged', { detail: { username: trimmedUsername } });
-          window.dispatchEvent(event);
-          
-          // Add to previous usernames
-          const previousUsernames = JSON.parse(localStorage.getItem('pfb_previous_usernames') || '[]');
-          if (!previousUsernames.includes(trimmedUsername)) {
-            previousUsernames.unshift(trimmedUsername);
-            previousUsernames.splice(10); // Keep only last 10
-            localStorage.setItem('pfb_previous_usernames', JSON.stringify(previousUsernames));
-          }
-          
-          setNewUsername('');
-          setShowUsernameSelector(false);
-        } else {
-          alert(result.message || 'Failed to register username');
-        }
-      } else {
-        alert(validation.message || 'Username not available');
-      }
-    } catch (error) {
-      console.error('Username registration error:', error);
-      alert('Unable to validate username. Please check your internet connection and try again.');
-    }
   };
 
   const handleDeveloperModeToggle = () => {
@@ -406,7 +346,15 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
           </button>
 
           <button
-            onClick={() => setShowUsernameSelector(!showUsernameSelector)}
+            onClick={() => {
+              console.log('👤 SettingsDrawerContent: Set Username clicked - navigating to menu');
+              if (onNavigateToMenu) {
+                onNavigateToMenu();
+              } else {
+                // Fallback: dispatch event to trigger navigation
+                window.dispatchEvent(new CustomEvent('navigateToMenu'));
+              }
+            }}
             style={{
               width: '100%',
               display: 'flex',
@@ -426,103 +374,12 @@ const SettingsDrawerContent: React.FC<SettingsDrawerContentProps> = ({ onClose }
             }}
           >
             <Users size={18} />
-            Set Username
-            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Set or change username</span>
+            Sign In / Sign Up
+            <span style={{ fontSize: '0.8rem', opacity: '0.9', marginLeft: 'auto' }}>Manage account</span>
           </button>
 
           {/* Username Selector */}
-          {showUsernameSelector && (
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #d1d5db',
-              padding: '12px',
-              marginBottom: '8px',
-              maxWidth: '100%',
-              overflow: 'hidden'
-            }}>
-              {/* Previous usernames */}
-              {(() => {
-                const previousUsernames = JSON.parse(localStorage.getItem('pfb_previous_usernames') || '[]');
-                return previousUsernames.length > 0 && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-                      Previous usernames:
-                    </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      flexWrap: 'wrap', 
-                      gap: '6px',
-                      maxWidth: '100%',
-                      overflow: 'hidden'
-                    }}>
-                      {previousUsernames.map((username: string) => (
-                        <button
-                          key={username}
-                          onClick={() => handleUsernameSelect(username)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid #d1d5db',
-                            background: 'white',
-                            color: '#374151',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            maxWidth: '100%',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {username}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-              
-              {/* New username input */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '8px',
-                maxWidth: '100%',
-                overflow: 'hidden'
-              }}>
-                <input
-                  type="text"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Enter new username"
-                  style={{
-                    flex: 1,
-                    minWidth: '0', // Allow flex item to shrink below content size
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleNewUsername()}
-                />
-                <button
-                  onClick={handleNewUsername}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: '#2563eb',
-                    color: 'white',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    flexShrink: 0 // Prevent button from shrinking
-                  }}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
+          {/* This section is now handled by a global event listener */}
 
           <button
             onClick={handleOpenManual}

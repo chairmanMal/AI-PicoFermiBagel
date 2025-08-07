@@ -1,10 +1,10 @@
 // src/config/version.ts
+export const BUILD_REVISION = 36;
+export const BUILD_DATE = '2025-08-07';
 export const VERSION = '1.0.0';
-export const BUILD_REVISION = 27;
-export const BUILD_DATE = '2025-08-06';
 
 export const getVersionString = () => {
-  return `${VERSION} (Build ${BUILD_REVISION})`;
+  return `${VERSION} (Build ${BUILD_REVISION}, ${BUILD_DATE})`;
 };
 
 export const getBuildInfo = () => {

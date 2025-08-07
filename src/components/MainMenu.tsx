@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DeviceDetection } from '../utils/deviceDetection';
-import { Users } from 'lucide-react';
+import { Users, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useGameStore } from '../stores/gameStore';
+import { authService } from '../services/authService';
+import { LoginScreen } from './LoginScreen';
+import { RegisterScreen } from './RegisterScreen';
 
 interface MainMenuProps {
   onSinglePlayer: () => void;
@@ -18,75 +21,52 @@ const MainMenu: React.FC<MainMenuProps> = ({
   isConnecting = false
 }) => {
   const [currentLayout, setCurrentLayout] = useState(() => DeviceDetection.getCurrentLayout());
-  const [showUsernameSelector, setShowUsernameSelector] = useState(false);
-  const [newUsername, setNewUsername] = useState('');
-  const [previousUsernames, setPreviousUsernames] = useState<string[]>([]);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   
   // Use global username from gameStore
-  const { globalUsername, setGlobalUsername } = useGameStore();
+  const { setGlobalUsername } = useGameStore();
 
-  // Load previous usernames from localStorage
+  // Check authentication status on mount
   useEffect(() => {
-    const saved = localStorage.getItem('pfb_previous_usernames');
-    if (saved) {
-      const usernames = JSON.parse(saved);
-      setPreviousUsernames(usernames);
-      if (usernames.length > 0 && !globalUsername) {
-        setGlobalUsername(usernames[0]);
-      }
+    const user = authService.getCurrentUser();
+    console.log('🔧 MainMenu: Checking authentication status:', { user, isAuthenticated: !!user });
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser(user.username);
+      setGlobalUsername(user.username);
     }
-  }, [globalUsername, setGlobalUsername]);
+  }, [setGlobalUsername]);
 
-  const handleUsernameSelect = (username: string) => {
+  const handleLoginSuccess = (username: string) => {
+    console.log('🔧 MainMenu: Login success for:', username);
+    setIsAuthenticated(true);
+    setCurrentUser(username);
     setGlobalUsername(username);
-    setShowUsernameSelector(false);
+    setShowLogin(false);
     // Dispatch event to notify App component that username changed
     window.dispatchEvent(new CustomEvent('usernameChanged'));
   };
 
-  const handleNewUsername = async () => {
-    if (!newUsername.trim()) return;
-    
-    const trimmedUsername = newUsername.trim();
-    
-    try {
-      // Initialize AWS first
-      const { initializeAWS } = await import('../services/awsConfig');
-      initializeAWS();
-      
-      // Small delay to ensure AWS is fully initialized
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Import and use multiplayerService for validation
-      const { multiplayerService } = await import('../services/multiplayerService');
-      const validation = await multiplayerService.validateUsername(trimmedUsername);
-      
-      if (validation.available) {
-        // Username is available, register it
-        const result = await multiplayerService.registerUser(trimmedUsername);
-        
-        if (result.success) {
-          // Username is valid, add to local storage
-          const updatedUsernames = [trimmedUsername, ...previousUsernames].slice(0, 5);
-          setPreviousUsernames(updatedUsernames);
-          localStorage.setItem('pfb_previous_usernames', JSON.stringify(updatedUsernames));
-          
-          setGlobalUsername(trimmedUsername);
-          setNewUsername('');
-          setShowUsernameSelector(false);
-          
-          // Dispatch event to notify App component that username changed
-          window.dispatchEvent(new CustomEvent('usernameChanged'));
-        } else {
-          alert(result.message || 'Failed to register username');
-        }
-      } else {
-        alert(validation.message || 'Username not available');
-      }
-    } catch (error) {
-      console.error('Username registration error:', error);
-      alert('Unable to validate username. Please check your internet connection and try again.');
-    }
+  const handleRegisterSuccess = (username: string) => {
+    console.log('🔧 MainMenu: Register success for:', username);
+    setIsAuthenticated(true);
+    setCurrentUser(username);
+    setGlobalUsername(username);
+    setShowRegister(false);
+    // Dispatch event to notify App component that username changed
+    window.dispatchEvent(new CustomEvent('usernameChanged'));
+  };
+
+  const handleSignOut = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setGlobalUsername('');
+    // Dispatch event to notify App component that username changed
+    window.dispatchEvent(new CustomEvent('usernameChanged'));
   };
 
   useEffect(() => {
@@ -155,47 +135,7 @@ const MainMenu: React.FC<MainMenuProps> = ({
         },
         content: {
           textAlign: 'center' as const,
-          maxWidth: '450px',
-          width: '100%'
-        },
-        title: {
-          fontSize: '42px',
-          fontWeight: 'bold' as const,
-          color: '#1f2937',
-          marginBottom: '36px'
-        },
-        buttonContainer: {
-          marginTop: '36px',
-          maxWidth: '380px',
-          margin: '36px auto 0'
-        },
-        button: {
-          width: '100%',
-          padding: '18px 28px',
-          borderRadius: '12px',
-          fontWeight: '600' as const,
-          fontSize: '20px',
-          border: 'none',
-          cursor: 'pointer' as const,
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          marginBottom: '16px',
-          transition: 'background-color 0.2s ease'
-        }
-      };
-    } else {
-      // iPhone portrait: compact layout
-      return {
-        container: {
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #faf5ff 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px'
-        },
-        content: {
-          textAlign: 'center' as const,
-          maxWidth: '320px',
+          maxWidth: '400px',
           width: '100%'
         },
         title: {
@@ -222,6 +162,46 @@ const MainMenu: React.FC<MainMenuProps> = ({
           transition: 'background-color 0.2s ease'
         }
       };
+    } else {
+      // Mobile: full screen with larger buttons
+      return {
+        container: {
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #faf5ff 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        },
+        content: {
+          textAlign: 'center' as const,
+          maxWidth: '320px',
+          width: '100%'
+        },
+        title: {
+          fontSize: '36px',
+          fontWeight: 'bold' as const,
+          color: '#1f2937',
+          marginBottom: '32px'
+        },
+        buttonContainer: {
+          marginTop: '32px',
+          maxWidth: '280px',
+          margin: '32px auto 0'
+        },
+        button: {
+          width: '100%',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          fontWeight: '600' as const,
+          fontSize: '18px',
+          border: 'none',
+          cursor: 'pointer' as const,
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          marginBottom: '16px',
+          transition: 'background-color 0.2s ease'
+        }
+      };
     }
   };
 
@@ -238,33 +218,56 @@ const MainMenu: React.FC<MainMenuProps> = ({
           PicoFermiBagel
         </h1>
         
-        {/* Username Selector */}
+        {/* Authentication Status */}
         <div style={{
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            marginBottom: '12px'
-          }}>
-            <Users size={20} color="#6b7280" />
-            <span style={{ fontSize: '16px', color: '#6b7280', fontWeight: '500' }}>
-              Select Username
-            </span>
-          </div>
+          {isAuthenticated ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '12px'
+              }}
+            >
+              <Users size={20} color="#10b981" />
+              <span style={{ fontSize: '16px', color: '#10b981', fontWeight: '500' }}>
+                Signed in as {currentUser}
+              </span>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '12px'
+              }}
+            >
+              <Users size={20} color="#6b7280" />
+              <span style={{ fontSize: '16px', color: '#6b7280', fontWeight: '500' }}>
+                Sign in to play multiplayer
+              </span>
+            </motion.div>
+          )}
           
-          {!showUsernameSelector ? (
+          {isAuthenticated ? (
             <button
-              onClick={() => setShowUsernameSelector(true)}
+              onClick={handleSignOut}
               style={{
                 padding: '8px 16px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
-                background: 'white',
-                color: '#374151',
+                border: '1px solid #fecaca',
+                background: '#fef2f2',
+                color: '#dc2626',
                 fontSize: '14px',
                 cursor: 'pointer',
                 display: 'flex',
@@ -273,121 +276,122 @@ const MainMenu: React.FC<MainMenuProps> = ({
                 margin: '0 auto'
               }}
             >
-              {globalUsername || 'Choose username...'}
+              <LogOut size={16} />
+              Sign Out
             </button>
           ) : (
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #d1d5db',
-              padding: '12px',
-              maxWidth: '280px',
-              margin: '0 auto'
-            }}>
-              {/* Previous usernames */}
-              {previousUsernames.length > 0 && (
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-                    Previous usernames:
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {previousUsernames.map(username => (
-                      <button
-                        key={username}
-                        onClick={() => handleUsernameSelect(username)}
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid #d1d5db',
-                          background: 'white',
-                          color: '#374151',
-                          fontSize: '12px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {username}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* New username input */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  type="text"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Enter new username"
-                  style={{
-                    flex: 1,
-                    padding: '6px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px'
-                  }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleNewUsername()}
-                />
-                <button
-                  onClick={handleNewUsername}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: '#2563eb',
-                    color: 'white',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Add
-                </button>
-              </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowLogin(true)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #d1d5db',
+                  background: 'white',
+                  color: '#374151',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <LogIn size={16} />
+                Sign In
+              </button>
+              <button
+                onClick={() => setShowRegister(true)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #d1d5db',
+                  background: 'white',
+                  color: '#374151',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <UserPlus size={16} />
+                Sign Up
+              </button>
             </div>
           )}
         </div>
-        
+
+        {/* Game Mode Buttons */}
         <div style={styles.buttonContainer}>
           <button
             onClick={onSinglePlayer}
             style={{
               ...styles.button,
-              backgroundColor: '#2563eb',
+              background: '#3b82f6',
               color: 'white'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2563eb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#3b82f6';
+            }}
           >
             Single Player
           </button>
-          
+
           <button
             onClick={onMultiplayer}
-            disabled={!multiplayerAvailable}
+            disabled={!multiplayerAvailable || isConnecting || !isAuthenticated}
             style={{
               ...styles.button,
-              backgroundColor: multiplayerAvailable ? '#9333ea' : '#9ca3af',
-              color: multiplayerAvailable ? 'white' : '#374151',
-              cursor: multiplayerAvailable ? 'pointer' : 'not-allowed'
+              background: isAuthenticated ? '#10b981' : '#9ca3af',
+              color: 'white',
+              cursor: (multiplayerAvailable && !isConnecting && isAuthenticated) ? 'pointer' : 'not-allowed',
+              opacity: (multiplayerAvailable && !isConnecting && isAuthenticated) ? 1 : 0.6
             }}
             onMouseEnter={(e) => {
-              if (multiplayerAvailable) {
-                e.currentTarget.style.backgroundColor = '#7c3aed';
+              if (multiplayerAvailable && !isConnecting && isAuthenticated) {
+                e.currentTarget.style.background = '#059669';
               }
             }}
             onMouseLeave={(e) => {
-              if (multiplayerAvailable) {
-                e.currentTarget.style.backgroundColor = '#9333ea';
+              if (multiplayerAvailable && !isConnecting && isAuthenticated) {
+                e.currentTarget.style.background = '#10b981';
               }
             }}
           >
-            Multiplayer
-            {isConnecting && (
-              <span style={{ display: 'block', fontSize: '14px', fontWeight: 'normal' }}>Connecting...</span>
-            )}
+            {isConnecting ? 'Connecting...' : 'Multiplayer'}
           </button>
         </div>
       </motion.div>
+
+      {/* Authentication Modals */}
+      <AnimatePresence>
+        {showLogin && (
+          <LoginScreen
+            onLoginSuccess={handleLoginSuccess}
+            onBack={() => setShowLogin(false)}
+            onSwitchToRegister={() => {
+              setShowLogin(false);
+              setShowRegister(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRegister && (
+          <RegisterScreen
+            onRegisterSuccess={handleRegisterSuccess}
+            onBack={() => setShowRegister(false)}
+            onSwitchToLogin={() => {
+              setShowRegister(false);
+              setShowLogin(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -152,14 +152,21 @@ const App: React.FC = () => {
       resetMultiplayerStateIfInLobby();
     };
 
+    const handleNavigateToMenuEvent = () => {
+      console.log('🔄 App: Received navigate to menu event');
+      navigateTo('menu');
+    };
+
     window.addEventListener('switchToMultiplayer', handleSwitchToMultiplayer);
     window.addEventListener('viewLeaderboard', handleViewLeaderboardEvent);
     window.addEventListener('usernameChanged', handleUsernameChangeEvent);
+    window.addEventListener('navigateToMenu', handleNavigateToMenuEvent);
     
     return () => {
       window.removeEventListener('switchToMultiplayer', handleSwitchToMultiplayer);
       window.removeEventListener('viewLeaderboard', handleViewLeaderboardEvent);
       window.removeEventListener('usernameChanged', handleUsernameChangeEvent);
+      window.removeEventListener('navigateToMenu', handleNavigateToMenuEvent);
     };
   }, []);
 

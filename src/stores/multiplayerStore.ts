@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { multiplayerService, GameStartEvent, GameUpdate } from '../services/multiplayerService';
 import { useGameStore } from './gameStore';
+import { initializeAWS } from '../services/awsConfig';
 
 interface MultiplayerState {
   // Multiplayer-specific state
@@ -48,7 +49,7 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     console.log('🎮 Initializing multiplayer...');
     try {
       // Initialize AWS configuration
-      // initializeAWS(); // This line was removed as per the new_code
+      initializeAWS();
       
       // Load username from main menu if available
       const savedUsernames = localStorage.getItem('pfb_previous_usernames');

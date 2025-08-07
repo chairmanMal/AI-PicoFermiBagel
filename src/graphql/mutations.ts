@@ -21,6 +21,44 @@ export const registerUser = `
   }
 `;
 
+export const loginUser = `
+  mutation LoginUser($input: UserLoginInput!) {
+    loginUser(input: $input) {
+      success
+      user {
+        username
+        deviceId
+        createdAt
+        lastLogin
+        gamesPlayed
+        bestScore
+        averageScore
+      }
+      message
+      suggestions
+    }
+  }
+`;
+
+export const registerUserWithPassword = `
+  mutation RegisterUserWithPassword($input: UserRegistrationWithPasswordInput!) {
+    registerUserWithPassword(input: $input) {
+      success
+      user {
+        username
+        deviceId
+        createdAt
+        lastLogin
+        gamesPlayed
+        bestScore
+        averageScore
+      }
+      message
+      suggestions
+    }
+  }
+`;
+
 export const joinLobby = `
   mutation JoinLobby($input: JoinLobbyInput!) {
     joinLobby(input: $input) {

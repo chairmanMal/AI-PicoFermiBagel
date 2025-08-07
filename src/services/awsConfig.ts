@@ -18,17 +18,27 @@ export const initializeAWS = () => {
     console.log('🔧 AWS: Auth Type:', awsConfig.aws_appsync_authenticationType);
     console.log('🔧 AWS: API Key:', awsConfig.aws_appsync_apiKey.substring(0, 10) + '...');
     
-    Amplify.configure({
+    const config = {
       API: {
         GraphQL: {
           endpoint: awsConfig.aws_appsync_graphqlEndpoint,
           region: awsConfig.aws_appsync_region,
-          defaultAuthMode: 'apiKey',
+          defaultAuthMode: 'apiKey' as const,
           apiKey: awsConfig.aws_appsync_apiKey,
         }
       }
-    });
+    };
+    
+    console.log('🔧 AWS: Configuration object:', JSON.stringify(config, null, 2));
+    
+    Amplify.configure(config);
     console.log('✅ AWS: Amplify configured successfully');
+    
+    // Verify configuration was applied
+    console.log('🔧 AWS: Verifying configuration...');
+    const currentConfig = Amplify.getConfig();
+    console.log('🔧 AWS: Current Amplify config:', currentConfig);
+    
   } catch (error: any) {
     console.error('❌ AWS: Configuration failed:', error);
     console.error('❌ AWS: Error details:', {

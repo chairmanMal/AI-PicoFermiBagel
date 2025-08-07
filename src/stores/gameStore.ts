@@ -37,8 +37,8 @@ const defaultSettings: GameSettings = {
   clearGuessAfterSubmit: true,
   multiRowGuessFeedback: true, // Default to enabled
   backgroundColor: 'purple', // Default to original purple theme
-  developerMode: false,
-  developerLoseScore: 80,
+  developerMode: typeof window !== 'undefined' ? localStorage.getItem('pfb_developer_mode') === 'true' : false,
+  developerLoseScore: typeof window !== 'undefined' ? parseInt(localStorage.getItem('pfb_developer_lose_score') || '80') : 80,
   randomSeed: Math.floor(Math.random() * 1000000), // Random seed for developer mode
 };
 

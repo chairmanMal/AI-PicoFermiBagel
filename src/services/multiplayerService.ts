@@ -1,5 +1,4 @@
 // src/services/multiplayerService.ts
-import { generateClient } from 'aws-amplify/api';
 import { v4 as uuidv4 } from 'uuid';
 import * as mutations from '../graphql/mutations';
 import * as queries from '../graphql/queries';
@@ -116,7 +115,7 @@ export interface GameStartEvent {
 }
 
 class MultiplayerService {
-  private client = generateClient();
+  private client: any = null;
   private subscriptions = new Map<string, any>();
   private deviceId: string;
   private maxRetries = 3;
@@ -132,6 +131,21 @@ class MultiplayerService {
     const newId = uuidv4();
     localStorage.setItem('deviceId', newId);
     return newId;
+  }
+
+  private async getClient() {
+    if (!this.client) {
+      // Ensure AWS is initialized before creating the client
+      const { initializeAWS } = await import('./awsConfig');
+      initializeAWS();
+      
+      // Small delay to ensure AWS is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const { generateClient } = await import('aws-amplify/api');
+      this.client = generateClient();
+    }
+    return this.client;
   }
 
   // Enhanced error handling utility
@@ -393,11 +407,11 @@ class MultiplayerService {
       const result = await this.retryOperation(
         async () => {
           console.log('🔧 validateUsername: Making AWS GraphQL call...');
-          const response = await this.client.graphql({
+          const client = await this.getClient();
+          const response = await client.graphql({
             query: mutations.validateUsername,
             variables: { username }
           });
-          console.log('🔧 validateUsername: AWS response received:', response);
           return response;
         },
         'validateUsername',
@@ -464,7 +478,8 @@ class MultiplayerService {
     try {
       const result = await this.retryOperation(
         async () => {
-          const response = await this.client.graphql({
+          const client = await this.getClient();
+          const response = await client.graphql({
             query: mutations.registerUser,
             variables: { input: { username, deviceId: this.deviceId, timestamp: new Date().toISOString() } }
           });
@@ -532,7 +547,8 @@ class MultiplayerService {
   async getLobbyStatus(difficulty: string): Promise<{ difficulty: string; playersWaiting: number; estimatedWaitTime: number }> {
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: queries.getLobbyStatus,
           variables: { difficulty }
         });
@@ -579,7 +595,8 @@ class MultiplayerService {
 
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: mutations.joinLobby,
           variables: {
             input: {
@@ -618,7 +635,8 @@ class MultiplayerService {
   async leaveLobby(difficulty: string): Promise<boolean> {
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: mutations.leaveLobby,
           variables: {
             input: {
@@ -645,7 +663,8 @@ class MultiplayerService {
   async updateDifficultyInterest(difficulty: string, isInterested: boolean): Promise<boolean> {
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: mutations.updateDifficultyInterest,
           variables: {
             input: {
@@ -680,7 +699,8 @@ class MultiplayerService {
   }): Promise<GamePulseResult | null> {
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: mutations.sendGamePulse,
           variables: {
             input: {
@@ -720,7 +740,8 @@ class MultiplayerService {
     
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: mutations.submitGameResult,
           variables: {
             input: {
@@ -777,7 +798,8 @@ class MultiplayerService {
     
     const result = await this.retryOperation(
       async () => {
-        const response = await this.client.graphql({
+        const client = await this.getClient();
+        const response = await client.graphql({
           query: queries.getLeaderboard,
           variables: { difficulty, limit }
         });
