@@ -82,9 +82,9 @@ export const leaveLobby = `
 export const updateDifficultyInterest = `
   mutation UpdateDifficultyInterestWithNotification($input: UpdateDifficultyInterestInput!) {
     updateDifficultyInterestWithNotification(input: $input) {
-      success
-      message
-      newInterestCount
+      difficulty
+      interestCount
+      timestamp
     }
   }
 `;

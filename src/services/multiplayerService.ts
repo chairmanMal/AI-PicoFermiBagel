@@ -143,9 +143,15 @@ class MultiplayerService {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const { generateClient } = await import('aws-amplify/api');
-      this.client = generateClient();
+      this.client = generateClient({ authMode: 'apiKey' });
     }
     return this.client;
+  }
+
+  // Force client recreation (useful after auth changes)
+  clearClient() {
+    console.log('🔄 MultiplayerService: Clearing cached client to force recreation');
+    this.client = null;
   }
 
   // Enhanced error handling utility
@@ -725,7 +731,8 @@ class MultiplayerService {
       }
 
       const data = (result.data as any).data?.updateDifficultyInterestWithNotification;
-      return data?.success || false;
+      // Now returns an array of DifficultyInterestUpdate objects
+      return Array.isArray(data) && data.length > 0;
     } catch (error) {
       console.warn('🎮 MultiplayerService: updateDifficultyInterest error:', error);
       return false;
@@ -838,7 +845,8 @@ class MultiplayerService {
 
       const data = (result.data as any).data?.updateDifficultyInterestWithNotification;
       console.log('🎮 MultiplayerService: Lobby entry announced, triggering subscription updates');
-      return data?.success || false;
+      // Now returns an array of DifficultyInterestUpdate objects
+      return Array.isArray(data) && data.length > 0;
     } catch (error) {
       console.warn('🎮 MultiplayerService: announceLobbyEntry error:', error);
       return false;
@@ -1045,50 +1053,6 @@ class MultiplayerService {
     return { unsubscribe: () => {} };
   }
 
-  // Simple polling fallback for real-time updates
-  private pollingInterval: NodeJS.Timeout | null = null;
-  private isPolling = false;
-
-  async startInterestPolling(callback: (updates: Array<{ difficulty: string; interestCount: number; timestamp: string }>) => void): Promise<void> {
-    if (this.isPolling) {
-      this.stopInterestPolling();
-    }
-
-    this.isPolling = true;
-    console.log('🔄 Starting interest count polling (5-second intervals)');
-
-    const pollForUpdates = async () => {
-      if (!this.isPolling) return;
-
-      try {
-        const counts = await this.getDifficultyInterestCounts();
-        if (counts && Object.keys(counts).length > 0) {
-          const updates = Object.entries(counts).map(([difficulty, interestCount]) => ({
-            difficulty,
-            interestCount,
-            timestamp: new Date().toISOString()
-          }));
-          callback(updates);
-        }
-      } catch (error) {
-        console.error('🔄 Polling error:', error);
-      }
-    };
-
-    // Poll immediately, then every 5 seconds
-    await pollForUpdates();
-    this.pollingInterval = setInterval(pollForUpdates, 5000);
-  }
-
-  stopInterestPolling(): void {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
-    }
-    this.isPolling = false;
-    console.log('🔄 Stopped interest count polling');
-  }
-
   // Subscribe to difficulty interest updates using real GraphQL subscription
   async subscribeDifficultyInterestUpdates(
     callback: (updates: Array<{ difficulty: string; interestCount: number; timestamp: string }>) => void
@@ -1098,54 +1062,50 @@ class MultiplayerService {
     try {
       const client = await this.getClient();
       
-      // Use the real GraphQL subscription
       const subscription = client.graphql({
         query: subscriptions.onDifficultyInterestUpdate
       }).subscribe({
-        next: (response: any) => {
-          console.log('🎮 MultiplayerService: Received difficulty interest update:', response);
-          const data = response.data?.onDifficultyInterestUpdate;
-          console.log('🎮 MultiplayerService: Subscription data:', data);
-          if (data && Array.isArray(data)) {
-            const updates = data.map((item: any) => ({
+        next: (data: any) => {
+          console.log('🎮 MultiplayerService: Received difficulty interest update:', data);
+          const subscriptionData = data.data?.onDifficultyInterestUpdate;
+          console.log('🎮 MultiplayerService: Subscription data:', subscriptionData);
+          
+          // The subscription now returns an array of DifficultyInterestUpdate objects
+          if (subscriptionData && Array.isArray(subscriptionData)) {
+            const updates = subscriptionData.map((item: any) => ({
               difficulty: item.difficulty,
               interestCount: item.interestCount,
               timestamp: item.timestamp
             }));
             console.log('🎮 MultiplayerService: Processed subscription updates:', updates);
             callback(updates);
-          } else {
-            console.log('🎮 MultiplayerService: No valid subscription data received');
+          } else if (subscriptionData) {
+            // Fallback: if it's a single object, convert to array
+            const update = {
+              difficulty: subscriptionData.difficulty,
+              interestCount: subscriptionData.interestCount,
+              timestamp: subscriptionData.timestamp
+            };
+            console.log('🎮 MultiplayerService: Processed single subscription update:', update);
+            callback([update]);
           }
         },
         error: (error: any) => {
-          console.error('🎮 MultiplayerService: Difficulty interest subscription error:', error);
-          console.log('🔄 Subscription failed, falling back to polling...');
-          // Fallback to polling if subscription fails
-          this.startInterestPolling(callback);
+          console.error('🎮 MultiplayerService: Subscription error:', error);
+          console.log('🎮 MultiplayerService: Subscription error occurred, check resolver configuration');
         }
       });
-      
-      const unsubscribe = () => {
-        subscription.unsubscribe();
-        this.stopInterestPolling(); // Stop polling when unsubscribing
-        console.log('🎮 MultiplayerService: Unsubscribed from difficulty interest updates');
+
+      return {
+        unsubscribe: () => {
+          console.log('🎮 MultiplayerService: Unsubscribing from difficulty interest updates');
+          subscription.unsubscribe();
+        }
       };
-      
-      this.subscriptions.set('difficultyInterest', { unsubscribe });
-      return { unsubscribe };
-      
     } catch (error) {
       console.error('🎮 MultiplayerService: Failed to subscribe to difficulty interest updates:', error);
-      console.log('🔄 Subscription setup failed, using polling instead...');
-      // Fallback to polling if subscription setup fails
-      this.startInterestPolling(callback);
-      
-      return { 
-        unsubscribe: () => {
-          this.stopInterestPolling();
-        } 
-      };
+      console.log('🎮 MultiplayerService: Subscription setup failed, check AWS configuration');
+      return { unsubscribe: () => {} };
     }
   }
 

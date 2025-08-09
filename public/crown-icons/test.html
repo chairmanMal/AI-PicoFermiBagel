@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crown Icons Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .crown-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .crown-item { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 120px;
+        }
+        .crown-item img { width: 48px; height: 48px; }
+        .crown-item h3 { margin: 10px 0 5px 0; color: #333; }
+        .crown-item p { margin: 0; color: #666; font-size: 14px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        .description { color: #666; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <h1>Crown Icons for Player Seats</h1>
+    <p class="description">Different colored crown icons to represent players in multiplayer lobbies:</p>
+    
+    <div class="crown-grid">
+        <div class="crown-item">
+            <img src="crown-gold.svg" alt="Gold Crown">
+            <h3>Gold Crown</h3>
+            <p>Your own seat in your lobby</p>
+        </div>
+        
+        <div class="crown-item">
+            <img src="crown-silver.svg" alt="Silver Crown">
+            <h3>Silver Crown</h3>
+            <p>Other player (Blue gems)</p>
+        </div>
+        
+        <div class="crown-item">
+            <img src="crown-bronze.svg" alt="Bronze Crown">
+            <h3>Bronze Crown</h3>
+            <p>Other player (Green gems)</p>
+        </div>
+        
+        <div class="crown-item">
+            <img src="crown-purple.svg" alt="Purple Crown">
+            <h3>Purple Crown</h3>
+            <p>Other player (Yellow gems)</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -25,9 +25,15 @@ class AuthService {
       initializeAWS();
       await new Promise(resolve => setTimeout(resolve, 100));
       const { generateClient } = await import('aws-amplify/api');
-      this.client = generateClient();
+      this.client = generateClient({ authMode: 'apiKey' });
     }
     return this.client;
+  }
+
+  // Force client recreation (useful after auth changes)
+  clearClient() {
+    console.log('🔄 AuthService: Clearing cached client to force recreation');
+    this.client = null;
   }
 
   private async retryOperation<T>(

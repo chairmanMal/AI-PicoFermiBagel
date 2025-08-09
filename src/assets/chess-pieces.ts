@@ -1,28 +1,45 @@
-// Chess piece images for different seat positions
+// Crown icons for different player states in multiplayer lobbies
+export const getCrownForPlayer = (isCurrentPlayer: boolean, seatIndex: number): string => {
+  // Gold crown for current player in their own lobby
+  if (isCurrentPlayer) {
+    return '/crown-icons/crown-gold.svg';
+  }
+  
+  // Different colored crowns for other players
+  const otherPlayerCrowns = [
+    '/crown-icons/crown-silver.svg',  // Silver with blue gems
+    '/crown-icons/crown-bronze.svg',  // Bronze with green gems
+    '/crown-icons/crown-purple.svg'   // Purple with yellow gems
+  ];
+  
+  return otherPlayerCrowns[seatIndex % otherPlayerCrowns.length];
+};
+
+// Get crown for current player (always gold)
+export const getCurrentPlayerCrown = (): string => {
+  return '/crown-icons/crown-gold.svg';
+};
+
+// Get crown for other players based on seat index
+export const getOtherPlayerCrown = (seatIndex: number): string => {
+  const otherPlayerCrowns = [
+    '/crown-icons/crown-silver.svg',  // Seat 0 - Silver crown
+    '/crown-icons/crown-bronze.svg',  // Seat 1 - Bronze crown  
+    '/crown-icons/crown-purple.svg'   // Seat 2 - Purple crown
+  ];
+  
+  return otherPlayerCrowns[seatIndex % otherPlayerCrowns.length];
+};
+
+// Legacy chess piece functions (deprecated - use crown functions instead)
 export const getChessPieceForSeat = (seatIndex: number): string => {
-  const chessPieces = [
-    '/chess-pieces/king.png',    // Seat 0 - Top (King for current player)
-    '/chess-pieces/rook.png',    // Seat 1 - Right (Rook)
-    '/chess-pieces/bishop.png',  // Seat 2 - Bottom (Bishop)
-    '/chess-pieces/knight.png'   // Seat 3 - Left (Knight)
-  ];
-  
-  return chessPieces[seatIndex] || chessPieces[0];
+  return getCrownForPlayer(false, seatIndex);
 };
 
-// Get chess piece for current player (always king)
 export const getCurrentPlayerChessPiece = (): string => {
-  return '/chess-pieces/king.png';
+  return getCurrentPlayerCrown();
 };
 
-// Get chess piece for other players based on seat
 export const getOtherPlayerChessPiece = (seatIndex: number): string => {
-  const otherPieces = [
-    '/chess-pieces/rook.png',    // Seat 0 - Rook
-    '/chess-pieces/bishop.png',  // Seat 1 - Bishop  
-    '/chess-pieces/knight.png',  // Seat 2 - Knight
-    '/chess-pieces/queen.png'    // Seat 3 - Queen
-  ];
-  
-  return otherPieces[seatIndex] || otherPieces[0];
+  return getOtherPlayerCrown(seatIndex);
 }; 

@@ -1,18 +1,40 @@
 import { GameSettings, GuessResult, ScoreData } from '@/types/game';
 
 /**
+ * Simple seeded random number generator (Linear Congruential Generator)
+ */
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed % 2147483647;
+    if (this.seed <= 0) this.seed += 2147483646;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return (this.seed - 1) / 2147483646;
+  }
+}
+
+/**
  * Generates a random target number based on game settings
  */
 export function generateTarget(settings: GameSettings): number[] {
-  const { targetLength, digitRange, difficulty } = settings;
+  const { targetLength, digitRange, difficulty, randomSeed } = settings;
   
   // Debug logging with more detail
   console.log('🎯 GENERATING TARGET:', { 
     targetLength, 
     digitRange, 
     difficulty,
+    randomSeed,
     fullSettings: settings
   });
+  
+  // Initialize seeded random generator
+  const rng = new SeededRandom(randomSeed);
+  console.log('🎯 Using seeded random generator with seed:', randomSeed);
   
   // Validate that settings match expected difficulty
   const expectedSettings = getDifficultySettings(difficulty);
@@ -30,7 +52,7 @@ export function generateTarget(settings: GameSettings): number[] {
   const usedDigits = new Set<number>();
 
   while (target.length < targetLength) {
-    const digit = Math.floor(Math.random() * (digitRange + 1));
+    const digit = Math.floor(rng.next() * (digitRange + 1));
     if (!usedDigits.has(digit)) {
       target.push(digit);
       usedDigits.add(digit);
@@ -47,7 +69,7 @@ export function generateTarget(settings: GameSettings): number[] {
       settings
     });
     // Force regeneration with corrected digits
-    return target.map(digit => digit > digitRange ? Math.floor(Math.random() * (digitRange + 1)) : digit);
+    return target.map(digit => digit > digitRange ? Math.floor(rng.next() * (digitRange + 1)) : digit);
   }
 
   console.log('🎯 GENERATED TARGET:', target, 'for digit range 0-' + digitRange);
