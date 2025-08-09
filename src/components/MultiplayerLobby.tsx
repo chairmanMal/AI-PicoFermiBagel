@@ -14,7 +14,7 @@ import { DeviceDetection } from '../utils/deviceDetection';
 import { soundUtils } from '../utils/soundUtils';
 import { useGameStore } from '../stores/gameStore';
 import { authService } from '../services/authService';
-import { getChessPieceForSeat } from '../assets/chess-pieces';
+import { getChessPieceForSeat, getOtherPlayerChessPiece } from '../assets/chess-pieces';
 
 interface MultiplayerLobbyProps {
   onGameStart: (gameData: any) => void;
@@ -65,7 +65,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
   const [showGameStartOverlay, setShowGameStartOverlay] = useState(false);
   const [selectedSeatIndex, setSelectedSeatIndex] = useState<number | null>(null);
-  const [difficultyInterestCounts, setDifficultyInterestCounts] = useState<Record<string, number>>({});
+  const [difficultyInterestCounts, setDifficultyInterestCounts] = useState<Record<string, number> | null>(null);
   
   const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
   const gameStartSubscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
@@ -86,15 +86,44 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   // Fetch difficulty interest counts for all difficulties
   const fetchDifficultyInterestCounts = async () => {
     try {
-      const counts: Record<string, number> = {};
-      for (const difficulty of Object.keys(DIFFICULTY_CONFIGS)) {
-        // For now, we'll use a mock count since the backend doesn't provide this yet
-        // In the future, this would call a real API endpoint
-        counts[difficulty] = Math.floor(Math.random() * 5); // Mock data
+      console.log('🎮 MultiplayerLobby: Fetching difficulty interest counts from AWS');
+      const counts = await multiplayerService.getDifficultyInterestCounts();
+      console.log('🎮 MultiplayerLobby: Received difficulty interest counts:', counts);
+      console.log('🎮 MultiplayerLobby: Type of counts:', typeof counts, 'Is null:', counts === null);
+      
+      if (counts === null) {
+        // AWS query not available, set to null to show "Interest count unavailable"
+        console.log('🎮 MultiplayerLobby: Setting to null - AWS query not available');
+        setDifficultyInterestCounts(null);
+      } else {
+        console.log('🎮 MultiplayerLobby: Setting counts:', counts);
+        console.log('🎮 MultiplayerLobby: Classic count specifically:', counts['classic']);
+        setDifficultyInterestCounts(counts);
       }
-      setDifficultyInterestCounts(counts);
     } catch (error) {
-      console.warn('Failed to fetch difficulty interest counts:', error);
+      console.warn('🎮 MultiplayerLobby: Failed to fetch difficulty interest counts:', error);
+      // Set to null to show "Interest count unavailable"
+      setDifficultyInterestCounts(null);
+    }
+  };
+
+  const fetchLobbyStatus = async () => {
+    try {
+      console.log('🎮 MultiplayerLobby: Fetching lobby status for:', selectedDifficulty);
+      const status = await multiplayerService.getLobbyStatus(selectedDifficulty);
+      console.log('🎮 MultiplayerLobby: Received lobby status:', status);
+      
+      if (status) {
+        setLobbyState(prev => ({
+          ...prev,
+          playersWaiting: status.playersWaiting,
+          players: status.players,
+          gameId: status.gameId,
+          countdown: status.countdown
+        }));
+      }
+    } catch (error) {
+      console.error('🎮 MultiplayerLobby: Failed to fetch lobby status:', error);
     }
   };
   
@@ -108,24 +137,155 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
     
     console.log('🎮 MultiplayerLobby: Final selected username:', effectiveUsername);
     
-    // Fetch difficulty interest counts
+    // Fetch initial data
     fetchDifficultyInterestCounts();
+    fetchLobbyStatus();
+    
+    let subscription: { unsubscribe: () => void } | null = null;
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    
+    // Subscribe to real-time difficulty interest updates (delayed to avoid overriding initial data)
+    setTimeout(async () => {
+      try {
+        console.log('🎮 MultiplayerLobby: Setting up subscription after initial query...');
+        subscription = await multiplayerService.subscribeDifficultyInterestUpdates((updates) => {
+          console.log('🎮 MultiplayerLobby: Received difficulty interest updates:', updates);
+          
+          // Only update if we have valid data
+          if (updates && updates.length > 0) {
+            // Convert updates to the expected format
+            const counts: Record<string, number> = {};
+            updates.forEach(update => {
+              counts[update.difficulty] = update.interestCount;
+            });
+            
+            console.log('🎮 MultiplayerLobby: Updating interest counts from subscription:', counts);
+            setDifficultyInterestCounts(counts);
+          }
+        });
+      } catch (error) {
+        console.error('🎮 MultiplayerLobby: Failed to setup subscription:', error);
+      }
+    }, 3000); // Wait 3 seconds before setting up subscription
+    
+    // Start heartbeat
+    heartbeatInterval = startHeartbeat();
+    
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
+      // Cleanup interest when component unmounts
+      cleanupInterest();
+    };
   }, [globalUsername, setGlobalUsername]);
+
+  // Handle app lifecycle events for immediate cleanup and return
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log('🎮 MultiplayerLobby: App unloading, cleaning up interest');
+      cleanupInterest();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('🎮 MultiplayerLobby: App becoming hidden, cleaning up interest');
+        cleanupInterest();
+      } else {
+        console.log('🎮 MultiplayerLobby: App becoming visible, re-registering interest');
+        reRegisterInterest();
+      }
+    };
+
+    const handlePageHide = () => {
+      console.log('🎮 MultiplayerLobby: Page hiding, cleaning up interest');
+      cleanupInterest();
+    };
+
+    const handlePageShow = () => {
+      console.log('🎮 MultiplayerLobby: Page showing, re-registering interest');
+      reRegisterInterest();
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      // Remove event listeners
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [selectedDifficulty]);
 
   // Initialize difficulty interest tracking
   useEffect(() => {
     const initializeDifficultyInterest = async () => {
       try {
-        // Notify AWS of initial difficulty interest
-        await multiplayerService.updateDifficultyInterest(selectedDifficulty, true);
-        console.log('🎮 MultiplayerLobby: Initialized difficulty interest for:', selectedDifficulty);
+        // Announce lobby entry to AWS (triggers subscription updates to all clients)
+        await multiplayerService.announceLobbyEntry(selectedDifficulty);
+        console.log('🎮 MultiplayerLobby: Announced lobby entry for:', selectedDifficulty);
       } catch (error) {
-        console.error('🎮 MultiplayerLobby: Failed to initialize difficulty interest:', error);
+        console.error('🎮 MultiplayerLobby: Failed to announce lobby entry:', error);
       }
     };
 
     initializeDifficultyInterest();
   }, [selectedDifficulty]);
+
+  // Heartbeat functionality
+  const startHeartbeat = () => {
+    if (selectedDifficulty) {
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          await multiplayerService.sendHeartbeat(selectedDifficulty);
+        } catch (error) {
+          console.error('🎮 MultiplayerLobby: Heartbeat failed:', error);
+        }
+      }, 30000); // Send heartbeat every 30 seconds
+      
+      return heartbeatInterval;
+    }
+    return null;
+  };
+
+  // Cleanup function to remove interest when leaving
+  const cleanupInterest = async () => {
+    if (selectedDifficulty) {
+      try {
+        console.log('🎮 MultiplayerLobby: Cleaning up interest for:', selectedDifficulty);
+        await multiplayerService.removeDifficultyInterest(selectedDifficulty);
+      } catch (error) {
+        console.error('🎮 MultiplayerLobby: Failed to cleanup interest:', error);
+      }
+    }
+  };
+
+  // Re-register interest when returning to lobby
+  const reRegisterInterest = async () => {
+    if (selectedDifficulty) {
+      try {
+        console.log('🎮 MultiplayerLobby: Re-registering interest for:', selectedDifficulty);
+        await multiplayerService.updateDifficultyInterest(selectedDifficulty, true);
+        console.log('🎮 MultiplayerLobby: Successfully re-registered interest');
+      } catch (error) {
+        console.error('🎮 MultiplayerLobby: Failed to re-register interest:', error);
+      }
+    }
+  };
+
+  // Navigation cleanup - called when leaving the lobby component
+  const handleNavigationAway = async () => {
+    console.log('🎮 MultiplayerLobby: Navigation away detected, cleaning up...');
+    await cleanupInterest();
+  };
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -345,19 +505,42 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   const handleDifficultyChange = async (newDifficulty: string) => {
     if (loading) return;
     
+    const previousDifficulty = selectedDifficulty;
+    console.log('🎮 MultiplayerLobby: Changing difficulty from', previousDifficulty, 'to', newDifficulty);
+    
+    // Update local state immediately for better UX
+    setSelectedDifficulty(newDifficulty);
+    
     // Notify AWS of difficulty interest change
     try {
-      await multiplayerService.updateDifficultyInterest(selectedDifficulty, false); // Leave current
-      await multiplayerService.updateDifficultyInterest(newDifficulty, true); // Join new
+      console.log('🎮 MultiplayerLobby: Updating AWS interest - joining', newDifficulty);
+      await multiplayerService.updateDifficultyInterest(newDifficulty, true); // Join new difficulty
+      
+      console.log('🎮 MultiplayerLobby: Successfully updated difficulty interest in AWS');
     } catch (error) {
-      console.error('Failed to update difficulty interest:', error);
+      console.error('🎮 MultiplayerLobby: Failed to update difficulty interest:', error);
+      // Revert local state if AWS update failed
+      setSelectedDifficulty(previousDifficulty);
     }
     
     if (isSeated) {
       await handleLeaveLobby();
     }
-    setSelectedDifficulty(newDifficulty);
   };
+
+  // Track if this is the initial mount to prevent double registration
+  const [isInitialMount, setIsInitialMount] = useState(true);
+
+  // Handle when player returns to lobby (difficulty changes only, not initial mount)
+  useEffect(() => {
+    if (selectedDifficulty && !isInitialMount) {
+      console.log('🎮 MultiplayerLobby: Difficulty changed, re-registering interest for:', selectedDifficulty);
+      reRegisterInterest();
+    }
+    if (isInitialMount) {
+      setIsInitialMount(false);
+    }
+  }, [selectedDifficulty]);
 
   // Get responsive styles based on device and orientation
   const getResponsiveStyles = () => {
@@ -773,7 +956,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                       {isCurrentUser && <Crown style={{ width: tableSize * 0.08, height: tableSize * 0.08 }} />}
                       {isOccupiedByOther && (
                         <img 
-                          src={getChessPieceForSeat(index)}
+                          src={getOtherPlayerChessPiece(index)}
                           alt="Chess piece"
                           style={{ 
                             width: tableSize * 0.12, 
@@ -784,15 +967,18 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                       )}
                     </div>
                     
-                    {/* Username positioned outside seat */}
+                    {/* Username positioned outside seat - Horizontal labels */}
                     <div style={{
                       position: 'absolute',
                       color: 'white',
                       fontWeight: 'bold',
-                      fontSize: tableSize * 0.04,
+                      fontSize: tableSize * 0.05, // Increased from 0.04 to 0.05
                       textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                       whiteSpace: 'nowrap',
+                      overflow: 'visible', // Ensure no overflow clipping
+                      textOverflow: 'clip', // Prevent text truncation
                       zIndex: 4,
+                      maxWidth: 'none', // Remove any max-width constraints
                       ...(isTopSeat && {
                         bottom: '120%',
                         left: '50%',
@@ -809,45 +995,24 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                         right: '120%',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        textAlign: 'center',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
+                        textAlign: 'right'
                       }),
                       ...(isRightSeat && {
                         left: '120%',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        textAlign: 'center',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
+                        textAlign: 'left'
                       })
                     }}>
-                      {(player?.username || (isCurrentUser ? effectiveUsername : '')).length > 8 
-                        ? `${(player?.username || (isCurrentUser ? effectiveUsername : '')).slice(0, 6)}...` 
-                        : (player?.username || (isCurrentUser ? effectiveUsername : ''))
-                      }
-                      {(isLeftSeat || isRightSeat) && (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '2px'
-                        }}>
-                          {(player?.username || (isCurrentUser ? effectiveUsername : '')).split('').map((char, i) => (
-                            <span key={i} style={{ lineHeight: '1' }}>{char}</span>
-                          ))}
-                        </div>
-                      )}
-                      {!(isLeftSeat || isRightSeat) && (
-                        <span>
-                          {(player?.username || (isCurrentUser ? effectiveUsername : '')).length > 8 
-                            ? `${(player?.username || (isCurrentUser ? effectiveUsername : '')).slice(0, 6)}...` 
-                            : (player?.username || (isCurrentUser ? effectiveUsername : ''))
-                          }
-                        </span>
-                      )}
+                      {/* Full username without truncation */}
+                      <span style={{
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap',
+                        overflow: 'visible',
+                        textOverflow: 'clip'
+                      }}>
+                        {player?.username || (isCurrentUser ? effectiveUsername : '')}
+                      </span>
                     </div>
                   </>
                 )}
@@ -970,14 +1135,36 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
             >
               <div style={{ fontWeight: '600', marginBottom: '2px' }}>{config.label}</div>
               <div style={{ fontSize: '0.8em', opacity: 0.8 }}>{config.description}</div>
-              {difficultyInterestCounts[key] !== undefined && (
+              {difficultyInterestCounts === null ? (
                 <div style={{ 
                   fontSize: '0.7em', 
-                  opacity: 0.9, 
+                  opacity: 0.8, 
                   marginTop: '2px',
-                  color: difficultyInterestCounts[key] > 0 ? '#10b981' : 'rgba(255, 255, 255, 0.6)'
+                  color: 'rgba(255, 255, 255, 0.8)' // Same color as description text
                 }}>
-                  {difficultyInterestCounts[key]} players
+                  Interest count unavailable
+                </div>
+              ) : difficultyInterestCounts[key] !== undefined && (
+                <div style={{ 
+                  fontSize: '0.7em', 
+                  opacity: 0.8, 
+                  marginTop: '2px',
+                  color: 'rgba(255, 255, 255, 0.8)' // Same color as description text
+                }}>
+                  {/* Subtract current player's interest from the total count */}
+                  {(() => {
+                    const totalCount = difficultyInterestCounts[key] || 0;
+                    const isSelected = selectedDifficulty === key;
+                    const otherPlayerCount = Math.max(0, totalCount - (isSelected ? 1 : 0));
+                    console.log(`🎮 MultiplayerLobby: ${key} - Total: ${totalCount}, Selected: ${isSelected}, Other: ${otherPlayerCount}, Raw data:`, difficultyInterestCounts);
+                    if (otherPlayerCount === 0) {
+                      return '0 players interested';
+                    } else if (otherPlayerCount === 1) {
+                      return '1 other player interested';
+                    } else {
+                      return `${otherPlayerCount} players interested`;
+                    }
+                  })()}
                 </div>
               )}
             </button>

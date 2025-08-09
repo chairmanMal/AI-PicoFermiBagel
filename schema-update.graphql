@@ -1,0 +1,13 @@
+
+# Add this type if it doesn't exist
+type DifficultyInterest {
+  difficulty: String!
+  interestCount: Int!
+  timestamp: String!
+}
+
+# Add this query to your existing Query type
+extend type Query {
+  getDifficultyInterestCounts: [DifficultyInterest!]!
+}
+    

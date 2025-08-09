@@ -1,0 +1,32 @@
+# Fix AppSync Subscription Schema
+# Add this to your AppSync schema to link subscriptions to mutations
+
+# Update the existing Subscription type to include the @aws_subscribe directive
+type Subscription {
+  onLobbyUpdate(difficulty: String!): LobbyUpdate
+  onGameUpdate(gameId: ID!): GameUpdate
+  onGameStart(deviceId: ID!): GameStartEvent
+  onGameEnd(gameId: ID!): GameEndEvent
+  
+  # THIS IS THE CRITICAL FIX:
+  # Link the subscription to the mutation that triggers it
+  onDifficultyInterestUpdate: [DifficultyInterest!]!
+    @aws_subscribe(mutations: ["updateDifficultyInterestWithNotification"])
+}
+
+# Alternative approach - if the above doesn't work, try this:
+# Remove the Lambda resolver and use a direct subscription
+extend type Subscription {
+  onDifficultyInterestUpdate: [DifficultyInterest!]!
+    @aws_subscribe(mutations: ["updateDifficultyInterestWithNotification"])
+}
+
+# MANUAL STEPS FOR AWS CONSOLE:
+# 1. Go to AWS AppSync Console
+# 2. Navigate to your API: PicoFermiBagel-Multiplayer-API  
+# 3. Go to "Schema" tab
+# 4. Find the Subscription type definition
+# 5. Add this line to the onDifficultyInterestUpdate field:
+#    @aws_subscribe(mutations: ["updateDifficultyInterestWithNotification"])
+# 6. Save the schema
+# 7. The subscription should now auto-trigger when the mutation succeeds! 

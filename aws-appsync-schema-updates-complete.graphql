@@ -1,0 +1,49 @@
+# Complete AppSync Schema Updates
+# Add these missing pieces to fix the multiplayer system
+
+# Missing Input Types
+input HeartbeatInput {
+  deviceId: ID!
+  difficulty: String!
+  username: String!
+  timestamp: AWSDateTime!
+}
+
+input RemoveDifficultyInterestInput {
+  deviceId: ID!
+  difficulty: String!
+  username: String!
+  timestamp: AWSDateTime!
+}
+
+input GetLobbyStatusInput {
+  difficulty: String!
+}
+
+# Missing Response Types
+type HeartbeatResponse {
+  success: Boolean!
+  message: String
+}
+
+type RemoveDifficultyInterestResponse {
+  success: Boolean!
+  message: String
+  newInterestCount: Int
+}
+
+# Add missing mutations to Mutation type
+extend type Mutation {
+  sendHeartbeat(input: HeartbeatInput!): HeartbeatResponse!
+  removeDifficultyInterest(input: RemoveDifficultyInterestInput!): RemoveDifficultyInterestResponse!
+}
+
+# Add missing query to Query type  
+extend type Query {
+  getLobbyStatus(input: GetLobbyStatusInput!): LobbyStatus
+}
+
+# Fix the subscription to return empty array instead of null
+extend type Subscription {
+  onDifficultyInterestUpdate: [DifficultyInterest!]!
+} 

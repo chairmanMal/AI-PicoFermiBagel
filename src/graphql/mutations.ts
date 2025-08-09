@@ -60,30 +60,50 @@ export const registerUserWithPassword = `
 `;
 
 export const joinLobby = `
-  mutation JoinLobby($input: JoinLobbyInput!) {
-    joinLobby(input: $input) {
+  mutation JoinLobbyWithNotification($input: JoinLobbyInputWithNotification!) {
+    joinLobbyWithNotification(input: $input) {
       success
       gameId
       playersWaiting
-      countdown
       message
     }
   }
 `;
 
 export const leaveLobby = `
-  mutation LeaveLobby($input: LeaveLobbyInput!) {
-    leaveLobby(input: $input)
+  mutation LeaveLobbyWithNotification($input: LeaveLobbyInputWithNotification!) {
+    leaveLobbyWithNotification(input: $input) {
+      success
+      message
+    }
   }
 `;
 
 export const updateDifficultyInterest = `
-  mutation UpdateDifficultyInterest($input: DifficultyInterestInput!) {
-    updateDifficultyInterest(input: $input) {
+  mutation UpdateDifficultyInterestWithNotification($input: UpdateDifficultyInterestInput!) {
+    updateDifficultyInterestWithNotification(input: $input) {
       success
-      difficulty
-      interestCount
       message
+      newInterestCount
+    }
+  }
+`;
+
+export const sendHeartbeat = `
+  mutation SendHeartbeat($input: HeartbeatInput!) {
+    sendHeartbeat(input: $input) {
+      success
+      message
+    }
+  }
+`;
+
+export const removeDifficultyInterest = `
+  mutation RemoveDifficultyInterest($input: RemoveDifficultyInterestInput!) {
+    removeDifficultyInterest(input: $input) {
+      success
+      message
+      newInterestCount
     }
   }
 `;

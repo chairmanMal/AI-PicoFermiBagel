@@ -68,3 +68,13 @@ export const onGameEnd = `
     }
   }
 `;
+
+export const onDifficultyInterestUpdate = `
+  subscription OnDifficultyInterestUpdate {
+    onDifficultyInterestUpdate {
+      difficulty
+      interestCount
+      timestamp
+    }
+  }
+`;

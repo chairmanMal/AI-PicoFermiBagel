@@ -38,7 +38,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorState | null>(null);
 
-  const difficulties = ['easy', 'classic', 'medium', 'hard', 'expert'];
+  const difficulties = ['easy', 'classic', 'medium', 'hard', 'harder', 'hardest', 'expert'];
 
   // Enhanced error handling
   const handleServiceError = (serviceError: ServiceError, operation: string) => {

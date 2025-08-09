@@ -1,0 +1,100 @@
+# AWS AppSync Schema Updates for Real-Time Subscriptions
+# Add these to your existing AppSync schema
+
+# Subscription types for real-time updates
+type Subscription {
+  # Real-time difficulty interest changes
+  onDifficultyInterestChanged: DifficultyInterestUpdate!
+  
+  # Real-time lobby updates when players join/leave
+  onPlayerJoinedLobby(difficulty: String!): LobbyUpdate!
+  onPlayerLeftLobby(difficulty: String!): LobbyUpdate!
+  
+  # Real-time game start notifications
+  onGameStarted(difficulty: String!): GameStartEvent!
+}
+
+# Types for subscription data
+type DifficultyInterestUpdate {
+  difficulty: String!
+  interestCount: Int!
+  timestamp: String!
+}
+
+type LobbyUpdate {
+  difficulty: String!
+  gameId: ID
+  playersWaiting: Int!
+  players: [LobbyPlayer!]!
+  countdown: Int
+}
+
+type LobbyPlayer {
+  username: String!
+  joinedAt: String!
+  seatIndex: Int!
+}
+
+type GameStartEvent {
+  gameId: ID!
+  difficulty: String!
+  players: [String!]!
+  gameSettings: GameSettings!
+  randomSeed: Int!
+}
+
+type GameSettings {
+  rows: Int!
+  columns: Int!
+  selectionSetSize: Int!
+  multiRowFeedback: Boolean!
+}
+
+# Add these mutations to trigger real-time updates
+extend type Mutation {
+  # Update difficulty interest and trigger real-time notification
+  updateDifficultyInterestWithNotification(input: UpdateDifficultyInterestInput!): UpdateDifficultyInterestResponse!
+  
+  # Join lobby with real-time notification
+  joinLobbyWithNotification(input: JoinLobbyInput!): LobbyResponse!
+  
+  # Leave lobby with real-time notification  
+  leaveLobbyWithNotification(input: LeaveLobbyInput!): Boolean!
+  
+  # Start game with real-time notification
+  startGameWithNotification(input: StartGameInput!): GameStartResponse!
+}
+
+input UpdateDifficultyInterestInput {
+  difficulty: String!
+  deviceId: String!
+  username: String!
+  timestamp: String!
+}
+
+input StartGameInput {
+  difficulty: String!
+  gameId: ID!
+  players: [String!]!
+  gameSettings: GameSettingsInput!
+  randomSeed: Int!
+}
+
+input GameSettingsInput {
+  rows: Int!
+  columns: Int!
+  selectionSetSize: Int!
+  multiRowFeedback: Boolean!
+}
+
+type UpdateDifficultyInterestResponse {
+  success: Boolean!
+  message: String!
+  newInterestCount: Int!
+}
+
+type GameStartResponse {
+  success: Boolean!
+  gameId: ID!
+  message: String!
+} 

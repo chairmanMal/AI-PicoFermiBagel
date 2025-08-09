@@ -251,6 +251,20 @@ export function getDifficultySettings(difficulty: string): Partial<GameSettings>
         gridRows: 2,
         gridColumns: 4,
       };
+    case 'harder':
+      return {
+        targetLength: 9,
+        digitRange: 16, // 0-16
+        gridRows: 3,
+        gridColumns: 3,
+      };
+    case 'hardest':
+      return {
+        targetLength: 12,
+        digitRange: 19, // 0-19
+        gridRows: 3,
+        gridColumns: 4,
+      };
     case 'expert':
       return {
         targetLength: 9,

@@ -1,5 +1,5 @@
 export interface GameSettings {
-  difficulty: 'classic' | 'easy' | 'medium' | 'hard' | 'expert' | 'custom';
+  difficulty: 'classic' | 'easy' | 'medium' | 'hard' | 'harder' | 'hardest' | 'expert' | 'custom';
   targetLength: number;
   digitRange: number; // 0-19 max for new requirements
   showTarget: boolean;

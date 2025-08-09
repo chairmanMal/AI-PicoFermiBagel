@@ -1,0 +1,11 @@
+{
+  "payload": {
+    "operation": "updateDifficultyInterestWithNotification",
+    "input": {
+      "difficulty": "classic",
+      "deviceId": "test-device-123",
+      "username": "testuser",
+      "timestamp": "2025-01-08T10:00:00Z"
+    }
+  }
+}

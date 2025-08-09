@@ -32,11 +32,27 @@ export const getUserStats = `
 `;
 
 export const getLobbyStatus = `
-  query GetLobbyStatus($difficulty: String!) {
-    getLobbyStatus(difficulty: $difficulty) {
+  query GetLobbyStatus($input: GetLobbyStatusInput!) {
+    getLobbyStatus(input: $input) {
       difficulty
       playersWaiting
-      estimatedWaitTime
+      players {
+        username
+        joinedAt
+        seatIndex
+      }
+      gameId
+      countdown
+    }
+  }
+`;
+
+export const getDifficultyInterestCounts = `
+  query GetDifficultyInterestCounts {
+    getDifficultyInterestCounts {
+      difficulty
+      interestCount
+      timestamp
     }
   }
 `;

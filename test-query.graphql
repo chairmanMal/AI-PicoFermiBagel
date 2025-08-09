@@ -1,0 +1,9 @@
+
+query TestGetDifficultyInterestCounts {
+  getDifficultyInterestCounts {
+    difficulty
+    interestCount
+    timestamp
+  }
+}
+    

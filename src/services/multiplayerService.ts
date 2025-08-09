@@ -540,17 +540,26 @@ class MultiplayerService {
   }
 
   getStoredUsername(): string | null {
-    return localStorage.getItem('username');
+    // Try multiple possible keys for username storage
+    const username = localStorage.getItem('pfb_username') || 
+                    localStorage.getItem('pfb_global_username') || 
+                    null;
+    console.log('🎮 MultiplayerService: getStoredUsername returning:', username);
+    return username;
   }
 
-  // Enhanced lobby status
-  async getLobbyStatus(difficulty: string): Promise<{ difficulty: string; playersWaiting: number; estimatedWaitTime: number }> {
+  // Enhanced lobby status with seated players
+  async getLobbyStatus(difficulty: string): Promise<LobbyUpdate | null> {
+    console.log('🎮 MultiplayerService: Getting lobby status for', difficulty);
+    
     const result = await this.retryOperation(
       async () => {
         const client = await this.getClient();
         const response = await client.graphql({
           query: queries.getLobbyStatus,
-          variables: { difficulty }
+          variables: { 
+            input: { difficulty }
+          }
         });
         return response;
       },
@@ -558,20 +567,24 @@ class MultiplayerService {
     );
 
     if (!result.success) {
-      console.error('Failed to get lobby status:', result.error);
-      return {
-        difficulty,
-        playersWaiting: 0,
-        estimatedWaitTime: 0
-      };
+      console.error('🎮 MultiplayerService: getLobbyStatus failed:', result.error);
+      return null;
     }
 
     const data = (result.data as any).data?.getLobbyStatus;
-    return {
-      difficulty,
-      playersWaiting: data?.playersWaiting || 0,
-      estimatedWaitTime: data?.estimatedWaitTime || 0
-    };
+    console.log('🎮 MultiplayerService: Lobby status data:', data);
+    
+    if (data) {
+      return {
+        difficulty: data.difficulty || difficulty,
+        playersWaiting: data.playersWaiting || 0,
+        gameId: data.gameId,
+        countdown: data.countdown,
+        players: data.players || []
+      };
+    }
+    
+    return null;
   }
 
   // Enhanced lobby joining
@@ -616,33 +629,39 @@ class MultiplayerService {
       );
 
       if (!result.success) {
-        console.warn('🎮 MultiplayerService: joinLobby failed, using fallback:', result.error);
-        // Return mock success for missing mutation
+        console.error('🎮 MultiplayerService: joinLobby failed:', result.error);
         return {
-          success: true,
-          gameId: `mock-game-${Date.now()}`,
-          playersWaiting: 1,
-          countdown: undefined,
-          message: 'Successfully joined lobby (mock)'
+          success: false,
+          playersWaiting: 0,
+          message: 'Failed to join lobby',
+          error: result.error
         };
       }
 
-      const data = (result.data as any).data?.joinLobby;
+      const data = (result.data as any).data?.joinLobbyWithNotification;
+      console.log('🎮 MultiplayerService: joinLobby response:', data);
+      
       return {
-        success: data?.success || true,
+        success: data?.success || false,
         gameId: data?.gameId,
-        playersWaiting: data?.playersWaiting || 1,
+        playersWaiting: data?.playersWaiting || 0,
         countdown: data?.countdown,
         message: data?.message || 'Successfully joined lobby'
       };
     } catch (error) {
-      console.warn('🎮 MultiplayerService: joinLobby error, using fallback:', error);
+      console.error('🎮 MultiplayerService: joinLobby error:', error);
       return {
-        success: true,
-        gameId: `mock-game-${Date.now()}`,
-        playersWaiting: 1,
-        countdown: undefined,
-        message: 'Successfully joined lobby (mock)'
+        success: false,
+        playersWaiting: 0,
+        message: 'Failed to join lobby',
+        error: this.createServiceError(
+          'NETWORK',
+          'Connection failed',
+          'Unable to connect to lobby service',
+          true,
+          'RETRY',
+          'joinLobby'
+        )
       };
     }
   }
@@ -672,7 +691,8 @@ class MultiplayerService {
       return false;
     }
 
-    return true;
+    const data = (result.data as any).data?.leaveLobbyWithNotification;
+    return data?.success || true;
   }
 
   // Enhanced difficulty interest update
@@ -688,7 +708,6 @@ class MultiplayerService {
             variables: {
               input: {
                 difficulty,
-                isInterested,
                 deviceId: this.deviceId,
                 username: this.getStoredUsername() || 'Unknown',
                 timestamp: new Date().toISOString()
@@ -701,16 +720,128 @@ class MultiplayerService {
       );
 
       if (!result.success) {
-        console.warn('🎮 MultiplayerService: updateDifficultyInterest failed, using fallback:', result.error);
-        // Return mock success for missing mutation
-        return true;
+        console.warn('🎮 MultiplayerService: updateDifficultyInterest failed:', result.error);
+        return false;
       }
 
-      const data = (result.data as any).data?.updateDifficultyInterest;
-      return data?.success || true; // Default to true for fallback
+      const data = (result.data as any).data?.updateDifficultyInterestWithNotification;
+      return data?.success || false;
     } catch (error) {
-      console.warn('🎮 MultiplayerService: updateDifficultyInterest error, using fallback:', error);
-      return true; // Return success for fallback
+      console.warn('🎮 MultiplayerService: updateDifficultyInterest error:', error);
+      return false;
+    }
+  }
+
+  // Send heartbeat to keep device active
+  async sendHeartbeat(difficulty: string): Promise<boolean> {
+    console.log('🎮 MultiplayerService: Sending heartbeat for', difficulty);
+    
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          const client = await this.getClient();
+          const response = await client.graphql({
+            query: mutations.sendHeartbeat,
+            variables: {
+              input: {
+                deviceId: this.deviceId,
+                difficulty,
+                username: this.getStoredUsername() || 'Unknown',
+                timestamp: new Date().toISOString()
+              }
+            }
+          });
+          return response;
+        },
+        'sendHeartbeat'
+      );
+
+      if (!result.success) {
+        console.warn('🎮 MultiplayerService: sendHeartbeat failed:', result.error);
+        return false;
+      }
+
+      const data = (result.data as any).data?.sendHeartbeat;
+      return data?.success || false;
+    } catch (error) {
+      console.warn('🎮 MultiplayerService: sendHeartbeat error:', error);
+      return false;
+    }
+  }
+
+  // Remove difficulty interest when leaving
+  async removeDifficultyInterest(difficulty: string): Promise<boolean> {
+    console.log('🎮 MultiplayerService: Removing difficulty interest for', difficulty);
+    
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          const client = await this.getClient();
+          const response = await client.graphql({
+            query: mutations.removeDifficultyInterest,
+            variables: {
+              input: {
+                deviceId: this.deviceId,
+                difficulty,
+                username: this.getStoredUsername() || 'Unknown',
+                timestamp: new Date().toISOString()
+              }
+            }
+          });
+          return response;
+        },
+        'removeDifficultyInterest'
+      );
+
+      if (!result.success) {
+        console.warn('🎮 MultiplayerService: removeDifficultyInterest failed:', result.error);
+        return false;
+      }
+
+      const data = (result.data as any).data?.removeDifficultyInterest;
+      return data?.success || false;
+    } catch (error) {
+      console.warn('🎮 MultiplayerService: removeDifficultyInterest error:', error);
+      return false;
+    }
+  }
+
+  // Announce lobby entry to AWS (triggers subscription updates to all clients)
+  async announceLobbyEntry(difficulty: string): Promise<boolean> {
+    const username = this.getStoredUsername() || 'Unknown';
+    console.log('🎮 MultiplayerService: Announcing lobby entry for', difficulty, 'with username:', username);
+    
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          const client = await this.getClient();
+          const response = await client.graphql({
+            query: mutations.updateDifficultyInterest,
+            variables: {
+              input: {
+                deviceId: this.deviceId,
+                difficulty,
+                username: username,
+                timestamp: new Date().toISOString()
+              }
+            }
+          });
+          return response;
+        },
+        'announceLobbyEntry'
+      );
+
+      if (!result.success) {
+        console.warn('🎮 MultiplayerService: announceLobbyEntry failed:', result.error);
+        return false;
+      }
+
+      const data = (result.data as any).data?.updateDifficultyInterestWithNotification;
+      console.log('🎮 MultiplayerService: Lobby entry announced, triggering subscription updates');
+      return data?.success || false;
+    } catch (error) {
+      console.warn('🎮 MultiplayerService: announceLobbyEntry error:', error);
+      return false;
     }
   }
 
@@ -843,6 +974,50 @@ class MultiplayerService {
     return data || [];
   }
 
+  // Get difficulty interest counts from AWS
+  async getDifficultyInterestCounts(): Promise<Record<string, number> | null> {
+    console.log('🎮 MultiplayerService: Loading difficulty interest counts from AWS');
+    
+    try {
+      const result = await this.retryOperation(
+        async () => {
+          const client = await this.getClient();
+          const response = await client.graphql({
+            query: queries.getDifficultyInterestCounts
+          });
+          return response;
+        },
+        'getDifficultyInterestCounts'
+      );
+
+      if (!result.success) {
+        console.error('🎮 MultiplayerService: Get difficulty interest counts failed:', result.error);
+        return null; // Return null to indicate unavailability
+      }
+
+      const data = (result.data as any).data?.getDifficultyInterestCounts;
+      console.log('🎮 MultiplayerService: AWS difficulty interest data:', data);
+      
+      // Convert array to record format
+      const counts: Record<string, number> = {};
+      if (data && Array.isArray(data)) {
+        console.log('🎮 MultiplayerService: Raw AWS data array:', data);
+        data.forEach((item: any) => {
+          if (item.difficulty && typeof item.interestCount === 'number') {
+            console.log(`🎮 MultiplayerService: Processing ${item.difficulty}: ${item.interestCount}`);
+            counts[item.difficulty] = item.interestCount;
+          }
+        });
+      }
+      
+      console.log('🎮 MultiplayerService: Final counts object:', counts);
+      return counts;
+    } catch (error) {
+      console.warn('🎮 MultiplayerService: getDifficultyInterestCounts query not available');
+      return null; // Return null to indicate unavailability
+    }
+  }
+
   // Enhanced subscription methods
   subscribeLobbyUpdates(
     _difficulty: string, 
@@ -868,6 +1043,110 @@ class MultiplayerService {
     // TODO: Implement proper GraphQL subscriptions
     console.log('🎮 MultiplayerService: Game start subscription not implemented yet');
     return { unsubscribe: () => {} };
+  }
+
+  // Simple polling fallback for real-time updates
+  private pollingInterval: NodeJS.Timeout | null = null;
+  private isPolling = false;
+
+  async startInterestPolling(callback: (updates: Array<{ difficulty: string; interestCount: number; timestamp: string }>) => void): Promise<void> {
+    if (this.isPolling) {
+      this.stopInterestPolling();
+    }
+
+    this.isPolling = true;
+    console.log('🔄 Starting interest count polling (5-second intervals)');
+
+    const pollForUpdates = async () => {
+      if (!this.isPolling) return;
+
+      try {
+        const counts = await this.getDifficultyInterestCounts();
+        if (counts && Object.keys(counts).length > 0) {
+          const updates = Object.entries(counts).map(([difficulty, interestCount]) => ({
+            difficulty,
+            interestCount,
+            timestamp: new Date().toISOString()
+          }));
+          callback(updates);
+        }
+      } catch (error) {
+        console.error('🔄 Polling error:', error);
+      }
+    };
+
+    // Poll immediately, then every 5 seconds
+    await pollForUpdates();
+    this.pollingInterval = setInterval(pollForUpdates, 5000);
+  }
+
+  stopInterestPolling(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    this.isPolling = false;
+    console.log('🔄 Stopped interest count polling');
+  }
+
+  // Subscribe to difficulty interest updates using real GraphQL subscription
+  async subscribeDifficultyInterestUpdates(
+    callback: (updates: Array<{ difficulty: string; interestCount: number; timestamp: string }>) => void
+  ): Promise<{ unsubscribe: () => void }> {
+    console.log('🎮 MultiplayerService: Subscribing to difficulty interest updates via GraphQL');
+    
+    try {
+      const client = await this.getClient();
+      
+      // Use the real GraphQL subscription
+      const subscription = client.graphql({
+        query: subscriptions.onDifficultyInterestUpdate
+      }).subscribe({
+        next: (response: any) => {
+          console.log('🎮 MultiplayerService: Received difficulty interest update:', response);
+          const data = response.data?.onDifficultyInterestUpdate;
+          console.log('🎮 MultiplayerService: Subscription data:', data);
+          if (data && Array.isArray(data)) {
+            const updates = data.map((item: any) => ({
+              difficulty: item.difficulty,
+              interestCount: item.interestCount,
+              timestamp: item.timestamp
+            }));
+            console.log('🎮 MultiplayerService: Processed subscription updates:', updates);
+            callback(updates);
+          } else {
+            console.log('🎮 MultiplayerService: No valid subscription data received');
+          }
+        },
+        error: (error: any) => {
+          console.error('🎮 MultiplayerService: Difficulty interest subscription error:', error);
+          console.log('🔄 Subscription failed, falling back to polling...');
+          // Fallback to polling if subscription fails
+          this.startInterestPolling(callback);
+        }
+      });
+      
+      const unsubscribe = () => {
+        subscription.unsubscribe();
+        this.stopInterestPolling(); // Stop polling when unsubscribing
+        console.log('🎮 MultiplayerService: Unsubscribed from difficulty interest updates');
+      };
+      
+      this.subscriptions.set('difficultyInterest', { unsubscribe });
+      return { unsubscribe };
+      
+    } catch (error) {
+      console.error('🎮 MultiplayerService: Failed to subscribe to difficulty interest updates:', error);
+      console.log('🔄 Subscription setup failed, using polling instead...');
+      // Fallback to polling if subscription setup fails
+      this.startInterestPolling(callback);
+      
+      return { 
+        unsubscribe: () => {
+          this.stopInterestPolling();
+        } 
+      };
+    }
   }
 
   // Enhanced cleanup
